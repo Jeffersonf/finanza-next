@@ -1,5 +1,5 @@
 ﻿'use strict';
-const APP_VERSION='4.3.2';
+const APP_VERSION='5.0.1-next';
 const DEFAULT_API_URL='https://finanza-api.onrender.com';
 const CK='fz_cfg',LK='fz_local',CCK='fz_cats',VK='fz_view',AVK='fz_avatar',PRIVK='fz_privacy',CAR_KEY='fz_car',PAGE_KEY='fz_page';
 const RATES_KEY='fz_rates', WIDGET_ORDER_KEY='fz_widget_order', WIDGET_FILTER_KEY='fz_widget_filters', DUE_KEY='fz_due_items', TX_FILTERS_KEY='fz_tx_filters', COMMITMENTS_KEY='fz_commitments', SIDEBAR_SHORTCUTS_KEY='fz_sidebar_shortcuts';
@@ -2021,7 +2021,7 @@ function avatarDataForSync(){
 }
 function getAppSettings(){
   const avatarData=avatarDataForSync();
-  const nextAccent=localStorage.getItem('next_accent')||'#f5d94e';
+  const nextAccent=localStorage.getItem('next_accent')||'#35c96f';
   return {theme:document.documentElement.dataset.theme||localStorage.getItem('fz_t')||'dark',nextAccent,next_accent:nextAccent,rates:{cdi:RATES.cdi,selic:RATES.selic,monthlyIncomeCents,monthly_income_cents:monthlyIncomeCents,dueItems,car:carState?.vehicles?.length?carState:normalizeCarState(),sharedSpace,shared_space:sharedSpace,avatarData,avatar_data:avatarData},widgetPrefs,widgetOrder,widgetFilters,sidebarShortcuts:sidebarShortcutPrefs,txView:curView,activeList:slActiveList,importCenter:compactImportCenterForSync(),commitments:commitmentsState};
 }
 function applyRemoteSettings(settings={}){

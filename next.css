@@ -48,7 +48,8 @@ body.next-visual::after {
 
 .next-visual.next-app-ready .sidebar,
 .next-visual.next-app-ready .fnav,
-.next-visual.next-app-ready .mobile-profile-btn {
+.next-visual.next-app-ready .mobile-profile-btn,
+.next-visual.next-app-ready .fab {
   display: none !important;
 }
 
@@ -82,11 +83,19 @@ body.next-visual::after {
   left: 50%;
   bottom: max(16px, env(safe-area-inset-bottom));
   display: grid;
-  grid-template-columns: 46px minmax(330px, auto) 46px;
+  grid-template-columns: minmax(330px, auto);
   gap: 8px;
   align-items: center;
   transform: translateX(-50%);
   filter: drop-shadow(0 16px 32px rgba(0, 0, 0, .13));
+}
+
+.next-app-chrome > .next-add-button {
+  display: none !important;
+}
+
+.next-visual[data-next-page="dashboard"] .next-app-chrome > .next-more-button {
+  display: none !important;
 }
 
 .next-tabbar {
@@ -1205,6 +1214,12 @@ body.next-visual::after {
 }
 
 @media (max-width: 760px) {
+  .next-visual *,
+  .next-visual *::before,
+  .next-visual *::after {
+    min-width: 0 !important;
+  }
+
   html,
   body.next-visual {
     width: 100% !important;
@@ -1225,9 +1240,9 @@ body.next-visual::after {
   .next-visual .box-budget-hero,
   .next-visual .box-section,
   .next-visual .box-insight-strip {
-    width: 100% !important;
+    width: min(100%, calc(100vw - 24px)) !important;
     min-width: 0 !important;
-    max-width: 100% !important;
+    max-width: calc(100vw - 24px) !important;
   }
 
   .next-visual .box-budget-hero,
@@ -1237,9 +1252,12 @@ body.next-visual::after {
   }
 
   .next-app-chrome {
+    left: 10px;
+    right: 10px;
+    transform: none;
     bottom: max(10px, env(safe-area-inset-bottom));
-    grid-template-columns: 0 minmax(0, 1fr) 44px;
-    width: calc(100% - 20px);
+    grid-template-columns: minmax(0, 1fr);
+    width: auto;
     gap: 6px;
   }
 
@@ -1297,7 +1315,28 @@ body.next-visual::after {
   }
 
   .box-budget-hero h2 {
-    font-size: clamp(38px, 12vw, 54px);
+    font-size: clamp(34px, 11vw, 46px);
+    letter-spacing: -.07em;
+    overflow-wrap: anywhere;
+  }
+
+  .box-budget-foot {
+    gap: 10px;
+  }
+
+  .box-budget-foot > span {
+    min-width: 0 !important;
+  }
+
+  .box-budget-foot strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .box-detail-button {
+    flex: 0 0 auto;
   }
 
   .box-insight-strip {
@@ -1624,4 +1663,131 @@ body.next-visual::after {
     min-height: calc(100vh - 20px);
     border-radius: 29px !important;
   }
+}
+
+@media (max-width: 760px) {
+  html,
+  body.next-visual,
+  body.next-visual .main,
+  body.next-visual .page.active,
+  body.next-visual .next-home {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  body.next-visual .main {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body.next-visual .page.active,
+  body.next-visual .next-home,
+  body.next-visual .box-budget-hero,
+  body.next-visual .box-section,
+  body.next-visual .box-transaction,
+  body.next-visual .box-insight-strip,
+  body.next-visual .box-insight-strip > * {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  body.next-visual .box-budget-hero {
+    padding-inline: 24px !important;
+  }
+
+  body.next-visual .box-transaction {
+    grid-template-columns: 38px minmax(0, 1fr) minmax(0, 86px) !important;
+  }
+
+  body.next-visual .box-transaction-value {
+    max-width: 86px !important;
+  }
+
+  body.next-visual .box-transaction-value b,
+  body.next-visual .box-transaction-value small {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 520px) {
+  body.next-visual .page.active,
+  body.next-visual .next-home,
+  body.next-visual .box-home-head,
+  body.next-visual .box-budget-hero,
+  body.next-visual .box-section,
+  body.next-visual .box-transaction,
+  body.next-visual .box-insight-strip,
+  body.next-visual .box-insight-strip > * {
+    width: min(366px, calc(100vw - 24px)) !important;
+    max-width: min(366px, calc(100vw - 24px)) !important;
+  }
+}
+
+.next-visual .box-page > .g4,
+.next-visual .box-page > .g3,
+.next-visual .box-page > .g2,
+.next-visual .box-page > .fgrid,
+.next-visual .box-page > .insight-grid:first-of-type {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.next-visual .box-page > .g4 .sc,
+.next-visual .box-page > .g3 .sc,
+.next-visual .box-page > .g2 .sc,
+.next-visual .box-page > .fgrid .sc,
+.next-visual .box-page > .insight-grid:first-of-type > * {
+  background: var(--box-paper) !important;
+  color: var(--box-ink) !important;
+  box-shadow: var(--box-shadow) !important;
+}
+
+.next-visual .box-page > .g4 .sc:first-child,
+.next-visual .box-page > .g3 .sc:first-child,
+.next-visual .box-page > .g2 .sc:first-child,
+.next-visual .box-page > .fgrid .sc:first-child,
+.next-visual .box-page > .insight-grid:first-of-type > *:first-child {
+  background: var(--box-dark) !important;
+  color: #fff !important;
+}
+
+.next-visual .box-page > .g4 .sc:first-child .cl,
+.next-visual .box-page > .g3 .sc:first-child .cl,
+.next-visual .box-page > .g2 .sc:first-child .cl,
+.next-visual .box-page > .fgrid .sc:first-child .cl,
+.next-visual .box-page > .g4 .sc:first-child .cc,
+.next-visual .box-page > .g3 .sc:first-child .cc,
+.next-visual .box-page > .g2 .sc:first-child .cc,
+.next-visual .box-page > .fgrid .sc:first-child .cc {
+  color: rgba(255, 255, 255, .48) !important;
+}
+
+.next-visual .box-page > .g4 .sc:first-child .cv,
+.next-visual .box-page > .g3 .sc:first-child .cv,
+.next-visual .box-page > .g2 .sc:first-child .cv,
+.next-visual .box-page > .fgrid .sc:first-child .cv {
+  color: #fff !important;
+}
+
+.next-visual .box-page > .g4 .sc:not(:first-child) .cl,
+.next-visual .box-page > .g3 .sc:not(:first-child) .cl,
+.next-visual .box-page > .g2 .sc:not(:first-child) .cl,
+.next-visual .box-page > .fgrid .sc:not(:first-child) .cl,
+.next-visual .box-page > .g4 .sc:not(:first-child) .cc,
+.next-visual .box-page > .g3 .sc:not(:first-child) .cc,
+.next-visual .box-page > .g2 .sc:not(:first-child) .cc,
+.next-visual .box-page > .fgrid .sc:not(:first-child) .cc {
+  color: var(--box-muted) !important;
+}
+
+.next-visual .box-page > .g4 .sc:not(:first-child) .cv,
+.next-visual .box-page > .g3 .sc:not(:first-child) .cv,
+.next-visual .box-page > .g2 .sc:not(:first-child) .cv,
+.next-visual .box-page > .fgrid .sc:not(:first-child) .cv {
+  color: var(--box-ink) !important;
 }

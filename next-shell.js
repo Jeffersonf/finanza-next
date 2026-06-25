@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '5.0.0-next';
+  const VERSION = '5.0.1-next';
   const HOME_ID = 'nextHome';
   const CHROME_ID = 'nextAppChrome';
   const LAUNCHER_ID = 'nextLauncher';
@@ -187,6 +187,7 @@
     let chrome = document.getElementById(CHROME_ID);
     const page = currentPage();
     const active = primaryFor(page);
+    document.body.dataset.nextPage = page;
     const signature = `${page}|${setupVisible}|${VERSION}`;
     if (!force && chrome?.dataset.signature === signature) return;
 
