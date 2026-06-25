@@ -6,17 +6,17 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Finanza">
-<meta name="application-name" content="Finanza">
+<meta name="apple-mobile-web-app-title" content="Next">
+<meta name="application-name" content="Next">
 <meta name="theme-color" id="themeColorMeta" content="#08090d">
 <meta name="app-version" content="4.3.2">
-<title>Finanza</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='10' fill='%2308090d'/%3E%3Ctext x='5' y='23' font-family='Arial Black' font-weight='900' font-size='17' fill='%23c8f55a'%3Efz%3C/text%3E%3C/svg%3E">
+<title>Next</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='10' fill='%2308090d'/%3E%3Ctext x='5' y='23' font-family='Arial Black' font-weight='900' font-size='17' fill='%23f5d94e'%3Enx%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=4.3.2">
-<link rel="stylesheet" href="next.css?v=4.5.0-next">
+<link rel="stylesheet" href="next.css?v=4.6.0-next">
 </head>
 <body class="next-visual">
 
@@ -25,9 +25,9 @@
 <div class="ptr" id="ptr"><div class="ptr-sp"></div><span class="ptr-ar" id="ptrAr">↓</span><span id="ptrTxt">Puxe para atualizar</span></div>
 <div class="btst" id="btst">Pressione voltar novamente para sair</div>
 <nav class="fnav" id="fnav">
-  <div class="fn-item active" data-page="dashboard"><span class="fni">📊</span>Início</div>
-  <div class="fn-item" data-page="transactions"><span class="fni">💸</span>Gastos</div>
-  <div class="fn-item fut-n" data-page="future"><span class="fni">📌</span>Venc.</div>
+  <div class="fn-item active" data-page="dashboard"><span class="fni">▣</span>Início</div>
+  <div class="fn-item" data-page="transactions"><span class="fni">−</span>Gastos</div>
+  <div class="fn-item fut-n" data-page="future"><span class="fni">⏱</span>Contas</div>
 </nav>
 <div class="qa-wrap" id="qaWrap">
   <div class="qa-panel" id="qaPanel">
@@ -57,11 +57,11 @@
     <section class="setup-story">
       <div class="setup-head">
         <div class="setup-copy-block">
-          <div class="setup-badge">Finanças pessoais sem fricção</div>
-          <div class="slogo"><span style="color:var(--ac)">fin</span><span style="color:var(--tx);font-weight:700">anza</span></div>
+          <div class="setup-badge">Orçamento pessoal sem fricção</div>
+          <div class="slogo"><span style="color:var(--ac)">the</span><span style="color:var(--tx);font-weight:700"> next</span></div>
           <div class="stag">Registro rápido, visão do mês e clareza para decidir antes do aperto virar bagunça.</div>
           <h1 class="setup-title">Seu dinheiro organizado antes que o mês aperte.</h1>
-          <p class="setup-copy">O Finanza reúne gastos, vencimentos, metas, compras e carro em um fluxo simples para registrar, revisar e decidir com clareza.</p>
+          <p class="setup-copy">O Next reúne orçamento, contas, carteiras e análise em um fluxo simples para registrar, revisar e decidir com clareza.</p>
           <div class="setup-inline-preview">
             <div class="setup-inline-head">
               <strong>O que você acompanha sem sair do fluxo</strong>
@@ -126,7 +126,7 @@
       </div>
     </section>
     <aside class="setup-auth">
-      <div id="sMain" class="setup-auth-panel" style="display:none"><div class="setup-section-note">Como você quer usar o Finanza?</div>
+      <div id="sMain" class="setup-auth-panel" style="display:none"><div class="setup-section-note">Como você quer usar o Next?</div>
         <button class="mode-btn" onclick="showS('online')"><span class="mode-emo">☁️</span><div><div class="mode-lbl">Online</div><div class="mode-sub">Sincroniza entre dispositivos</div></div><span style="margin-left:auto;color:var(--mt)">›</span></button>
         <button class="mode-btn" onclick="showS('local')"><span class="mode-emo">💾</span><div><div class="mode-lbl">Local</div><div class="mode-sub">Dados neste dispositivo</div></div><span style="margin-left:auto;color:var(--mt)">›</span></button>
       </div>
@@ -185,13 +185,13 @@
   </div>
 </div>
 <aside class="sidebar">
-  <div class="logo"><span class="brand-word"><span style="color:var(--ac)">fin</span><span style="color:var(--tx)">anza</span></span><div class="logo-actions"><button class="theme-btn" id="privBtn" onclick="togglePrivacy()" title="Ocultar valores" aria-label="Ocultar valores">👁️</button><button class="theme-btn" id="thmBtn" onclick="toggleTheme()">🌙</button></div></div>
+  <div class="logo"><span class="brand-word"><span style="color:var(--ac)">the</span><span style="color:var(--tx)"> next</span></span><div class="logo-actions"><button class="theme-btn" id="privBtn" onclick="togglePrivacy()" title="Ocultar valores" aria-label="Ocultar valores">👁️</button><button class="theme-btn" id="thmBtn" onclick="toggleTheme()">🌙</button></div></div>
   <div class="sb-search" onclick="document.getElementById('sbSrch').focus()"><span style="color:var(--mt);font-size:12px">🔍</span><input id="sbSrch" placeholder="Buscar... (Ctrl+K)" oninput="if(this.value.length>1)openSrch(this.value)"></div>
   <div class="nav-lbl">Menu</div>
   <nav>
-    <div class="nav-item active" data-page="dashboard"><span class="ico">📊</span>Dashboard</div>
-    <div class="nav-item" data-page="transactions"><span class="ico">💸</span>Gastos do dia a dia</div>
-    <div class="nav-item fn" data-page="future"><span class="ico">📌</span>Vencimentos</div>
+    <div class="nav-item active" data-page="dashboard"><span class="ico">▣</span>Início</div>
+    <div class="nav-item" data-page="transactions"><span class="ico">−</span>Gastos</div>
+    <div class="nav-item fn" data-page="future"><span class="ico">⏱</span>Contas</div>
   </nav>
   <div class="sidebar-utility">
     <div class="sidebar-card">
@@ -232,7 +232,7 @@
   <span class="mobile-profile-label">Perfil</span>
 </button>
 <div class="page active" id="page-dashboard">
-  <div class="ph"><div><div class="pt">Dashboard</div><div class="ps">Centro do dia para lançar, revisar e decidir seus gastos</div></div>
+  <div class="ph"><div><div class="pt">Início</div><div class="ps">Centro do dia para lançar, revisar e decidir seus gastos</div></div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
       <div class="mnav"><button id="prevM">‹</button><span class="mname" id="curM"></span><button id="nextM">›</button></div>
       <button class="btn btn-g btn-sm" onclick="openImportCenter()" title="Importar transações" aria-label="Importar transações">📥</button>
@@ -370,7 +370,7 @@
   </div>
 </div>
 <div class="page" id="page-future">
-  <div class="ph"><div><div class="pt" style="color:var(--fut)">📌 Vencimentos</div><div class="ps">Contas fixas, boletos, Pix, cartões próprios e crediários</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-g btn-sm" data-write-only="criar transações futuras" onclick="openModal(null,true)">+ Lançar futuro</button><button class="btn btn-p" data-write-only="criar vencimentos" onclick="openDueModal()">+ Vencimento</button></div></div>
+  <div class="ph"><div><div class="pt" style="color:var(--fut)">⏱ Contas</div><div class="ps">Contas fixas, boletos, Pix, cartões próprios e crediários</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-g btn-sm" data-write-only="criar transações futuras" onclick="openModal(null,true)">+ Lançar futuro</button><button class="btn btn-p" data-write-only="criar vencimentos" onclick="openDueModal()">+ Conta</button></div></div>
   <div class="pbar" id="futPbar">
     <span class="pl">Próximos</span>
     <button class="pb active" data-fp="7d">7 dias</button><button class="pb" data-fp="15d">15 dias</button>
@@ -387,7 +387,7 @@
     <div class="sc sc-glow-fut"><span class="ci">📅</span><div class="cl">Próximo</div><div class="cv" id="futNxt" style="font-size:15px">—</div><div class="cc" id="futNxtN">—</div></div>
   </div>
   <div class="box fixed-bills-panel"><div id="fixedBillsHub"></div></div>
-  <div class="sdiv"><div class="sdiv-line"></div><span class="sdiv-lbl" style="color:var(--fut)">📌 Vencimentos e lembretes</span><div class="sdiv-line"></div></div>
+  <div class="sdiv"><div class="sdiv-line"></div><span class="sdiv-lbl" style="color:var(--fut)">⏱ Contas e lembretes</span><div class="sdiv-line"></div></div>
   <div class="box"><div class="tl" id="dueList"></div></div>
   <div class="box future-center-panel"><div id="futureCommandCenter"></div></div>
   <div id="ovdSec" style="display:none"><div class="sdiv"><div class="sdiv-line"></div><span class="sdiv-lbl" style="color:var(--dan)">⚠️ Vencidos</span><div class="sdiv-line"></div></div><div class="box" style="border-color:rgba(245,112,90,.2)"><div class="tl" id="ovdList"></div></div></div>
@@ -464,7 +464,7 @@
   <div class="ss"><div class="ss-t">Dados</div>
     <div class="ss-r"><div><div class="ss-l">Backup completo</div><div class="ss-s">Exporta JSON + CSV ao mesmo tempo</div></div><button class="btn btn-p btn-sm" onclick="exportBackupFull()">💾 Exportar tudo</button></div>
     <div class="ss-r"><div><div class="ss-l">Só CSV</div><div class="ss-s">Planilha — abre no Excel e Google Sheets</div></div><button class="btn btn-g btn-sm" onclick="exportCSV()">📊 CSV</button></div>
-    <div class="ss-r"><div><div class="ss-l">Só JSON</div><div class="ss-s">Backup para reimportar no Finanza</div></div><button class="btn btn-g btn-sm" onclick="exportJson()">📦 JSON</button></div>
+    <div class="ss-r"><div><div class="ss-l">Só JSON</div><div class="ss-s">Backup para reimportar no Next</div></div><button class="btn btn-g btn-sm" onclick="exportJson()">📦 JSON</button></div>
     <div class="ss-r"><div><div class="ss-l">Importar JSON</div><div class="ss-s">Restaura um backup no modo atual. No online, envia tudo para o Supabase.</div></div><label class="btn btn-g btn-sm" for="impBackupFile">Importar</label><input type="file" id="impBackupFile" accept=".json,application/json" style="display:none" onchange="importBackupFile(this)"></div>
     <div class="ss-r"><div><div class="ss-l">Último backup</div><div class="ss-s backup-status"><span class="backup-dot" id="backupDot"></span><span id="backupStatusTxt">—</span></div></div><button class="btn btn-g btn-sm" onclick="autoBackupNow()">💾 Agora</button></div>
     <div class="ss-r" id="setJsonRow" style="display:none"><div><div class="ss-l">Backup local</div></div><button class="btn btn-g btn-sm" onclick="exportJson()">💾 Exportar</button></div>
@@ -512,7 +512,7 @@
   </div>
   <div class="ss"><div class="ss-t">Changelog</div>
     <div class="ss-r changelog-head">
-      <div><div class="ss-l">Finanza 4.3.2</div><div class="ss-s">Resumo das entregas já consolidadas no app</div></div>
+      <div><div class="ss-l">Next 1.0</div><div class="ss-s">Resumo das entregas já consolidadas no app</div></div>
       <button class="btn btn-g btn-sm" onclick="copyChangelog()">Copiar</button>
     </div>
     <div class="changelog-list" id="settingsChangelog"></div>
@@ -698,7 +698,7 @@
   <div class="typetog"><button class="ttb active expense" id="tExp" onclick="setTyp('expense')">⬇ Despesa</button><button class="ttb income" id="tInc" onclick="setTyp('income')">⬆ Receita</button></div>
   <div class="frow"><div class="fg" style="flex:1.8"><label class="fl" for="txQuickText">Lançamento rápido</label><input type="text" class="fi" id="txQuickText" placeholder="Ex: mercado 82,40 hoje nubank" aria-describedby="txQuickPreview" oninput="previewTxFromText()" onkeydown="if(event.key==='Enter'){event.preventDefault();fillAndSaveTxFromText();}"></div><div class="fg" style="flex:.7;justify-content:flex-end;display:flex;gap:6px"><button class="btn btn-g" type="button" onclick="fillTxFromText()">Preencher</button><button class="btn btn-p" type="button" onclick="fillAndSaveTxFromText()">Preencher + salvar</button></div></div>
   <div class="quick-preview" id="txQuickPreview">Digite uma frase para ver a prévia antes de salvar.</div>
-  <div class="required-hint">Só o valor é obrigatório. Se deixar em branco, o Finanza usa descrição pela categoria, data de hoje e sua conta principal.</div>
+  <div class="required-hint">Só o valor é obrigatório. Se deixar em branco, o Next usa descrição pela categoria, data de hoje e sua conta principal.</div>
   <div class="frow"><div class="fg"><label class="fl" for="txDesc">Descrição opcional</label><input type="text" class="fi" id="txDesc" placeholder="Ex: Aluguel..."></div><div class="fg"><label class="fl" for="txAmt">Valor (R$) *</label><input type="number" class="fi" id="txAmt" placeholder="0,00" min="0" step="0.01" inputmode="decimal" oninput="updIPrev()"></div></div>
   <div class="frow"><div class="fg"><label class="fl" for="txCat">Categoria</label><select class="fi" id="txCat"></select></div><div class="fg"><label class="fl" for="txAcc">Conta</label><select class="fi" id="txAcc" onchange="refreshTxDateHint()"></select></div></div>
   <div class="frow"><div class="fg"><label class="fl" for="txDt" id="txDateLabel">Data</label><input type="date" class="fi" id="txDt" onchange="refreshTxDateHint()"></div><div class="fg"><label class="fl" for="txNote">Observação</label><input type="text" class="fi" id="txNote" placeholder="Opcional..."></div></div>
@@ -894,6 +894,7 @@
 <script src="future.js?v=4.3.2"></script>
 <script src="bootstrap.js?v=4.3.2"></script>
 <script src="boot.js?v=4.3.2"></script>
+<script src="next-shell.js?v=4.6.0-next"></script>
 </body>
 </html>
 
