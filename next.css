@@ -733,3 +733,418 @@ body.next-visual::after {
     grid-template-columns: 1fr;
   }
 }
+
+/* NEXT STANDARD PASS ------------------------------------------------------
+   A stronger product-level pass so the logged-in app feels intentionally
+   different from Classic Finanza while preserving the same HTML/JS/access.
+------------------------------------------------------------------------- */
+
+body.next-visual {
+  --next-yellow-text: #111109;
+  --next-card-pad: 18px;
+}
+
+.next-visual .page {
+  animation: nextPageIn .18s ease both;
+}
+
+@keyframes nextPageIn {
+  from { opacity: .86; transform: translateY(4px); }
+}
+
+.next-visual .ph::before {
+  content: "Orçamento. Contas. Controle.";
+  display: inline-flex;
+  width: max-content;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 11px;
+  margin-bottom: 12px;
+  border: 1px solid color-mix(in srgb, var(--ac) 36%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ac) 9%, transparent);
+  color: var(--ac);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.next-visual .ph {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  column-gap: 18px;
+}
+
+.next-visual .ph > div:first-child {
+  min-width: 0;
+}
+
+.next-visual .ph > div:first-child,
+.next-visual .ph::before {
+  grid-column: 1;
+}
+
+.next-visual .ph > div:last-child {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.next-visual .dash-section {
+  margin-bottom: 14px;
+}
+
+.next-visual .dash-section > .bh:first-child,
+.next-visual .box > .bh:first-child,
+.next-visual .quick-actions-widget > .bh:first-child {
+  margin-bottom: 14px;
+}
+
+.next-visual .bh {
+  align-items: flex-start;
+}
+
+.next-visual .bh .ct,
+.next-visual .section-title,
+.next-visual .card-title {
+  font-weight: 900;
+}
+
+.next-visual .g4 > .sc:first-child,
+.next-visual .g3 > .sc:first-child,
+.next-visual .bg-grid > .bg-card:first-child,
+.next-visual .insight-grid > .insight-card:first-child {
+  border-color: transparent;
+  background: var(--ac);
+  color: var(--next-yellow-text);
+}
+
+.next-visual .g4 > .sc:first-child .cl,
+.next-visual .g4 > .sc:first-child .cc,
+.next-visual .g3 > .sc:first-child .cl,
+.next-visual .g3 > .sc:first-child .cc,
+.next-visual .bg-grid > .bg-card:first-child *,
+.next-visual .insight-grid > .insight-card:first-child * {
+  color: rgba(17,17,9,.62) !important;
+}
+
+.next-visual .g4 > .sc:first-child .cv,
+.next-visual .g3 > .sc:first-child .cv,
+.next-visual .bg-grid > .bg-card:first-child strong,
+.next-visual .insight-grid > .insight-card:first-child .insight-v {
+  color: var(--next-yellow-text) !important;
+}
+
+.next-visual .sc .ci {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 16px;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--ac) 13%, var(--sf2));
+  color: var(--ac);
+  font-size: 16px;
+}
+
+.next-visual .g4 > .sc:first-child .ci,
+.next-visual .g3 > .sc:first-child .ci {
+  background: rgba(0,0,0,.12);
+  color: var(--next-yellow-text);
+}
+
+.next-visual .quick-actions-widget-featured .quick-actions-grid {
+  gap: 10px;
+}
+
+.next-visual .quick-action-card-workbench {
+  min-height: 106px;
+}
+
+.next-visual .quick-action-card .quick-action-ico {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 12px;
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--ac) 11%, var(--sf));
+}
+
+.next-visual .quick-action-card.primary .quick-action-ico {
+  background: rgba(0,0,0,.12);
+}
+
+.next-visual .daily-flow-head,
+.next-visual .daily-flow-chart-head,
+.next-visual .tx-chart-title,
+.next-visual .future-center-name,
+.next-visual .proj-chip-k {
+  color: var(--tx);
+}
+
+.next-visual .daily-flow-grid,
+.next-visual .daily-flow-graphs {
+  gap: 10px;
+}
+
+.next-visual .daily-flow-widget {
+  background:
+    radial-gradient(circle at 84% 0%, color-mix(in srgb, var(--ac) 6%, transparent), transparent 30%),
+    var(--sf);
+}
+
+.next-visual .daily-flow-metric,
+.next-visual .daily-flow-chart-card {
+  background: var(--sf2);
+}
+
+.next-visual .daily-flow-ico {
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ac) 13%, transparent);
+  color: var(--ac);
+}
+
+.next-visual .tx-surface,
+.next-visual .tx-toolbar,
+.next-visual .tx-period-bar,
+.next-visual .tx-summary-strip,
+.next-visual .cat-filter-row,
+.next-visual .tx-range-row {
+  border: 1px solid var(--bd);
+  border-radius: var(--r-lg);
+  background: var(--sf);
+  box-shadow: none;
+}
+
+.next-visual .tx-toolbar,
+.next-visual .tx-summary-strip,
+.next-visual .tx-range-row {
+  padding: 10px;
+}
+
+.next-visual .tx-sum-pill,
+.next-visual .cat-filter-chip,
+.next-visual .bdg,
+.next-visual .tag,
+.next-visual .status-pill {
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  background: var(--sf2);
+  color: var(--tx2);
+}
+
+.next-visual .tx-sum-pill.pos,
+.next-visual .tx-sum-pill.warn,
+.next-visual .tx-sum-pill.fut {
+  color: var(--ac);
+  border-color: color-mix(in srgb, var(--ac) 26%, var(--bd));
+}
+
+.next-visual .tx-sum-pill.neg {
+  color: var(--dan);
+  border-color: color-mix(in srgb, var(--dan) 26%, var(--bd));
+}
+
+.next-visual .tx-list-host .ti,
+.next-visual .tl .ti {
+  margin-bottom: 8px;
+  border: 1px solid var(--bd);
+  border-radius: 20px;
+  background: var(--sf);
+}
+
+.next-visual .tx-list-host .ti:hover,
+.next-visual .tl .ti:hover {
+  background: var(--sf2);
+}
+
+.next-visual .ib,
+.next-visual .vbtn,
+.next-visual .widget-menu-btn,
+.next-visual .dash-widget-action {
+  border: 1px solid var(--bd);
+  border-radius: 13px;
+  background: var(--sf2);
+  color: var(--tx2);
+  box-shadow: none;
+}
+
+.next-visual .ib:hover,
+.next-visual .vbtn:hover,
+.next-visual .widget-menu-btn:hover {
+  border-color: color-mix(in srgb, var(--ac) 30%, var(--bd));
+  color: var(--tx);
+  transform: none;
+}
+
+.next-visual .future-center-row {
+  padding: 13px 14px;
+  border-radius: 18px;
+  background: var(--sf2);
+}
+
+.next-visual .future-center-amt,
+.next-visual .proj-scenario strong,
+.next-visual .proj-chip strong {
+  color: var(--tx);
+  font-weight: 900;
+}
+
+.next-visual .proj-scenarios,
+.next-visual .projection-grid,
+.next-visual .insight-grid,
+.next-visual .bg-grid {
+  gap: 10px;
+}
+
+.next-visual .proj-scenario,
+.next-visual .proj-chip,
+.next-visual .insight-card,
+.next-visual .bg-card {
+  border-radius: 20px;
+  background: var(--sf2);
+}
+
+.next-visual .modal {
+  max-width: min(720px, calc(100% - 24px));
+  padding: 22px;
+}
+
+.next-visual .modal .mt {
+  color: var(--tx);
+  font-size: 24px;
+  font-weight: 950;
+  letter-spacing: -.055em;
+}
+
+.next-visual .modal .ms,
+.next-visual .fl,
+.next-visual .hint,
+.next-visual .quick-preview {
+  color: var(--mt);
+}
+
+.next-visual .ttb,
+.next-visual .qa-type,
+.next-visual .qa-tb,
+.next-visual .mode-btn {
+  border: 1px solid var(--bd);
+  border-radius: 15px;
+  background: var(--sf2);
+  color: var(--tx2);
+}
+
+.next-visual .ttb.active,
+.next-visual .qa-tb.active,
+.next-visual .qa-type.active {
+  background: var(--ac);
+  color: var(--next-yellow-text);
+  border-color: transparent;
+}
+
+.next-visual .shopping-hero,
+.next-visual .sl-header,
+.next-visual .car-hero,
+.next-visual .vehicle-widget-hero {
+  border: 1px solid var(--bd);
+  border-radius: calc(var(--r-lg) + 4px);
+  background:
+    radial-gradient(circle at 86% 0%, color-mix(in srgb, var(--ac) 10%, transparent), transparent 34%),
+    var(--sf);
+  box-shadow: none;
+}
+
+.next-visual .sl-title,
+.next-visual .car-title,
+.next-visual .vehicle-widget-title {
+  color: var(--tx);
+  letter-spacing: -.055em;
+}
+
+.next-visual .sl-card,
+.next-visual .sl-item,
+.next-visual .car-panel,
+.next-visual .car-maint-wrap,
+.next-visual .car-chart-panel,
+.next-visual .vehicle-widget-card {
+  border: 1px solid var(--bd);
+  border-radius: 22px;
+  background: var(--sf);
+  box-shadow: none;
+}
+
+.next-visual .srch-row {
+  margin-bottom: 8px;
+}
+
+.next-visual .srch-ico {
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ac) 13%, transparent);
+  color: var(--ac);
+}
+
+.next-visual .srch-title {
+  color: var(--tx);
+  font-weight: 850;
+}
+
+.next-visual .srch-meta,
+.next-visual .srch-empty,
+.next-visual .srch-summary {
+  color: var(--mt);
+}
+
+.next-visual .import-center,
+.next-visual .import-preview-card,
+.next-visual .import-file-drop,
+.next-visual .key-box,
+.next-visual .auth-ok,
+.next-visual .serr {
+  border: 1px solid var(--bd);
+  border-radius: 18px;
+  background: var(--sf2);
+}
+
+.next-visual .serr.show {
+  color: var(--dan);
+  border-color: color-mix(in srgb, var(--dan) 28%, var(--bd));
+}
+
+@media (min-width: 961px) {
+  .next-visual .quick-actions-grid.workbench-grid-full {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .next-visual .tx-toolbar {
+    align-items: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .next-visual .ph {
+    display: block;
+  }
+
+  .next-visual .ph::before {
+    margin-bottom: 10px;
+  }
+
+  .next-visual .quick-action-card {
+    min-height: 92px;
+  }
+
+  .next-visual .quick-action-card .quick-action-ico {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
+  }
+
+  .next-visual .tx-toolbar,
+  .next-visual .tx-summary-strip,
+  .next-visual .tx-range-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
