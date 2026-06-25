@@ -1,0 +1,14 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Android / Gradle
+android-kotlin/.gradle/
+android-kotlin/build/
+android-kotlin/local.properties
+android-kotlin/app/build/
+
+# Preview artifacts
+*.png
