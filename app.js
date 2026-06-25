@@ -2021,10 +2021,12 @@ function avatarDataForSync(){
 }
 function getAppSettings(){
   const avatarData=avatarDataForSync();
-  return {theme:document.documentElement.dataset.theme||localStorage.getItem('fz_t')||'dark',rates:{cdi:RATES.cdi,selic:RATES.selic,monthlyIncomeCents,monthly_income_cents:monthlyIncomeCents,dueItems,car:carState?.vehicles?.length?carState:normalizeCarState(),sharedSpace,shared_space:sharedSpace,avatarData,avatar_data:avatarData},widgetPrefs,widgetOrder,widgetFilters,sidebarShortcuts:sidebarShortcutPrefs,txView:curView,activeList:slActiveList,importCenter:compactImportCenterForSync(),commitments:commitmentsState};
+  const nextAccent=localStorage.getItem('next_accent')||'#f5d94e';
+  return {theme:document.documentElement.dataset.theme||localStorage.getItem('fz_t')||'dark',nextAccent,next_accent:nextAccent,rates:{cdi:RATES.cdi,selic:RATES.selic,monthlyIncomeCents,monthly_income_cents:monthlyIncomeCents,dueItems,car:carState?.vehicles?.length?carState:normalizeCarState(),sharedSpace,shared_space:sharedSpace,avatarData,avatar_data:avatarData},widgetPrefs,widgetOrder,widgetFilters,sidebarShortcuts:sidebarShortcutPrefs,txView:curView,activeList:slActiveList,importCenter:compactImportCenterForSync(),commitments:commitmentsState};
 }
 function applyRemoteSettings(settings={}){
   if(settings.theme)applyTheme(settings.theme);
+  if(settings.nextAccent||settings.next_accent)localStorage.setItem('next_accent',settings.nextAccent||settings.next_accent);
   const rates=settings.rates||{};
   if(rates.cdi)RATES.cdi=parseFloat(rates.cdi);
   if(rates.selic)RATES.selic=parseFloat(rates.selic);

@@ -2,9 +2,20 @@
   'use strict';
 
   const HOME_ID = 'nextHome';
-  const VERSION = '4.6.0-next';
+  const CHROME_ID = 'nextAppChrome';
+  const ACCENT_KEY = 'next_accent';
+  const VERSION = '4.7.0-next';
   let renderTimer = null;
   let lastSignature = '';
+
+  const accents = [
+    ['#f5d94e', 'Amarelo'],
+    ['#b6f55f', 'Lima'],
+    ['#5af5c8', 'Menta'],
+    ['#74a8ff', 'Azul'],
+    ['#b89cff', 'Lilás'],
+    ['#ff8b6b', 'Coral']
+  ];
 
   const BRL = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -24,6 +35,34 @@
     '"': '&quot;',
     "'": '&#39;'
   }[char]));
+
+  const validAccent = value => /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value).toLowerCase() : accents[0][0];
+
+  const currentAccent = () => validAccent(localStorage.getItem(ACCENT_KEY) || accents[0][0]);
+
+  const applyAccent = value => {
+    const color = validAccent(value);
+    localStorage.setItem(ACCENT_KEY, color);
+    document.documentElement.style.setProperty('--next-accent', color);
+    document.documentElement.style.setProperty('--ac', color);
+    const meta = document.getElementById('themeColorMeta');
+    if (meta) meta.content = '#080808';
+    return color;
+  };
+
+  const setAccent = value => {
+    applyAccent(value);
+    renderChrome(true);
+    renderAccentPanel();
+    scheduleRender();
+    try {
+      if (typeof cfg !== 'undefined' && cfg?.mode === 'api' && typeof saveRemoteState === 'function') {
+        saveRemoteState().catch(() => {});
+      }
+    } catch {}
+  };
+
+  window.setNextAccent = setAccent;
 
   const money = value => {
     try {
@@ -93,8 +132,90 @@
     state.due.length,
     state.income,
     document.querySelector('#page-dashboard.active') ? 'active' : 'hidden',
+    currentAccent(),
     VERSION
   ].join('|');
+
+  const navItems = () => [
+    ['dashboard', '▣', 'Início'],
+    ['transactions', '−', 'Gastos'],
+    ['future', '⏱', 'Contas'],
+    ['budget', '%', 'Orçamento'],
+    ['accounts', '◼', 'Carteiras'],
+    ['goals', '◇', 'Metas'],
+    ['shopping', '🛒', 'Compras'],
+    ['car', '◆', 'Carro'],
+    ['settings', '⚙', 'Ajustes']
+  ];
+
+  const currentPage = () => document.querySelector('.page.active')?.id?.replace('page-', '') || 'dashboard';
+
+  const renderChrome = force => {
+    const setupVisible = document.getElementById('setup')?.classList.contains('visible');
+    document.body.classList.toggle('next-setup-visible', !!setupVisible);
+    document.body.classList.add('next-app-ready');
+
+    let chrome = document.getElementById(CHROME_ID);
+    const active = currentPage();
+    const signature = `${active}|${currentAccent()}|${setupVisible ? 'setup' : 'app'}|${VERSION}`;
+    if (!force && chrome?.dataset.signature === signature) return;
+    if (!chrome) {
+      chrome = document.createElement('header');
+      chrome.id = CHROME_ID;
+      chrome.className = 'next-app-chrome';
+      document.body.insertBefore(chrome, document.querySelector('.main') || document.body.firstChild);
+    }
+    chrome.dataset.signature = signature;
+    chrome.innerHTML = `
+      <div class="next-brand-pill" onclick="showPage('dashboard')" role="button" tabindex="0">
+        <span>nx</span>
+        <strong>next</strong>
+      </div>
+      <nav class="next-global-nav" aria-label="Navegação principal">
+        ${navItems().map(([id, icon, label]) => `
+          <button type="button" class="${active === id ? 'active' : ''}" onclick="showPage('${id}')">
+            <span>${icon}</span>${label}
+          </button>
+        `).join('')}
+      </nav>
+      <div class="next-chrome-actions">
+        <button class="next-chrome-btn" type="button" onclick="openImportCenter()" title="Importar">📥</button>
+        <button class="next-chrome-primary" type="button" onclick="openModal()">+ Gasto</button>
+        <div class="next-accent-picker" aria-label="Cor destaque">
+          ${accents.map(([color, label]) => `
+            <button type="button" title="${esc(label)}" aria-label="${esc(label)}" class="${currentAccent() === color ? 'active' : ''}" style="--sw:${color}" onclick="setNextAccent('${color}')"></button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  };
+
+  const renderAccentPanel = () => {
+    const settings = document.getElementById('page-settings');
+    if (!settings) return;
+    let panel = document.getElementById('nextAccentSettings');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'nextAccentSettings';
+      panel.className = 'ss next-accent-settings';
+      const firstSection = settings.querySelector('.ss');
+      settings.insertBefore(panel, firstSection?.nextSibling || settings.firstChild);
+    }
+    panel.innerHTML = `
+      <div class="ss-t">Visual Next</div>
+      <div class="ss-r next-accent-row">
+        <div>
+          <div class="ss-l">Cor destaque</div>
+          <div class="ss-s">O amarelo é o padrão The Box. Você pode testar outra base sem mudar a identidade do layout.</div>
+        </div>
+        <div class="next-settings-swatches">
+          ${accents.map(([color, label]) => `
+            <button type="button" title="${esc(label)}" class="${currentAccent() === color ? 'active' : ''}" style="--sw:${color}" onclick="setNextAccent('${color}')"></button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  };
 
   const categorySummary = state => {
     const map = new Map();
@@ -285,15 +406,6 @@
         </div>
       </header>
 
-      <nav class="next-nav-rail" aria-label="Navegação Next">
-        <button type="button" class="active" onclick="showPage('dashboard')"><span>▣</span>Início</button>
-        <button type="button" onclick="showPage('transactions')"><span>−</span>Gastos</button>
-        <button type="button" onclick="showPage('future')"><span>⏱</span>Contas</button>
-        <button type="button" onclick="showPage('budget')"><span>%</span>Orçamento</button>
-        <button type="button" onclick="showPage('accounts')"><span>◼</span>Carteiras</button>
-        <button type="button" onclick="showPage('settings')"><span>⚙</span>Ajustes</button>
-      </nav>
-
       <div class="next-main-grid">
         <article class="next-budget-card">
           <div class="next-card-top">
@@ -386,7 +498,11 @@
 
   const scheduleRender = () => {
     clearTimeout(renderTimer);
-    renderTimer = setTimeout(renderHome, 60);
+    renderTimer = setTimeout(() => {
+      renderChrome();
+      renderAccentPanel();
+      renderHome();
+    }, 60);
   };
 
   const patchShowPage = () => {
@@ -403,6 +519,8 @@
   };
 
   const init = () => {
+    applyAccent(currentAccent());
+    renderChrome(true);
     patchShowPage();
     scheduleRender();
     setInterval(() => {
