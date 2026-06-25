@@ -1,902 +1,189 @@
-﻿<!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark">
+<!doctype html>
+<html lang="pt-BR" data-accent="amber">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Finanza">
-<meta name="application-name" content="Finanza">
-<meta name="theme-color" id="themeColorMeta" content="#08090d">
-<meta name="app-version" content="4.3.2">
-<title>Finanza</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='10' fill='%2308090d'/%3E%3Ctext x='5' y='23' font-family='Arial Black' font-weight='900' font-size='17' fill='%23c8f55a'%3Efz%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=4.3.2">
-<link rel="stylesheet" href="next.css?v=4.4.0-next">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080808">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Finanza Next</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="next.css?v=5.0.0">
 </head>
-<body class="next-visual">
+<body>
+  <div class="app" id="app">
+    <aside class="rail" aria-label="Navegação principal">
+      <a class="brand" href="#overview" data-route="overview" aria-label="Finanza Next">
+        <span class="brand-mark">fn</span>
+        <span>
+          <strong>finanza</strong>
+          <small>next lab</small>
+        </span>
+      </a>
 
-<div class="conn-toast" id="connBar" role="status" aria-live="polite"></div>
-<div class="sync-badge" id="syncBadge" onclick="syncQueue()">⏳ <span id="syncCount">0</span> pendente(s) — toque para sincronizar</div>
-<div class="ptr" id="ptr"><div class="ptr-sp"></div><span class="ptr-ar" id="ptrAr">↓</span><span id="ptrTxt">Puxe para atualizar</span></div>
-<div class="btst" id="btst">Pressione voltar novamente para sair</div>
-<nav class="fnav" id="fnav">
-  <div class="fn-item active" data-page="dashboard"><span class="fni">📊</span>Início</div>
-  <div class="fn-item" data-page="transactions"><span class="fni">💸</span>Gastos</div>
-  <div class="fn-item fut-n" data-page="future"><span class="fni">📌</span>Venc.</div>
-</nav>
-<div class="qa-wrap" id="qaWrap">
-  <div class="qa-panel" id="qaPanel">
-    <div class="qa-type"><button class="qa-tb active expense" id="qaE" onclick="qaType('expense')">⬇ Despesa</button><button class="qa-tb income" id="qaI" onclick="qaType('income')">⬆ Receita</button></div>
-    <div class="qa-disp"><div class="qa-amt expense" id="qaAmt">R$ 0</div></div>
-    <div class="qa-cats" id="qaCats"></div>
-    <input class="qa-note" id="qaNote" placeholder="Descrição rápida (opcional)...">
-    <div class="qa-pad">
-      <button class="qa-key" onclick="qaK('7')">7</button><button class="qa-key" onclick="qaK('8')">8</button><button class="qa-key" onclick="qaK('9')">9</button>
-      <button class="qa-key" onclick="qaK('4')">4</button><button class="qa-key" onclick="qaK('5')">5</button><button class="qa-key" onclick="qaK('6')">6</button>
-      <button class="qa-key" onclick="qaK('1')">1</button><button class="qa-key" onclick="qaK('2')">2</button><button class="qa-key" onclick="qaK('3')">3</button>
-      <button class="qa-key" onclick="qaK('.')">.</button><button class="qa-key" onclick="qaK('0')">0</button><button class="qa-key del-k" onclick="qaK('del')">⌫</button>
-    </div>
-    <button class="qa-save" onclick="qaSave()">Salvar ✓</button>
-  </div>
-  <button class="fab" id="fabBtn" onclick="toggleQA()">+</button>
-</div>
-<div class="srch-ov" id="srchOv" onclick="if(event.target===this)closeSrch()">
-  <div class="srch-box">
-    <div class="srch-inp"><span style="font-size:16px;color:var(--mt)">🔍</span><input id="srchInp" placeholder="Buscar transações, carro, vencimentos, compras..." oninput="doSrch(this.value)"><button onclick="closeSrch()" style="background:none;border:none;cursor:pointer;color:var(--mt);font-size:16px;">✕</button></div>
-    <div class="srch-scopes" id="srchScopes"></div>
-    <div class="srch-res" id="srchRes"><div class="srch-empty">Digite para buscar...</div></div>
-  </div>
-</div>
-<div id="setup">
-  <div class="setup-box setup-shell">
-    <section class="setup-story">
-      <div class="setup-head">
-        <div class="setup-copy-block">
-          <div class="setup-badge">Finanças pessoais sem fricção</div>
-          <div class="slogo"><span style="color:var(--ac)">fin</span><span style="color:var(--tx);font-weight:700">anza</span></div>
-          <div class="stag">Registro rápido, visão do mês e clareza para decidir antes do aperto virar bagunça.</div>
-          <h1 class="setup-title">Seu dinheiro organizado antes que o mês aperte.</h1>
-          <p class="setup-copy">O Finanza reúne gastos, vencimentos, metas, compras e carro em um fluxo simples para registrar, revisar e decidir com clareza.</p>
-          <div class="setup-inline-preview">
-            <div class="setup-inline-head">
-              <strong>O que você acompanha sem sair do fluxo</strong>
-              <span>Decisão diária</span>
-            </div>
-            <div class="setup-inline-grid">
-              <div class="setup-inline-card">
-                <span>Hoje</span>
-                <strong>2 contas vencem</strong>
-                <small>aluguel e internet</small>
-              </div>
-              <div class="setup-inline-card">
-                <span>Mês</span>
-                <strong>Saldo previsto positivo</strong>
-                <small>+R$ 1.263 no fechamento</small>
-              </div>
-              <div class="setup-inline-card">
-                <span>Meta</span>
-                <strong>Viagem em andamento</strong>
-                <small>42% concluído</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="setup-preview">
-          <div class="setup-preview-head">
-            <span class="setup-dot"></span><span class="setup-dot"></span><span class="setup-dot"></span>
-            <strong>Resumo financeiro</strong>
-          </div>
-          <div class="setup-kpis">
-            <div class="setup-kpi"><span>Entradas do mês</span><strong>R$ 5.500</strong></div>
-            <div class="setup-kpi"><span>Saídas do mês</span><strong>R$ 2.817</strong></div>
-            <div class="setup-kpi"><span>A pagar</span><strong>R$ 1.420</strong></div>
-          </div>
-          <div class="setup-rail">
-            <div class="setup-rail-card">
-              <div class="setup-rail-title">Hoje no controle</div>
-              <div class="setup-rail-line"><span>3 lançamentos novos</span><strong>Caixa em dia</strong></div>
-              <div class="setup-rail-line"><span>2 vencimentos</span><strong>Esta semana</strong></div>
-              <div class="setup-rail-line"><span>Meta ativa</span><strong>Viagem 42%</strong></div>
-            </div>
-            <div class="setup-rail-card accent">
-              <div class="setup-rail-title">Fluxo principal</div>
-              <div class="setup-flow"><span>Capturar</span><span>Filtrar</span><span>Decidir</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="setup-feature-grid">
-        <article class="setup-feature-card">
-          <strong>Registro rápido</strong>
-          <p>Lance gastos, receitas, parcelas e recorrências sem sair do fluxo.</p>
-        </article>
-        <article class="setup-feature-card">
-          <strong>Visão do que vem</strong>
-          <p>Acompanhe vencimentos, contas futuras e alertas antes do aperto chegar.</p>
-        </article>
-        <article class="setup-feature-card">
-          <strong>Operação do dia a dia</strong>
-          <p>Transações, compras, carro, metas e contas conectados na mesma rotina.</p>
-        </article>
-      </div>
-    </section>
-    <aside class="setup-auth">
-      <div id="sMain" class="setup-auth-panel" style="display:none"><div class="setup-section-note">Como você quer usar o Finanza?</div>
-        <button class="mode-btn" onclick="showS('online')"><span class="mode-emo">☁️</span><div><div class="mode-lbl">Online</div><div class="mode-sub">Sincroniza entre dispositivos</div></div><span style="margin-left:auto;color:var(--mt)">›</span></button>
-        <button class="mode-btn" onclick="showS('local')"><span class="mode-emo">💾</span><div><div class="mode-lbl">Local</div><div class="mode-sub">Dados neste dispositivo</div></div><span style="margin-left:auto;color:var(--mt)">›</span></button>
-      </div>
-      <div id="sOnline" class="setup-auth-panel" style="display:none">
-        <div class="setup-auth-badge">Acesse sua conta</div>
-        <button class="back-btn" onclick="showS('main')">← Voltar</button>
-        <div class="auth-title">Entrar</div>
-        <div class="setup-auth-intro">Entre para sincronizar seus dados e continuar de onde parou em qualquer dispositivo.</div>
-        <div id="sErr" class="serr"></div>
-        <label class="slbl">Usuário</label><input type="text" class="sinp" id="sUser" placeholder="Digite seu usuário" autocomplete="username">
-        <label class="slbl">Senha</label><input type="password" class="sinp" id="sPass" placeholder="Digite sua senha" autocomplete="current-password">
-        <label class="slbl">Código 2FA (opcional)</label><input type="text" class="sinp" id="sOtp" placeholder="Só se você ativou 2FA" inputmode="numeric" autocomplete="one-time-code">
-        <div class="shint">Seus dados ficam salvos no Supabase e sincronizam entre dispositivos.</div>
-        <button class="sbtn" id="sBtn" onclick="doSetup()"><span id="sBtnTxt">Entrar →</span></button>
-        <div class="slinks"><a onclick="showS('newuser')">Criar usuário</a><span></span><a onclick="showS('reset')">Esqueci a senha</a></div>
-        <div class="setup-auth-note">Prefere usar sem conta? <a onclick="showS('local')">Entrar no modo local</a></div>
-      </div>
-      <div id="sNewUser" class="setup-auth-panel" style="display:none">
-        <div class="setup-auth-badge">Novo acesso</div>
-        <button class="back-btn" onclick="showS('online')">← Voltar</button>
-        <div class="auth-title">Criar usuário</div>
-        <div class="setup-section-note">Escolha um nome de exibição, um usuário e uma senha. A chave admin é opcional.</div>
-        <div id="nuErr" class="serr"></div>
-        <label class="slbl">Nome</label><input type="text" class="sinp" id="nuName" placeholder="Como seu nome aparece">
-        <label class="slbl">Usuário</label><input type="text" class="sinp" id="nuUser" placeholder="Crie seu usuário" autocomplete="username">
-        <label class="slbl">Senha</label><input type="password" class="sinp" id="nuPass" placeholder="Crie uma senha" autocomplete="new-password">
-        <label class="slbl">Chave admin (opcional)</label><input type="password" class="sinp" id="nuAdmin" placeholder="API_SECRET se o cadastro estiver fechado">
-        <button class="sbtn" onclick="createUser()">Criar usuário →</button>
-        <div id="nuRes" class="auth-ok" style="display:none">
-          <strong>Usuário criado.</strong>
-          <span>Entre com o usuário e a senha.</span>
-          <button class="sbtn secondary" onclick="useNewUserKey()">Entrar agora</button>
-        </div>
-      </div>
-      <div id="sReset" class="setup-auth-panel" style="display:none">
-        <div class="setup-auth-badge">Recuperação</div>
-        <button class="back-btn" onclick="showS('online')">← Voltar</button>
-        <div class="auth-title">Redefinir senha</div>
-        <div class="setup-section-note">Por segurança, a senha antiga não pode ser recuperada. Crie uma nova usando a chave admin do servidor.</div>
-        <div id="rpErr" class="serr"></div>
-        <label class="slbl">Usuário</label><input type="text" class="sinp" id="rpUser" placeholder="Digite seu usuário" autocomplete="username">
-        <label class="slbl">Nova senha</label><input type="password" class="sinp" id="rpPass" placeholder="Digite a nova senha" autocomplete="new-password">
-        <label class="slbl">Chave admin</label><input type="password" class="sinp" id="rpAdmin" placeholder="API_SECRET do Render">
-        <label class="slbl">Código de recuperação (opcional)</label><input type="text" class="sinp" id="rpRecovery" placeholder="Use se você gerou um código antes">
-        <button class="sbtn" onclick="resetPassword()">Redefinir senha →</button>
-      </div>
-      <div id="sLocal" class="setup-auth-panel" style="display:none">
-        <div class="setup-auth-badge">Modo local</div>
-        <button class="back-btn" onclick="showS('main')">← Voltar</button>
-        <div class="auth-title auth-title-local">Modo local</div>
-        <div class="setup-section-note">Seus dados ficam só neste dispositivo. Você pode começar do zero ou importar um backup JSON existente.</div>
-        <button class="mode-btn" onclick="startLocal()"><span class="mode-emo">✨</span><div><div class="mode-lbl">Começar do zero</div></div><span style="margin-left:auto;color:var(--mt)">›</span></button>
-        <label class="mode-btn" for="impFile"><span class="mode-emo">📂</span><div><div class="mode-lbl">Importar backup JSON</div></div><span style="margin-left:auto;color:var(--mt)">›</span><input type="file" id="impFile" accept=".json" style="display:none" onchange="importLocal(this)"></label>
-      </div>
+      <nav class="rail-nav" id="sideNav"></nav>
+
+      <section class="rail-card">
+        <span class="eyebrow">Fluxo rápido</span>
+        <button class="primary wide" data-action="open-entry">Registrar gasto</button>
+        <button class="ghost wide" data-action="open-bill">Nova conta</button>
+      </section>
     </aside>
-  </div>
-</div>
-<aside class="sidebar">
-  <div class="logo"><span class="brand-word"><span style="color:var(--ac)">fin</span><span style="color:var(--tx)">anza</span></span><div class="logo-actions"><button class="theme-btn" id="privBtn" onclick="togglePrivacy()" title="Ocultar valores" aria-label="Ocultar valores">👁️</button><button class="theme-btn" id="thmBtn" onclick="toggleTheme()">🌙</button></div></div>
-  <div class="sb-search" onclick="document.getElementById('sbSrch').focus()"><span style="color:var(--mt);font-size:12px">🔍</span><input id="sbSrch" placeholder="Buscar... (Ctrl+K)" oninput="if(this.value.length>1)openSrch(this.value)"></div>
-  <div class="nav-lbl">Menu</div>
-  <nav>
-    <div class="nav-item active" data-page="dashboard"><span class="ico">📊</span>Dashboard</div>
-    <div class="nav-item" data-page="transactions"><span class="ico">💸</span>Gastos do dia a dia</div>
-    <div class="nav-item fn" data-page="future"><span class="ico">📌</span>Vencimentos</div>
-  </nav>
-  <div class="sidebar-utility">
-    <div class="sidebar-card">
-      <div class="sidebar-card-head">
-        <div class="sidebar-card-kicker">Atalhos fixos</div>
-        <button class="sidebar-card-edit" onclick="toggleSidebarShortcutMenu()" title="Editar atalhos">Editar</button>
-      </div>
-      <div class="sidebar-icon-shortcuts" id="sidebarShortcuts"></div>
-      <div class="sidebar-shortcut-menu" id="sidebarShortcutMenu"></div>
-    </div>
-    <div class="sidebar-mini-actions">
-      <button class="sidebar-mini-btn primary" data-write-only="criar transações" onclick="openModal()">+ Nova</button>
-      <button class="sidebar-mini-btn" onclick="openImportCenter()">Importar</button>
-    </div>
-  </div>
-  <div class="sb-bottom">
-    <div class="conn-wrap">
-    </div>
-    <div class="made-by">feito com carinho por <span>jeffef.dev</span></div>
-    <div class="acct-area">
-      <div class="acct-btn" id="acctBtn" onclick="togglePop()">
-        <div class="uavatar" id="uAvatar">EU</div>
-        <div style="flex:1;min-width:0;"><div class="uname" id="uName">Minha Conta</div><div class="urole" id="uRole">—</div></div>
-        <span style="color:var(--mt);font-size:11px" id="popChev">▲</span>
-      </div>
-      <div class="acct-pop" id="acctPop">
-        <div class="pop-item" data-admin-only data-admin-display="flex" onclick="showPage('admin');closePop()">🛠 Painel admin</div>
-        <div class="pop-div" data-admin-only data-admin-display="block"></div>
-        <div class="pop-item" onclick="showPage('settings');closePop()">⚙️ Configurações</div>
-        <div class="pop-item danger" onclick="logout();closePop()">🚪 Sair / Trocar conta</div>
-      </div>
-    </div>
-  </div>
-</aside>
-<main class="main">
-<button class="mobile-profile-btn" id="mobileProfileBtn" onclick="showPage('settings')" aria-label="Abrir perfil e configurações">
-  <span class="uavatar" id="uAvatarMobile">EU</span>
-  <span class="mobile-profile-label">Perfil</span>
-</button>
-<div class="page active" id="page-dashboard">
-  <div class="ph"><div><div class="pt">Dashboard</div><div class="ps">Centro do dia para lançar, revisar e decidir seus gastos</div></div>
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-      <div class="mnav"><button id="prevM">‹</button><span class="mname" id="curM"></span><button id="nextM">›</button></div>
-      <button class="btn btn-g btn-sm" onclick="openImportCenter()" title="Importar transações" aria-label="Importar transações">📥</button>
-      <button class="btn btn-p" data-write-only="criar transações" onclick="openModal()">+ Nova</button>
-    </div>
-  </div>
-  <div class="last-data-notice" id="lastDataNotice"></div>
-  <div class="dash-manager" id="dashManager"></div>
-  <div class="dash-widgets" id="dashWidgets">
-    <!-- widgets renderizados via JS com base nas preferências -->
-  </div>
-</div>
-<div class="page" id="page-accounts">
-  <div class="ph"><div><div class="pt">Contas</div><div class="ps">Corrente, poupança, cartão</div></div><button class="btn btn-p" data-write-only="criar contas" onclick="openAccModal()">+ Nova Conta</button></div>
-  <div class="insight-grid" id="accStats"></div>
-  <div class="box" style="margin-bottom:14px;">
-    <div class="bh">
-      <div><div class="ct">Central de cartões</div><div class="cs">Fechamento, vencimento, validade e final do cartão em um lugar só</div></div>
-      <button class="btn btn-g btn-sm" data-write-only="criar contas" onclick="openCreditCardModal()">+ Novo cartão</button>
-    </div>
-    <div class="card-center-grid" id="accCardCenter"></div>
-  </div>
-  <div class="bg-grid" id="accGrid"></div>
-  <div class="box" style="margin-top:14px;"><div class="bh"><div class="ct">Transferência</div></div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-end;">
-      <div style="flex:1;min-width:110px;"><label class="fl">De</label><select class="fi sel" id="trFrom" style="width:100%"></select></div>
-      <div style="flex:1;min-width:110px;"><label class="fl">Para</label><select class="fi sel" id="trTo" style="width:100%"></select></div>
-      <div style="flex:1;min-width:90px;"><label class="fl">Valor (R$)</label><input type="number" class="fi" id="trAmt" placeholder="0,00" step="0.01"></div>
-      <button class="btn btn-p" data-write-only="transferir entre contas" onclick="doTransfer()">Transferir</button>
-    </div>
-  </div>
-</div>
-<div class="page tx-page" id="page-transactions">
-  <div class="ph tx-head"><div><div class="pt">Transações</div><div class="ps">Histórico completo</div></div><div class="tx-head-actions"><button class="btn btn-g btn-sm" onclick="openImportCenter()">Importar</button><button class="btn btn-p" data-write-only="criar transações" onclick="openModal()">+ Nova</button></div></div>
-  <div class="pbar tx-period-bar" id="txPbar">
-    <button class="pb" data-p="7d-p">7 dias</button>
-    <button class="pb active" data-p="1m-p">1 mês</button>
-    <button class="pb" data-p="3m-p">3 meses</button>
-    <button class="pb" data-p="6m-p">6 meses</button>
-    <button class="pb" data-p="all-p">Tudo</button>
-  </div>
-  <div class="box tx-surface">
-    <div class="fr tx-toolbar">
-      <input type="text" class="sb" id="txSrch" placeholder="🔍 Buscar...">
-      <select class="sel tx-sel-sm" id="fTyp"><option value="all">Todos</option><option value="income">Receitas</option><option value="expense">Despesas</option></select>
-      <select class="sel tx-sel-md" id="fCat"><option value="all">Categoria</option></select>
-      <select class="sel tx-sel-md" id="fAcc"><option value="all">Conta</option></select>
-      <select class="sel tx-sel-sm" id="fSort"><option value="dd">Data ↓</option><option value="da">Data ↑</option><option value="ad">Valor ↓</option><option value="aa">Valor ↑</option></select>
-      <div class="tx-range-row">
-        <span class="tx-range-label">Valor</span>
-        <div class="tx-range-fields">
-          <input type="number" class="fi tx-range-input" id="fMin" placeholder="Mín" oninput="renderTxDebounced()">
-          <span class="tx-range-sep">até</span>
-          <input type="number" class="fi tx-range-input" id="fMax" placeholder="Máx" oninput="renderTxDebounced()">
+
+    <main class="stage">
+      <header class="top">
+        <div>
+          <span class="pill">Orçamento. Contas. Controle.</span>
+          <h1 id="screenTitle">Seu mês claro.</h1>
+          <p id="screenSubtitle">Registre em segundos, veja o orçamento e decida antes do aperto virar bagunça.</p>
         </div>
-      </div>
-      <div class="vtog"><button class="vbtn active" id="vN" onclick="setView('n')" title="Normal">☰</button><button class="vbtn" id="vC" onclick="setView('c')" title="Compacto">≡</button><button class="vbtn" id="vChart" onclick="setView('chart')" title="Gráficos">📊</button></div>
-    </div>
-    <div class="cat-filter-row" id="catFilterChips"></div>
-    <div id="txSum" class="tx-summary-strip"></div>
-    <div class="insight-grid" id="txInsightCards"></div>
-    <div id="txChartWrap" class="tx-chart-wrap" style="display:none;">
-      <div class="tx-chart-grid">
-        <div class="cc-box tx-chart-card">
-          <div class="ct tx-chart-title">Por categoria</div>
-          <div class="cs tx-chart-sub">Total de despesas</div>
-          <canvas id="txCatChart" style="max-height:160px;"></canvas>
+        <div class="top-actions">
+          <button class="round" data-action="toggle-privacy" aria-label="Ocultar valores">◐</button>
+          <button class="primary" data-action="open-entry">+ Novo</button>
         </div>
-        <div class="cc-box tx-chart-card">
-          <div class="ct tx-chart-title">Evolução</div>
-          <div class="cs tx-chart-sub">Dia a dia no período</div>
-          <canvas id="txLineChart" style="max-height:160px;"></canvas>
+      </header>
+
+      <section class="screen is-active" id="screen-overview" data-title="Seu mês claro." data-subtitle="O essencial do Finanza em um painel simples: orçamento, contas, categorias e próximos compromissos.">
+        <div class="overview-grid">
+          <article class="budget-hero">
+            <div class="hero-head">
+              <span class="eyebrow dark">Orçamento mensal</span>
+              <button class="chip dark" data-action="open-budget">Editar</button>
+            </div>
+            <strong class="money-main" data-money id="budgetRemaining">—</strong>
+            <p id="budgetSentence">—</p>
+            <div class="meter"><span id="budgetMeter"></span></div>
+            <div class="budget-split">
+              <div><span>Entradas</span><strong data-money id="monthIncome">—</strong></div>
+              <div><span>Saídas</span><strong data-money id="monthExpense">—</strong></div>
+              <div><span>Usado</span><strong id="budgetPercent">—</strong></div>
+            </div>
+          </article>
+
+          <article class="panel snapshot">
+            <div class="window-dots"><span></span><span></span><span></span><strong>Resumo</strong></div>
+            <div class="snapshot-grid">
+              <div><span>Hoje</span><strong id="todayCount">—</strong><small>lançamentos</small></div>
+              <div><span>Contas</span><strong id="dueCount">—</strong><small>vencendo</small></div>
+              <div><span>Categoria</span><strong id="topCategory">—</strong><small>mais pesada</small></div>
+            </div>
+            <div class="flow-tags">
+              <span>Capturar</span><span>Filtrar</span><span>Decidir</span>
+            </div>
+          </article>
         </div>
-      </div>
-    </div>
-    <div id="txView" class="tx-list-host"></div>
-  </div>
-</div>
-<div class="page" id="page-shared">
-  <div class="ph"><div><div class="pt">Acertos</div><div class="ps">Divisão de despesas, modo casal, família ou casa compartilhada</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-g btn-sm" onclick="copySharedInviteLink()">Convidar por link</button><button class="btn btn-g btn-sm" onclick="openSettlementModal()">Registrar acerto</button><button class="btn btn-p btn-sm" data-write-only="criar transações" onclick="openModal()">+ Nova despesa</button></div></div>
-  <div class="g3" style="margin-bottom:18px;">
-    <div class="sc sc-glow-ac2"><span class="ci">👥</span><div class="cl">Pessoas</div><div class="cv neu" id="sharedPeopleCount">—</div><div class="cc" id="sharedModeLabel">—</div></div>
-    <div class="sc sc-glow-ac"><span class="ci">⬆️</span><div class="cl">A receber</div><div class="cv pos" id="sharedReceivable">—</div><div class="cc">quem te deve</div></div>
-    <div class="sc sc-glow-dan"><span class="ci">⬇️</span><div class="cl">A pagar</div><div class="cv neg" id="sharedPayable">—</div><div class="cc">quem você deve</div></div>
-  </div>
-  <div class="box" style="margin-bottom:14px">
-    <div class="bh"><div><div class="ct">Espaço compartilhado</div><div class="cs">Defina com quem você divide gastos e acertos</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Convite por link</div><div class="ss-s" id="sharedInviteMeta">Crie o espaço e copie um link para outra pessoa entrar com o mesmo contexto.</div></div><button class="btn btn-g btn-sm" onclick="copySharedInviteLink()">Copiar link</button></div>
-    <div class="frow">
-      <div class="fg"><label class="fl" for="sharedMode">Modo</label><select class="fi" id="sharedMode" onchange="saveSharedSpaceFromInputs()"><option value="couple">Casal</option><option value="family">Família</option><option value="house">República / casa</option></select></div>
-      <div class="fg"><label class="fl" for="sharedName">Nome do espaço</label><input type="text" class="fi" id="sharedName" placeholder="Ex: Casa, Nós, Família" onchange="saveSharedSpaceFromInputs()"></div>
-    </div>
-    <div class="frow">
-      <div class="fg"><label class="fl" for="sharedOwnerName">Seu nome nesse espaço</label><input type="text" class="fi" id="sharedOwnerName" placeholder="Ex: Jeffe" onchange="renameSharedOwner(this.value)"></div>
-      <div class="fg"><label class="fl" for="sharedPersonName">Adicionar pessoa</label><div style="display:flex;gap:6px"><input type="text" class="fi" id="sharedPersonName" placeholder="Ex: Ana"><button class="btn btn-g btn-sm" data-write-only="gerenciar pessoas compartilhadas" onclick="addSharedPerson()">+ Adicionar</button></div></div>
-    </div>
-    <div id="sharedPeopleList" style="display:flex;flex-direction:column;gap:8px"></div>
-  </div>
-  <div class="box" style="margin-bottom:14px">
-    <div class="bh"><div><div class="ct">Aprovação de gastos</div><div class="cs" id="sharedApprovalMeta">Nenhum gasto aguardando aprovação</div></div></div>
-    <div id="sharedApprovalList"></div>
-  </div>
-  <div class="box">
-    <div class="bh"><div><div class="ct">Saldos entre vocês</div><div class="cs">Quem deve para quem com base nas despesas divididas e nos acertos registrados</div></div></div>
-    <div id="sharedBalancesList"></div>
-  </div>
-</div>
-<div class="page" id="page-commitments">
-  <div class="ph"><div><div class="pt">📦 Assinaturas, dívidas e contratos</div><div class="ps">Central para o dinheiro comprometido, renovações, parcelas e acordos recorrentes</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-g btn-sm" data-write-only="criar assinaturas" onclick="openSubscriptionModal()">+ Assinatura</button><button class="btn btn-g btn-sm" data-write-only="criar dividas" onclick="openDebtModal()">+ Dívida</button><button class="btn btn-p btn-sm" data-write-only="criar contratos" onclick="openContractModal()">+ Contrato</button></div></div>
-  <div class="g4" style="margin-bottom:18px;">
-    <div class="sc sc-glow-warn"><span class="ci">📺</span><div class="cl">Assinaturas/mês</div><div class="cv neu" id="commitSubTotal">—</div><div class="cc">o que é recorrente e continua cobrando</div></div>
-    <div class="sc sc-glow-dan"><span class="ci">💳</span><div class="cl">Dívidas em aberto</div><div class="cv neg" id="commitDebtTotal">—</div><div class="cc" id="commitDebtAlert">—</div></div>
-    <div class="sc sc-glow-ac2"><span class="ci">🔔</span><div class="cl">Alertas em 30 dias</div><div class="cv fut" id="commitRenewCount">—</div><div class="cc" id="commitRenewMeta">—</div></div>
-    <div class="sc sc-glow-ac"><span class="ci">🧾</span><div class="cl">Comprometido/mês</div><div class="cv" id="commitCommittedMonthly">—</div><div class="cc">fixos que saem antes do resto</div></div>
-  </div>
-  <div class="box" style="margin-bottom:14px">
-    <div class="bh"><div><div class="ct">Painel de dinheiro comprometido</div><div class="cs">Veja o que já pesa no mês e qual dívida atacar primeiro</div></div></div>
-    <div id="commitmentCenter"></div>
-  </div>
-  <div class="box" style="margin-bottom:14px">
-    <div class="bh"><div><div class="ct">Central de assinaturas</div><div class="cs">Renovações, comparação do que é útil vs esquecido e vínculo com vencimentos</div></div></div>
-    <div id="subscriptionList" class="commit-list"></div>
-    <div class="sdiv"><div class="sdiv-line"></div><span class="sdiv-lbl">Detector automático</span><div class="sdiv-line"></div></div>
-    <div id="subscriptionSuggestionList"></div>
-  </div>
-  <div class="box" style="margin-bottom:14px">
-    <div class="bh"><div><div class="ct">Dívidas e plano de quitação</div><div class="cs">Parcelas, juros, ordem sugerida para quitar e vínculo com vencimentos</div></div></div>
-    <div id="debtList" class="commit-list"></div>
-    <div class="sdiv"><div class="sdiv-line"></div><span class="sdiv-lbl">Ordem sugerida</span><div class="sdiv-line"></div></div>
-    <div id="debtPlanList"></div>
-  </div>
-  <div class="box">
-    <div class="bh"><div><div class="ct">Contratos e reajustes</div><div class="cs">Internet, aluguel, seguro, financiamento e acordos que merecem revisão</div></div></div>
-    <div id="contractList" class="commit-list"></div>
-  </div>
-</div>
-<div class="page" id="page-future">
-  <div class="ph"><div><div class="pt" style="color:var(--fut)">📌 Vencimentos</div><div class="ps">Contas fixas, boletos, Pix, cartões próprios e crediários</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-g btn-sm" data-write-only="criar transações futuras" onclick="openModal(null,true)">+ Lançar futuro</button><button class="btn btn-p" data-write-only="criar vencimentos" onclick="openDueModal()">+ Vencimento</button></div></div>
-  <div class="pbar" id="futPbar">
-    <span class="pl">Próximos</span>
-    <button class="pb active" data-fp="7d">7 dias</button><button class="pb" data-fp="15d">15 dias</button>
-    <button class="pb" data-fp="1m">1 mês</button><button class="pb" data-fp="3m">3 meses</button>
-    <button class="pb" data-fp="6m">6 meses</button><button class="pb" data-fp="all">Tudo</button>
-  </div>
-  <div class="fgrid">
-    <div class="sc sc-glow-fut"><span class="ci">📌</span><div class="cl">Compromissos</div><div class="cv fut" id="dueTotal">—</div><div class="cc" id="dueCount">0</div></div>
-    <div class="sc sc-glow-fut"><span class="ci">⏰</span><div class="cl">Próximo vencimento</div><div class="cv" id="dueNext" style="font-size:15px">—</div><div class="cc" id="dueNextName">—</div></div>
-    <div class="sc sc-glow-fut"><span class="ci">💸</span><div class="cl">A Pagar</div><div class="cv fut" id="futDbt">—</div><div class="cc">despesas futuras</div></div>
-    <div class="sc sc-glow-ac"><span class="ci">💰</span><div class="cl">A Receber</div><div class="cv pos" id="futInc">—</div><div class="cc up">receitas futuras</div></div>
-    <div class="sc sc-glow-ac2"><span class="ci">⚖️</span><div class="cl">Saldo Futuro</div><div class="cv" id="futBal">—</div><div class="cc" id="futBalLbl">projeção</div></div>
-    <div class="sc sc-glow-dan"><span class="ci">⚠️</span><div class="cl">Vencidos</div><div class="cv neg" id="futOvd">—</div><div class="cc dn">atrasados</div></div>
-    <div class="sc sc-glow-fut"><span class="ci">📅</span><div class="cl">Próximo</div><div class="cv" id="futNxt" style="font-size:15px">—</div><div class="cc" id="futNxtN">—</div></div>
-  </div>
-  <div class="box fixed-bills-panel"><div id="fixedBillsHub"></div></div>
-  <div class="sdiv"><div class="sdiv-line"></div><span class="sdiv-lbl" style="color:var(--fut)">📌 Vencimentos e lembretes</span><div class="sdiv-line"></div></div>
-  <div class="box"><div class="tl" id="dueList"></div></div>
-  <div class="box future-center-panel"><div id="futureCommandCenter"></div></div>
-  <div id="ovdSec" style="display:none"><div class="sdiv"><div class="sdiv-line"></div><span class="sdiv-lbl" style="color:var(--dan)">⚠️ Vencidos</span><div class="sdiv-line"></div></div><div class="box" style="border-color:rgba(245,112,90,.2)"><div class="tl" id="ovdList"></div></div></div>
-  <div id="futIncSec" style="display:none"><div class="sdiv"><div class="sdiv-line"></div><span class="sdiv-lbl" style="color:var(--ac)">💰 A Receber</span><div class="sdiv-line"></div></div><div class="box" style="border-color:rgba(200,245,90,.18)"><div class="tl" id="futIncList"></div></div></div>
-  <div class="sdiv"><div class="sdiv-line"></div><span class="sdiv-lbl" style="color:var(--fut)">🔮 A Pagar</span><div class="sdiv-line"></div></div>
-  <div class="box"><div class="tl" id="futExpList"></div></div>
-</div>
-<div class="page" id="page-budget">
-  <div class="ph"><div><div class="pt">Orçamentos</div><div class="ps">Limites mensais por categoria</div></div><button class="btn btn-p" data-write-only="criar orçamentos" onclick="openBudModal()">+ Novo</button></div>
-  <div class="g3" style="margin-bottom:18px;">
-    <div class="sc sc-glow-ac2"><span class="ci">📊</span><div class="cl">Total Orçado</div><div class="cv neu" id="budTot">—</div></div>
-    <div class="sc sc-glow-dan"><span class="ci">💸</span><div class="cl">Total Gasto</div><div class="cv neg" id="budSpent">—</div></div>
-    <div class="sc sc-glow-ac"><span class="ci">✅</span><div class="cl">Disponível</div><div class="cv pos" id="budAvail">—</div></div>
-  </div>
-  <div class="bg-grid" id="budGrid"></div>
-</div>
-<div class="page" id="page-goals">
-  <div class="ph"><div><div class="pt">Metas</div><div class="ps">Objetivos financeiros</div></div><button class="btn btn-p" data-write-only="criar metas" onclick="openGoalModal()">+ Nova Meta</button></div>
-  <div class="insight-grid" id="goalStats"></div>
-  <div class="bg-grid" id="goalGrid"></div>
-</div>
-<div class="page" id="page-settings">
-  <div class="ph"><div><div class="pt">Configurações</div><div class="ps">App e preferências</div></div>
-  </div>
-  <div class="ss"><div class="ss-t">Central de dados</div>
-    <div class="ss-r"><div><div class="ss-l">Atualizar agora</div><div class="ss-s">Recarrega os dados da conta online quando você quiser conferir tudo de novo</div></div><button class="btn btn-g btn-sm reload-btn" id="rlBtnS" onclick="doReload()"><span class="ri">🔄</span> Atualizar</button></div>
-    <div class="ss-r"><div><div class="ss-l">Atalhos centralizados</div><div class="ss-s">Exportar, importar, backup e migração ficam só aqui para evitar botões repetidos no app</div></div></div>
-  </div>
-  <div class="ss"><div class="ss-t">Conta</div>
-    <div class="ss-r"><div><div class="ss-l">Usuário</div><div class="ss-s" id="setUsr">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Papel e permissões</div><div class="ss-s" id="setRoleSummary">—</div></div><span class="diag-pill" id="setRolePill">—</span></div>
-    <div class="ss-r"><div><div class="ss-l">Foto do perfil</div><div class="ss-s">Imagem salva no dispositivo e sincronizada no modo online</div></div>
-      <div class="avatar-actions">
-        <label class="btn btn-g btn-sm" for="avatarFile">Escolher</label>
-        <button class="btn btn-d btn-sm" onclick="removeAvatar()">Remover</button>
-        <input type="file" id="avatarFile" accept="image/*" style="display:none" onchange="changeAvatar(this)">
-      </div>
-    </div>
-    <div class="ss-r"><div><div class="ss-l">Modo</div><div class="ss-s" id="setMod">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Servidor</div><div class="ss-s" id="setUrl">—</div></div><button class="btn btn-g btn-sm" onclick="openConnModal()">Editar</button></div>
-    <div class="ss-r"><div><div class="ss-l" style="color:var(--dan)">Sair / Trocar conta</div></div><button class="btn btn-d btn-sm" onclick="logout()">Sair</button></div>
-  </div>
-  <div class="ss"><div class="ss-t">Segurança da conta</div>
-    <div class="ss-r"><div><div class="ss-l">2FA opcional</div><div class="ss-s" id="set2faStatus">—</div></div><div id="twoFactorActions"></div></div>
-    <div id="twoFactorSetupPanel" style="display:none;padding-top:10px">
-      <div class="ss-s" style="margin-bottom:8px">Cadastre este segredo no autenticador e confirme o código de 6 dígitos.</div>
-      <div class="key-box" id="twoFactorSecret"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><input type="text" class="fi" id="twoFactorCode" placeholder="Código do autenticador" style="flex:1;min-width:160px"><button class="btn btn-p btn-sm" onclick="confirmTwoFactorSetup()">Confirmar 2FA</button></div>
-    </div>
-    <div class="ss-r"><div><div class="ss-l">Código de recuperação</div><div class="ss-s">Gere um código único para resetar a senha sem depender só da chave admin.</div></div><button class="btn btn-g btn-sm" onclick="generateRecoveryCode()">Gerar código</button></div>
-    <div class="key-box" id="recoveryCodeBox" style="display:none"></div>
-  </div>
-  <div class="ss"><div class="ss-t">Aparência</div>
-    <div class="ss-r"><div><div class="ss-l">Tema escuro</div></div>
-      <label class="tog"><input type="checkbox" id="thmTog" onchange="thmFromSet(this.checked)"><div class="tog-t"></div><div class="tog-th"></div></label>
-    </div>
-    <div class="ss-r"><div><div class="ss-l">Ocultar valores</div><div class="ss-s">Mascara saldos, salários, gastos e totais para prints e gravações</div></div>
-      <label class="tog"><input type="checkbox" id="privTog" onchange="privacyFromSet(this.checked)"><div class="tog-t"></div><div class="tog-th"></div></label>
-    </div>
-  </div>
-  <div class="ss"><div class="ss-t">Minha base financeira</div>
-    <div class="ss-r"><div><div class="ss-l">Salário / renda mensal base</div><div class="ss-s">Base principal para comparar seus gastos do dia a dia</div></div><input type="text" class="fi" id="setIncome" style="width:120px;padding:6px 10px;font-size:12px" placeholder="0,00" onchange="updateRates()"></div>
-  </div>
-  <div class="ss"><div class="ss-t">Categorias personalizadas</div>
-    <div class="ss-r" style="flex-direction:column;align-items:flex-start;gap:9px;">
-      <div id="custCatChips" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <input type="text" class="fi" id="nCatIco" placeholder="🏷️" style="width:52px;padding:6px;text-align:center;">
-        <input type="text" class="fi" id="nCatNm" placeholder="Nome da categoria" style="flex:1;min-width:110px;">
-        <button class="btn btn-g btn-sm" data-write-only="criar categorias personalizadas" onclick="addCustCat()">+ Adicionar</button>
-      </div>
-    </div>
-  </div>
-  <div class="ss"><div class="ss-t">Dados</div>
-    <div class="ss-r"><div><div class="ss-l">Backup completo</div><div class="ss-s">Exporta JSON + CSV ao mesmo tempo</div></div><button class="btn btn-p btn-sm" onclick="exportBackupFull()">💾 Exportar tudo</button></div>
-    <div class="ss-r"><div><div class="ss-l">Só CSV</div><div class="ss-s">Planilha — abre no Excel e Google Sheets</div></div><button class="btn btn-g btn-sm" onclick="exportCSV()">📊 CSV</button></div>
-    <div class="ss-r"><div><div class="ss-l">Só JSON</div><div class="ss-s">Backup para reimportar no Finanza</div></div><button class="btn btn-g btn-sm" onclick="exportJson()">📦 JSON</button></div>
-    <div class="ss-r"><div><div class="ss-l">Importar JSON</div><div class="ss-s">Restaura um backup no modo atual. No online, envia tudo para o Supabase.</div></div><label class="btn btn-g btn-sm" for="impBackupFile">Importar</label><input type="file" id="impBackupFile" accept=".json,application/json" style="display:none" onchange="importBackupFile(this)"></div>
-    <div class="ss-r"><div><div class="ss-l">Último backup</div><div class="ss-s backup-status"><span class="backup-dot" id="backupDot"></span><span id="backupStatusTxt">—</span></div></div><button class="btn btn-g btn-sm" onclick="autoBackupNow()">💾 Agora</button></div>
-    <div class="ss-r" id="setJsonRow" style="display:none"><div><div class="ss-l">Backup local</div></div><button class="btn btn-g btn-sm" onclick="exportJson()">💾 Exportar</button></div>
-    <div class="ss-r" id="setMigRow" style="display:none"><div><div class="ss-l">Migrar para online</div><div class="ss-s">Envia dados para o servidor</div></div><button class="btn btn-g btn-sm" onclick="migrateToOnline()">☁️ Migrar</button></div>
-    <div class="ss-r"><div><div class="ss-l">Transações</div></div><span style="font-family:var(--font-money);font-weight:700;font-size:13px" id="setTxCt">—</span></div>
-  </div>
-</div>
-<div class="page" id="page-admin">
-  <div class="ph"><div><div class="pt">Painel admin</div><div class="ps">Controles globais, saúde do app e gestão do ambiente</div></div></div>
-  <div class="ss"><div class="ss-t">Visão administrativa</div>
-    <div class="ss-r"><div><div class="ss-l">Conta atual</div><div class="ss-s" id="adminAccountName">—</div></div><span class="diag-pill">Admin</span></div>
-    <div class="ss-r"><div><div class="ss-l">Ambiente</div><div class="ss-s" id="adminServerMode">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Servidor</div><div class="ss-s" id="adminServerUrl">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Usuários gerenciáveis</div><div class="ss-s" id="adminUsersMeta">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Papéis ativos</div><div class="ss-s" id="adminRolesMeta">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Saúde do servidor</div><div class="ss-s" id="adminHealthMeta">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Atividade auditada</div><div class="ss-s" id="adminAuditMeta">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Último backup</div><div class="ss-s" id="adminBackupMeta">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Transações online</div><div class="ss-s" id="adminTransactionsMeta">—</div></div></div>
-  </div>
-  <div class="ss"><div class="ss-t">Referências globais</div>
-    <div class="ss-r"><div><div class="ss-l">CDI atual (% a.a.)</div><div class="ss-s">Usado nos cálculos de investimento para todo o app</div></div><input type="number" class="fi" id="setCDI" style="width:90px;padding:6px 10px;font-size:12px" step="0.01" onchange="updateRates()"></div>
-    <div class="ss-r"><div><div class="ss-l">Selic atual (% a.a.)</div><div class="ss-s">Referência global para módulos e comparativos</div></div><input type="number" class="fi" id="setSelic" style="width:90px;padding:6px 10px;font-size:12px" step="0.01" onchange="updateRates()"></div>
-  </div>
-  <div class="ss" id="adminUsersBox" style="display:none"><div class="ss-t">Usuários e papéis</div>
-    <div class="ss-r"><div><div class="ss-l">Acessos do sistema</div><div class="ss-s">Crie contas, ajuste papéis e mantenha o ambiente organizado</div></div></div>
-    <div class="admin-user-form">
-      <input type="text" class="fi" id="adminNewName" placeholder="Nome">
-      <input type="text" class="fi" id="adminNewUser" placeholder="usuario">
-      <input type="password" class="fi" id="adminNewPass" placeholder="senha">
-      <select class="fi" id="adminNewRole"><option value="editor">Editor</option><option value="read">Leitura</option><option value="guest">Convidado</option><option value="admin">Admin</option></select>
-      <button class="btn btn-p btn-sm" onclick="createAdminUser()">Criar</button>
-    </div>
-    <div class="sync-history" id="adminUsersList"></div>
-  </div>
-  <div class="ss"><div class="ss-t">Saúde dos dados</div>
-    <div class="ss-r"><div><div class="ss-l">Estado atual</div><div class="ss-s" id="dataStateTxt">—</div></div><span class="state-pill local" id="dataStatePill">Local</span></div>
-    <div class="ss-r"><div><div class="ss-l">Última atividade</div><div class="ss-s" id="dataStateMeta">—</div></div><button class="btn btn-g btn-sm" onclick="syncQueue()">Sincronizar</button></div>
-    <div class="ss-r"><div><div class="ss-l">Fila offline</div><div class="ss-s" id="syncQueueTxt">—</div></div></div>
-    <div class="sync-history" id="syncHistoryList"></div>
-  </div>
-  <div class="ss"><div class="ss-t">Atividade importante</div>
-    <div class="ss-r"><div><div class="ss-l">Auditoria</div><div class="ss-s">No online, usa a trilha persistente do servidor; no local, mostra o histórico deste dispositivo</div></div></div>
-    <div class="sync-history" id="activityHistoryList"></div>
-  </div>
-  <div class="ss"><div class="ss-t">Changelog</div>
-    <div class="ss-r changelog-head">
-      <div><div class="ss-l">Finanza 4.3.2</div><div class="ss-s">Resumo das entregas já consolidadas no app</div></div>
-      <button class="btn btn-g btn-sm" onclick="copyChangelog()">Copiar</button>
-    </div>
-    <div class="changelog-list" id="settingsChangelog"></div>
-  </div>
-  <div class="ss"><div class="ss-t">Avançado</div>
-    <div class="ss-r"><div><div class="ss-l" style="color:var(--dan)">Limpar cache</div><div class="ss-s">Remove dados locais (banco OK)</div></div><button class="btn btn-d btn-sm" onclick="clearCache()">Limpar</button></div>
-  </div>
-  <div class="ss"><div class="ss-t">Sobre / diagnóstico</div>
-    <div class="ss-r"><div><div class="ss-l">Versão</div><div class="ss-s">Build atual do app</div></div><span class="diag-pill" id="diagVersion">—</span></div>
-    <div class="ss-r"><div><div class="ss-l">Modo</div><div class="ss-s" id="diagMode">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Sincronização</div><div class="ss-s" id="diagSync">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Dados locais</div><div class="ss-s" id="diagData">—</div></div></div>
-    <div class="ss-r"><div><div class="ss-l">Diagnóstico</div><div class="ss-s">Copia versão, modo, servidor e contagens</div></div><button class="btn btn-g btn-sm" onclick="copyDiag()">Copiar</button></div>
-  </div>
-</div>
-<div class="page" id="page-shopping">
-  <div class="sl-header">
-    <div><div class="pt">🛒 Lista de Compras</div><div class="ps">Organize o que precisa comprar</div></div>
-    <div style="display:flex;gap:7px;">
-      <button class="btn btn-g btn-sm" data-write-only="limpar itens comprados" onclick="clearBought()">🧹 Limpar comprados</button>
-      <button class="btn btn-p" data-write-only="criar listas de compras" onclick="openNewListModal()">+ Nova Lista</button>
-    </div>
-  </div>
-  <div class="sl-progress">
-    <div><div style="font-size:13px;font-weight:600;">Progresso</div><div class="sl-prog-lbl" id="slProgLbl">da lista atual</div></div>
-    <div class="sl-prog-bar"><div class="sl-prog-fill" id="slProgFill" style="width:0%"></div></div>
-    <div class="sl-prog-txt" id="slProgTxt">0/0</div>
-  </div>
-  <div class="insight-grid" id="slStats"></div>
-  <div class="sl-lists" id="slTabs"></div>
-  <div class="sl-add-row">
-    <input type="text" class="fi" id="slItemName" data-write-only="adicionar itens às listas" placeholder="Adicionar item..." onkeydown="if(event.key==='Enter')addShoppingItem()">
-    <input type="text" class="fi" id="slItemQty" data-write-only="adicionar itens às listas" placeholder="Qtd" style="width:70px;flex:none;">
-    <select class="sel fi" id="slItemCat" data-write-only="adicionar itens às listas">
-      <option value="🛒 Geral">🛒 Geral</option>
-      <option value="🥩 Carnes">🥩 Carnes</option>
-      <option value="🥦 Hortifruti">🥦 Hortifruti</option>
-      <option value="🥛 Laticínios">🥛 Laticínios</option>
-      <option value="🍞 Padaria">🍞 Padaria</option>
-      <option value="🧃 Bebidas">🧃 Bebidas</option>
-      <option value="🧴 Higiene">🧴 Higiene</option>
-      <option value="🧹 Limpeza">🧹 Limpeza</option>
-      <option value="🍫 Snacks">🍫 Snacks</option>
-      <option value="❄️ Congelados">❄️ Congelados</option>
-      <option value="💊 Farmácia">💊 Farmácia</option>
-      <option value="🔧 Outros">🔧 Outros</option>
-    </select>
-    <button class="btn btn-p" data-write-only="adicionar itens às listas" onclick="addShoppingItem()">+ Adicionar</button>
-  </div>
-  <div id="slContent"></div>
-</div>
-<div class="page" id="page-car">
-  <div class="car-hero">
-    <div>
-      <div class="pt">🚗 <span id="carTitleView">Meu carro</span></div>
-      <div class="ps" id="carSubView">Consumo, abastecimentos e despesas</div>
-    </div>
-    <div class="car-actions">
-      <button class="btn btn-g btn-sm" data-write-only="criar veículos" onclick="openCarVehicleModal()">+ Veículo</button>
-      <button class="btn btn-g btn-sm" data-write-only="editar veículos" onclick="openSelectedCarVehicleModal()">Editar veículo</button>
-      <label class="btn btn-g btn-sm" for="carCsvFile">Importar CSV</label>
-      <input type="file" id="carCsvFile" accept=".csv,text/csv,.txt" style="display:none" onchange="importCarCsv(this)">
-      <button class="btn btn-g btn-sm" data-write-only="criar registros do carro" onclick="openCarEntry('expense')">+ Despesa</button>
-      <button class="btn btn-p" data-write-only="criar registros do carro" onclick="openCarEntry('fuel')">+ Abastecimento</button>
-    </div>
-  </div>
-  <div class="car-filterbar">
-    <select class="fi" id="carVehicleFilter" onchange="setCarVehicleFilter(this.value)"></select>
-    <select class="fi" id="carPeriodFilter" onchange="setCarPeriodFilter(this.value)">
-      <option value="month">Mês atual</option>
-      <option value="30d">Últimos 30 dias</option>
-      <option value="90d">Últimos 90 dias</option>
-      <option value="year">Ano atual</option>
-      <option value="all">Tudo</option>
-      <option value="custom">Personalizado</option>
-    </select>
-    <select class="fi" id="carTypeFilter" onchange="setCarFilter('type',this.value)">
-      <option value="all">Todos os tipos</option>
-      <option value="fuel">Abastecimento</option>
-      <option value="expense">Despesa</option>
-    </select>
-    <select class="fi" id="carKindFilter" onchange="setCarFilter('kind',this.value)"></select>
-    <select class="fi" id="carSortFilter" onchange="setCarFilter('sort',this.value)">
-      <option value="date_desc">Mais recentes</option>
-      <option value="date_asc">Mais antigos</option>
-      <option value="odo_desc">Maior km</option>
-      <option value="odo_asc">Menor km</option>
-      <option value="amount_desc">Maior valor</option>
-      <option value="amount_asc">Menor valor</option>
-    </select>
-    <input type="search" class="fi" id="carSearchFilter" placeholder="Buscar no histórico..." oninput="setCarFilter('query',this.value)">
-  </div>
-  <div class="car-custom-range" id="carCustomRange">
-    <input type="date" class="fi" id="carFromFilter" onchange="setCarFilter('from',this.value)">
-    <input type="date" class="fi" id="carToFilter" onchange="setCarFilter('to',this.value)">
-  </div>
-  <div class="insight-grid" id="carStats"></div>
-  <div class="box car-maint-wrap" id="carMaintenancePanel"></div>
-  <div class="box car-chart-panel">
-    <div class="bh">
-      <div><div class="ct">Evolução do carro</div><div class="cs">Barras para gasto por período, linha para tendência de custo e consumo</div></div>
-      <div class="vtog">
-        <button class="vbtn active" id="carChartBars" onclick="setCarChartMode('bars')" title="Barras">▮</button>
-        <button class="vbtn" id="carChartLine" onclick="setCarChartMode('line')" title="Linha">／</button>
-      </div>
-    </div>
-    <div class="car-chart-grid">
-      <div class="car-chart-card"><canvas id="carSpendChart" style="max-height:220px;"></canvas></div>
-      <div class="car-chart-card"><canvas id="carMixChart" style="max-height:220px;"></canvas></div>
-    </div>
-    <div class="empty" id="carChartsEmpty" style="display:none"><span class="ei">📈</span><p>Adicione mais registros para ver a evolução do veículo.</p></div>
-  </div>
-  <div class="box car-panel">
-    <div class="bh"><div><div class="ct">Histórico do carro</div><div class="cs">Abastecimentos, manutenção, seguro, impostos e lavagens</div></div></div>
-    <div id="carList"></div>
-  </div>
-  <div class="car-import-note">
-    <label class="opt-tog car-sync-toggle"><input type="checkbox" id="carImportTxChk"><span style="font-size:12px;font-weight:500">Também lançar importação nas transações</span></label>
-  </div>
-  <div class="car-import-status" id="carImportStatus"></div>
-</div>
 
-</main>
+        <div class="quick-grid">
+          <button data-action="open-entry"><span>−</span>Gasto</button>
+          <button data-action="open-income"><span>+</span>Receita</button>
+          <button data-action="open-bill"><span>!</span>Conta</button>
+          <button data-route="analysis"><span>%</span>Análise</button>
+        </div>
 
-<div class="ov" id="carModal"><div class="modal">
-  <button class="mc" onclick="closeM('carModal')">✕</button>
-  <div class="mt">Registro do carro</div><div class="ms">Controle combustível, consumo e gastos do veículo</div>
-  <input type="hidden" id="carEntryId">
-  <div class="typetog"><button class="ttb active expense" id="carTypeFuel" onclick="setCarEntryType('fuel')">⛽ Abastecimento</button><button class="ttb income" id="carTypeExpense" onclick="setCarEntryType('expense')">🔧 Despesa</button></div>
-  <div class="frow"><div class="fg"><label class="fl">Veículo</label><select class="fi" id="carEntryVehicle"></select></div><div class="fg"><label class="fl">Conta</label><select class="fi" id="carAcc"></select></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Data</label><input type="date" class="fi" id="carDate"></div><div class="fg"><label class="fl">Hodômetro (km)</label><input type="number" class="fi" id="carOdo" min="0" step="1" placeholder="0"></div></div>
-  <div id="carFuelFields">
-    <div class="frow"><div class="fg"><label class="fl">Combustível</label><select class="fi" id="carFuelType"><option>Gasolina</option><option>Etanol</option><option>Diesel</option><option>GNV</option><option>Flex</option></select></div><div class="fg"><label class="fl">Litros</label><input type="number" class="fi" id="carLiters" min="0" step="0.001" oninput="updateCarAmount()"></div></div>
-    <div class="frow"><div class="fg"><label class="fl">Preço por litro (R$)</label><input type="number" class="fi" id="carPrice" min="0" step="0.001" oninput="updateCarAmount()"></div><div class="fg"><label class="fl">Total (R$)</label><input type="number" class="fi" id="carAmount" min="0" step="0.01" oninput="this.dataset.manual='1'"></div></div>
-  </div>
-  <div id="carExpenseFields" style="display:none">
-    <div class="frow"><div class="fg"><label class="fl">Tipo</label><select class="fi" id="carCategory"><option value="Maintenance">Manutenção</option><option value="Insurance">Seguro</option><option value="Tax">Imposto / documento</option><option value="Parking">Estacionamento</option><option value="Wash">Lavagem</option><option value="Fine">Multa</option><option value="Other">Outro</option></select></div><div class="fg"><label class="fl">Valor (R$)</label><input type="number" class="fi" id="carAmountExpense" min="0" step="0.01"></div></div>
-    <div class="fg"><label class="fl">Descrição</label><input type="text" class="fi" id="carTitle" placeholder="Ex: Troca de óleo, IPVA, seguro..."></div>
-  </div>
-  <div class="fg"><label class="fl">Observação</label><input type="text" class="fi" id="carNote" placeholder="Posto, oficina, detalhes..."></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveCarEntry()">Salvar</button><button class="btn btn-g" onclick="closeM('carModal')">Cancelar</button></div>
-</div></div>
+        <div class="two-col">
+          <section class="panel">
+            <div class="section-head"><div><span class="eyebrow">Categorias</span><h2>Onde o dinheiro está indo</h2></div><button class="link" data-route="analysis">Ver análise</button></div>
+            <div class="category-layout">
+              <div class="donut" id="donut"><span id="donutCenter">—</span><small>usado</small></div>
+              <div class="legend" id="categoryLegend"></div>
+            </div>
+          </section>
 
-<div class="ov" id="carVehicleModal"><div class="modal">
-  <button class="mc" onclick="closeM('carVehicleModal')">✕</button>
-  <div class="mt" id="carVehicleModalTitle">Novo veículo</div><div class="ms">Cadastre carro, moto ou qualquer veículo que você quer acompanhar</div>
-  <input type="hidden" id="carVehicleId">
-  <div class="frow"><div class="fg"><label class="fl">Nome</label><input type="text" class="fi" id="carVehicleName" placeholder="Ex: Astra, Moto R3"></div><div class="fg"><label class="fl">Placa</label><input type="text" class="fi" id="carPlate" placeholder="ABC1D23"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Modelo / ano</label><input type="text" class="fi" id="carModel" placeholder="Ex: 2.0 2011"></div><div class="fg"><label class="fl">Hodômetro atual</label><input type="number" class="fi" id="carVehicleOdo" min="0" step="1" placeholder="0"></div></div>
-  <div class="ma"><button class="btn btn-d" id="carVehicleDeleteBtn" onclick="deleteCarVehicle()">Excluir</button><button class="btn btn-p" style="flex:1" onclick="saveCarVehicle()">Salvar veículo</button><button class="btn btn-g" onclick="closeM('carVehicleModal')">Cancelar</button></div>
-</div></div>
+          <section class="panel">
+            <div class="section-head"><div><span class="eyebrow">Próximo</span><h2>Contas e compromissos</h2></div><button class="link" data-route="bills">Abrir</button></div>
+            <div class="list" id="upcomingList"></div>
+          </section>
+        </div>
 
-<div class="ov" id="newListModal">
-<div class="modal">
-  <button class="mc" onclick="closeM('newListModal')">✕</button>
-  <div class="mt">Nova Lista</div>
-  <div class="ms">Crie uma lista separada de compras</div>
-  <div class="fg"><label class="fl">Nome</label>
-    <input type="text" class="fi" id="nlName" placeholder="Ex: Mercado, Farmácia...">
-  </div>
-  <div class="fg"><label class="fl">Ícone</label>
-    <div class="list-modal-ico">
-      <button class="list-ico-btn sel" onclick="selListIco(this,'🛒')">🛒</button>
-      <button class="list-ico-btn" onclick="selListIco(this,'🏪')">🏪</button>
-      <button class="list-ico-btn" onclick="selListIco(this,'💊')">💊</button>
-      <button class="list-ico-btn" onclick="selListIco(this,'🏠')">🏠</button>
-      <button class="list-ico-btn" onclick="selListIco(this,'🎉')">🎉</button>
-      <button class="list-ico-btn" onclick="selListIco(this,'🐾')">🐾</button>
-      <button class="list-ico-btn" onclick="selListIco(this,'👔')">👔</button>
-      <button class="list-ico-btn" onclick="selListIco(this,'🔧')">🔧</button>
-    </div>
-  </div>
-  <div class="ma">
-    <button class="btn btn-p" style="flex:1" onclick="createNewList()">Criar lista</button>
-    <button class="btn btn-g" onclick="closeM('newListModal')">Cancelar</button>
-  </div>
-</div>
-</div>
+        <section class="panel">
+          <div class="section-head"><div><span class="eyebrow">Histórico</span><h2>Últimos movimentos</h2></div><button class="link" data-route="transactions">Todos</button></div>
+          <div class="list" id="recentList"></div>
+        </section>
+      </section>
 
-<div class="ov" id="txModal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTit" aria-describedby="mSub">
-  <button class="mc" onclick="closeM('txModal')" aria-label="Fechar transação">✕</button>
-  <div class="mt" id="mTit">Nova Transação</div><div class="ms" id="mSub">Registre uma receita ou despesa</div>
-  <div class="typetog"><button class="ttb active expense" id="tExp" onclick="setTyp('expense')">⬇ Despesa</button><button class="ttb income" id="tInc" onclick="setTyp('income')">⬆ Receita</button></div>
-  <div class="frow"><div class="fg" style="flex:1.8"><label class="fl" for="txQuickText">Lançamento rápido</label><input type="text" class="fi" id="txQuickText" placeholder="Ex: mercado 82,40 hoje nubank" aria-describedby="txQuickPreview" oninput="previewTxFromText()" onkeydown="if(event.key==='Enter'){event.preventDefault();fillAndSaveTxFromText();}"></div><div class="fg" style="flex:.7;justify-content:flex-end;display:flex;gap:6px"><button class="btn btn-g" type="button" onclick="fillTxFromText()">Preencher</button><button class="btn btn-p" type="button" onclick="fillAndSaveTxFromText()">Preencher + salvar</button></div></div>
-  <div class="quick-preview" id="txQuickPreview">Digite uma frase para ver a prévia antes de salvar.</div>
-  <div class="required-hint">Só o valor é obrigatório. Se deixar em branco, o Finanza usa descrição pela categoria, data de hoje e sua conta principal.</div>
-  <div class="frow"><div class="fg"><label class="fl" for="txDesc">Descrição opcional</label><input type="text" class="fi" id="txDesc" placeholder="Ex: Aluguel..."></div><div class="fg"><label class="fl" for="txAmt">Valor (R$) *</label><input type="number" class="fi" id="txAmt" placeholder="0,00" min="0" step="0.01" inputmode="decimal" oninput="updIPrev()"></div></div>
-  <div class="frow"><div class="fg"><label class="fl" for="txCat">Categoria</label><select class="fi" id="txCat"></select></div><div class="fg"><label class="fl" for="txAcc">Conta</label><select class="fi" id="txAcc" onchange="refreshTxDateHint()"></select></div></div>
-  <div class="frow"><div class="fg"><label class="fl" for="txDt" id="txDateLabel">Data</label><input type="date" class="fi" id="txDt" onchange="refreshTxDateHint()"></div><div class="fg"><label class="fl" for="txNote">Observação</label><input type="text" class="fi" id="txNote" placeholder="Opcional..."></div></div>
-  <div class="quick-preview" id="txCardHint" style="display:none"></div>
-  <div id="txSplitWrap" class="opt-sec" style="display:block">
-    <div class="opt-t" style="color:var(--ac2)">🤝 Divisão de despesas</div>
-    <div class="frow"><div class="fg"><label class="fl" for="txSplitMode">Como tratar</label><select class="fi" id="txSplitMode" onchange="syncTxSplitUI()"><option value="none">Só minha</option><option value="equal">Dividir igualmente</option></select></div><div class="fg"><label class="fl" for="txSplitPayer">Quem pagou</label><select class="fi" id="txSplitPayer" onchange="syncTxSplitHint()"></select></div></div>
-    <div id="txSplitParticipantsWrap">
-      <label class="fl" for="txSplitParticipants">Quem participa</label>
-      <div id="txSplitParticipants" style="display:grid;gap:8px"></div>
-    </div>
-    <label class="opt-tog" id="txApprovalWrap"><input type="checkbox" id="txNeedApproval"><span style="font-size:12px;font-weight:500">🔐 Pedir aprovação antes de entrar na divisão</span></label>
-    <div class="quick-preview" id="txSplitHint">Essa despesa não entra na divisão.</div>
+      <section class="screen" id="screen-transactions" data-title="Transações sem ruído." data-subtitle="Lance, busque e revise gastos com meio de pagamento, categoria e data.">
+        <div class="toolbar">
+          <input id="searchInput" type="search" placeholder="Buscar transações">
+          <select id="walletFilter"></select>
+          <button class="primary" data-action="open-entry">+ Gasto</button>
+        </div>
+        <div class="panel list" id="transactionsList"></div>
+      </section>
+
+      <section class="screen" id="screen-bills" data-title="Antes do vencimento." data-subtitle="Contas fixas, boletos, cartões e contratos em uma régua simples de decisão.">
+        <div class="toolbar">
+          <button class="primary" data-action="open-bill">+ Conta fixa</button>
+          <button class="ghost" data-action="mark-paid">Marcar próxima como paga</button>
+        </div>
+        <div class="timeline" id="billsTimeline"></div>
+      </section>
+
+      <section class="screen" id="screen-analysis" data-title="Análise que cabe no olho." data-subtitle="Percentual do orçamento, categorias mais fortes e leitura rápida do mês.">
+        <div class="analysis-grid" id="analysisGrid"></div>
+      </section>
+
+      <section class="screen" id="screen-wallets" data-title="Carteiras e pagamento." data-subtitle="Pix, débito, crédito, dinheiro e contas — sem sincronização bancária obrigatória.">
+        <div class="toolbar"><button class="primary" data-action="open-wallet">+ Carteira</button></div>
+        <div class="cards-grid" id="walletsGrid"></div>
+      </section>
+
+      <section class="screen" id="screen-goals" data-title="Metas com contexto." data-subtitle="Objetivos, orçamento e pequenas decisões conectados no mesmo fluxo.">
+        <div class="cards-grid" id="goalsGrid"></div>
+      </section>
+
+      <section class="screen" id="screen-plans" data-title="Compras e carro." data-subtitle="Planeje compras, mercado, IPVA, seguro e manutenção antes de entrar no cartão.">
+        <div class="two-col">
+          <section class="panel"><div class="section-head"><div><span class="eyebrow">Compras</span><h2>Lista planejada</h2></div></div><div class="list" id="shoppingList"></div></section>
+          <section class="panel"><div class="section-head"><div><span class="eyebrow">Carro</span><h2>Custos da garagem</h2></div></div><div class="list" id="carList"></div></section>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-settings" data-title="O app do seu jeito." data-subtitle="Mude a cor-base sem perder o padrão escuro, direto e modular.">
+        <section class="panel">
+          <div class="section-head"><div><span class="eyebrow">Visual</span><h2>Cor base</h2></div></div>
+          <p class="muted">O amarelo é o padrão visual inspirado no The Box, mas pode virar uma base ajustável dentro do Finanza Next.</p>
+          <div class="accent-grid" id="accentGrid"></div>
+        </section>
+        <section class="panel">
+          <div class="section-head"><div><span class="eyebrow">Dados</span><h2>Local primeiro</h2></div></div>
+          <p class="muted">Este protótipo novo salva no navegador. A próxima etapa é sincronizar com backend e migrar dados reais do Finanza atual.</p>
+          <button class="ghost" data-action="reset-demo">Restaurar demo</button>
+        </section>
+      </section>
+    </main>
+
+    <nav class="mobile-nav" id="mobileNav"></nav>
   </div>
-  <label class="opt-tog"><input type="checkbox" id="instChk" onchange="togInst()"><span style="font-size:12px;font-weight:500">💳 Parcelado</span></label>
-  <div id="instSec" class="opt-sec ins" style="display:none"><div class="opt-t" style="color:#5ab5f5">Parcelamento</div><div class="frow"><div class="fg"><label class="fl">Nº Parcelas</label><input type="number" class="fi" id="instN" placeholder="12" min="2" max="60" oninput="updIPrev()"></div><div class="fg"><label class="fl">1ª Parcela</label><input type="date" class="fi" id="instSt"></div></div><div class="iprev" id="iPrev">Preencha valor e parcelas.</div></div>
-  <label class="opt-tog"><input type="checkbox" id="recChk" onchange="togRec()"><span style="font-size:12px;font-weight:500">🔄 Recorrente</span></label>
-  <div id="recSec" class="opt-sec rec" style="display:none"><div class="opt-t" style="color:var(--grn)">Recorrência</div><div class="frow"><div class="fg"><label class="fl">Frequência</label><select class="fi" id="recFreq"><option value="weekly">Semanal</option><option value="monthly" selected>Mensal</option><option value="yearly">Anual</option></select></div><div class="fg"><label class="fl">Repetir (vezes)</label><input type="number" class="fi" id="recN" placeholder="12" min="2" max="120"></div></div></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveTx()" id="saveTxBtn">Salvar</button><button class="btn btn-g" onclick="closeM('txModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="settlementModal"><div class="modal">
-  <button class="mc" onclick="closeM('settlementModal')">✕</button>
-  <div class="mt">Registrar acerto</div><div class="ms">Quando alguém paga alguém para acertar a divisão</div>
-  <div class="frow"><div class="fg"><label class="fl" for="settlementFrom">Quem pagou</label><select class="fi" id="settlementFrom"></select></div><div class="fg"><label class="fl" for="settlementTo">Quem recebeu</label><select class="fi" id="settlementTo"></select></div></div>
-  <div class="frow"><div class="fg"><label class="fl" for="settlementAmount">Valor (R$)</label><input type="number" class="fi" id="settlementAmount" min="0" step="0.01" placeholder="0,00"></div><div class="fg"><label class="fl" for="settlementDate">Data</label><input type="date" class="fi" id="settlementDate"></div></div>
-  <div class="frow"><div class="fg"><label class="fl" for="settlementAccount">Conta</label><select class="fi" id="settlementAccount"></select></div><div class="fg"><label class="fl" for="settlementNote">Observação</label><input type="text" class="fi" id="settlementNote" placeholder="Pix, dinheiro, transferência..."></div></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveSettlement()">Salvar acerto</button><button class="btn btn-g" onclick="closeM('settlementModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="accModal"><div class="modal">
-  <button class="mc" onclick="closeM('accModal')">✕</button>
-  <div class="mt" id="accModalTitle">Nova Conta</div><div class="ms" id="accModalSub">Conta bancária ou carteira</div>
-  <div class="frow"><div class="fg"><label class="fl">Nome</label><input type="text" class="fi" id="accNm" placeholder="Ex: Nubank..."></div><div class="fg"><label class="fl">Ícone</label><input type="text" class="fi" id="accIco" placeholder="🏦" maxlength="2"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Tipo</label><select class="fi" id="accTyp" onchange="toggleAccInvFields()"><option value="checking">Corrente</option><option value="savings">Poupança</option><option value="credit">Cartão</option><option value="cash">Dinheiro</option><option value="investment">Investimento / CDB / CDI</option></select></div><div class="fg"><label class="fl">Saldo Atual (R$)</label><input type="number" class="fi" id="accBal" placeholder="0,00" step="0.01" oninput="updAccYieldPreview()"></div></div>
-  <div id="accCardFields" style="display:none">
-    <div style="background:rgba(245,196,90,.06);border:1px solid rgba(245,196,90,.18);border-radius:14px;padding:14px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--warn);margin-bottom:12px">💳 Ciclo da fatura</div>
-      <div class="frow">
-        <div class="fg"><label class="fl">Fechamento</label><input type="number" class="fi" id="accCardClosingDay" min="1" max="31" placeholder="15" oninput="toggleAccInvFields()"></div>
-        <div class="fg"><label class="fl">Vencimento</label><input type="number" class="fi" id="accCardDueDay" min="1" max="31" placeholder="22"></div>
+
+  <dialog class="sheet" id="entryDialog">
+    <form method="dialog" class="sheet-card" id="entryForm">
+      <div class="sheet-head"><div><span class="eyebrow">Registro rápido</span><h2 id="entryDialogTitle">Novo gasto</h2></div><button value="cancel" class="round">×</button></div>
+      <input name="title" placeholder="Descrição" required>
+      <div class="form-grid">
+        <input name="amount" placeholder="Valor" inputmode="decimal" required>
+        <select name="category"></select>
       </div>
-      <div class="frow">
-        <div class="fg"><label class="fl">Final</label><input type="text" class="fi" id="accCardLast4" placeholder="1234" maxlength="4"></div>
-        <div class="fg"><label class="fl">Validade (MM/AA)</label><input type="text" class="fi" id="accCardExpiry" placeholder="08/29" maxlength="5" oninput="this.value=formatCardExpiry(this.value)"></div>
+      <div class="form-grid">
+        <select name="wallet"></select>
+        <input name="date" type="date">
       </div>
-      <div class="frow">
-        <div class="fg"><label class="fl">Melhor dia estimado</label><input type="text" class="fi" id="accCardBestDay" placeholder="Depois do fechamento" disabled></div>
-      </div>
-    </div>
-  </div>
-  <div id="accInvFields" style="display:none">
-    <div style="background:rgba(90,245,200,.06);border:1px solid rgba(90,245,200,.18);border-radius:14px;padding:14px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ac2);margin-bottom:12px">📈 Rendimento</div>
-      <div class="frow">
-        <div class="fg"><label class="fl">Tipo de rendimento</label><select class="fi" id="accYieldType" onchange="updAccYieldPreview()"><option value="cdi_pct">% do CDI</option><option value="cdi_plus">CDI + % a.a.</option><option value="fixed">Taxa fixa % a.a.</option><option value="selic">% da Selic</option><option value="poupanca">Poupança</option></select></div>
-        <div class="fg"><label class="fl" id="accYieldLbl">% do CDI</label><input type="number" class="fi" id="accYieldVal" placeholder="100" step="0.1" oninput="updAccYieldPreview()"></div>
-      </div>
-      <div class="frow">
-        <div class="fg"><label class="fl">Base de cálculo</label><select class="fi" id="accCalcBase" onchange="updAccYieldPreview()"><option value="du">Dias úteis (252/ano)</option><option value="dc">Dias corridos (360/ano)</option></select></div>
-        <div class="fg"><label class="fl">Data de início</label><input type="date" class="fi" id="accStartDate" onchange="updAccYieldPreview()"></div>
-      </div>
-      <div id="accYieldPreview" style="margin-top:10px;padding:10px 12px;background:var(--sf);border-radius:10px;font-size:12px;line-height:1.7;color:var(--tx2)">Preencha os campos para ver a projeção.</div>
-    </div>
-  </div>
-  <div class="frow"><div class="fg"><label class="fl">Rendimento mensal manual (%)</label><input type="number" class="fi" id="accYield" placeholder="Opcional" min="0" step="0.01" oninput="updAccYieldPreview()"></div><div class="fg"><label class="fl">Observação</label><input type="text" class="fi" id="accNote" placeholder="CDB, caixinha, poupança..."></div></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveAcc()">Salvar</button><button class="btn btn-g" onclick="closeM('accModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="dueModal"><div class="modal">
-  <button class="mc" onclick="closeM('dueModal')">✕</button>
-  <div class="mt">Vencimento</div><div class="ms">Lembre o que pagar, quando vence e onde resolver</div>
-  <input type="hidden" id="dueId">
-  <div class="frow"><div class="fg"><label class="fl">Nome</label><input type="text" class="fi" id="dueName" placeholder="Ex: Internet, Luz, Crediário..."></div><div class="fg"><label class="fl">Valor previsto (R$)</label><input type="number" class="fi" id="dueAmount" min="0" step="0.01" placeholder="0,00"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Próximo vencimento</label><input type="date" class="fi" id="dueDate"></div><div class="fg"><label class="fl">Recorrência</label><select class="fi" id="dueRec"><option value="monthly">Mensal</option><option value="once">Uma vez</option></select></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Forma</label><select class="fi" id="dueMethod"><option value="pix">Pix</option><option value="boleto">Boleto</option><option value="credit">Cartão principal</option><option value="store_card">Cartão próprio/loja</option><option value="debit">Débito automático</option><option value="financing">Crediário</option><option value="cash">Dinheiro</option></select></div><div class="fg"><label class="fl">Onde pagar</label><input type="text" class="fi" id="duePlace" placeholder="App, site, loja, banco..."></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Conta/cartão</label><select class="fi" id="dueAcc"></select></div><div class="fg"><label class="fl">Categoria</label><select class="fi" id="dueCat"></select></div></div>
-  <div class="fg"><label class="fl">Observação</label><input type="text" class="fi" id="dueNotes" placeholder="Contrato, código, login, detalhe importante..."></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveDue()">Salvar</button><button class="btn btn-g" onclick="closeM('dueModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="subscriptionModal"><div class="modal">
-  <button class="mc" onclick="closeM('subscriptionModal')">✕</button>
-  <div class="mt">Assinatura</div><div class="ms">Guarde o que renova todo mês e o que já vale rever ou cancelar</div>
-  <input type="hidden" id="subId">
-  <div class="frow"><div class="fg"><label class="fl">Nome</label><input type="text" class="fi" id="subName" placeholder="Ex: Netflix, Adobe, academia"></div><div class="fg"><label class="fl">Valor mensal (R$)</label><input type="number" class="fi" id="subAmount" min="0" step="0.01" placeholder="0,00"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Categoria</label><input type="text" class="fi" id="subCategory" value="Assinaturas"></div><div class="fg"><label class="fl">Dia da cobrança</label><input type="number" class="fi" id="subDay" min="1" max="31" placeholder="15"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Próxima renovação</label><input type="date" class="fi" id="subRenewal"></div><div class="fg"><label class="fl">Uso percebido</label><select class="fi" id="subUsage"><option value="high">Muito usada</option><option value="medium">Uso normal</option><option value="low">Quase esquecida</option></select></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Forma</label><select class="fi" id="subMethod"><option value="credit">Cartão principal</option><option value="debit">Débito automático</option><option value="pix">Pix</option><option value="boleto">Boleto</option></select></div><div class="fg"><label class="fl">Onde cobra</label><input type="text" class="fi" id="subPlace" placeholder="App, site, operadora..."></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Conta/cartão</label><select class="fi" id="subAcc"></select></div><div class="fg"><label class="fl">Status</label><select class="fi" id="subStatus"><option value="active">Ativa</option><option value="paused">Pausada</option><option value="cancelled">Cancelada</option></select></div></div>
-  <div class="fg"><label class="fl">Observação</label><input type="text" class="fi" id="subNotes" placeholder="Preço promocional, motivo, login, oportunidade de corte..."></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveSubscription()">Salvar assinatura</button><button class="btn btn-g" onclick="closeM('subscriptionModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="debtModal"><div class="modal">
-  <button class="mc" onclick="closeM('debtModal')">✕</button>
-  <div class="mt">Dívida</div><div class="ms">Acompanhe saldo, juros, parcelas e a melhor ordem para quitar</div>
-  <input type="hidden" id="debtId">
-  <div class="frow"><div class="fg"><label class="fl">Nome</label><input type="text" class="fi" id="debtName" placeholder="Ex: Nubank parcelado, empréstimo, consignado"></div><div class="fg"><label class="fl">Valor total (R$)</label><input type="number" class="fi" id="debtTotal" min="0" step="0.01" placeholder="0,00"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Saldo em aberto (R$)</label><input type="number" class="fi" id="debtOutstanding" min="0" step="0.01" placeholder="0,00"></div><div class="fg"><label class="fl">Parcela mensal (R$)</label><input type="number" class="fi" id="debtInstallment" min="0" step="0.01" placeholder="0,00"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Parcelas totais</label><input type="number" class="fi" id="debtTotalInstallments" min="1" step="1"></div><div class="fg"><label class="fl">Parcelas restantes</label><input type="number" class="fi" id="debtRemainingInstallments" min="0" step="1"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Juros (% a.m.)</label><input type="number" class="fi" id="debtInterest" min="0" step="0.01" placeholder="0,00"></div><div class="fg"><label class="fl">Próxima parcela</label><input type="date" class="fi" id="debtNextDate"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Conta/cartão</label><select class="fi" id="debtAcc"></select></div><div class="fg"><label class="fl">Estratégia</label><select class="fi" id="debtStrategy"><option value="custom">Livre</option><option value="snowball">Bola de neve</option><option value="avalanche">Avalanche</option></select></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Status</label><select class="fi" id="debtStatus"><option value="active">Ativa</option><option value="watch">Acompanhar</option><option value="closed">Quitada</option></select></div><div class="fg"></div></div>
-  <div class="fg"><label class="fl">Observação</label><input type="text" class="fi" id="debtNotes" placeholder="Banco, renegociação, CET, risco, condição especial..."></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveDebt()">Salvar dívida</button><button class="btn btn-g" onclick="closeM('debtModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="contractModal"><div class="modal">
-  <button class="mc" onclick="closeM('contractModal')">✕</button>
-  <div class="mt">Contrato</div><div class="ms">Guarde prazos, reajustes, valores e pontos de atenção antes de renovar</div>
-  <input type="hidden" id="contractId">
-  <div class="frow"><div class="fg"><label class="fl">Nome</label><input type="text" class="fi" id="contractName" placeholder="Ex: Aluguel, internet, seguro do carro"></div><div class="fg"><label class="fl">Tipo</label><select class="fi" id="contractKind"><option value="service">Serviço</option><option value="rent">Aluguel</option><option value="insurance">Seguro</option><option value="financing">Financiamento</option><option value="utility">Conta essencial</option></select></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Valor mensal (R$)</label><input type="number" class="fi" id="contractAmount" min="0" step="0.01" placeholder="0,00"></div><div class="fg"><label class="fl">Fornecedor / contraparte</label><input type="text" class="fi" id="contractProvider" placeholder="Ex: Vivo, imobiliária, banco"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Renovação / vencimento</label><input type="date" class="fi" id="contractRenewal"></div><div class="fg"><label class="fl">Reajuste previsto</label><input type="date" class="fi" id="contractAdjustment"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Conta/cartão</label><select class="fi" id="contractAcc"></select></div><div class="fg"><label class="fl">Status</label><select class="fi" id="contractStatus"><option value="active">Ativo</option><option value="watch">Acompanhar</option><option value="ended">Encerrado</option></select></div></div>
-  <div class="fg"><label class="fl">Observação</label><input type="text" class="fi" id="contractNotes" placeholder="Cláusula importante, link, reajuste, multa, contato, anexo externo..."></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveContract()">Salvar contrato</button><button class="btn btn-g" onclick="closeM('contractModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="budModal"><div class="modal">
-  <button class="mc" onclick="closeM('budModal')">✕</button>
-  <div class="mt">Novo Orçamento</div><div class="ms">Limite mensal por categoria</div>
-  <div class="fg"><label class="fl">Categoria</label><select class="fi" id="budCat"></select></div>
-  <div class="fg"><label class="fl">Limite (R$)</label><input type="number" class="fi" id="budLim" placeholder="0,00" min="0" step="0.01"></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveBud()">Salvar</button><button class="btn btn-g" onclick="closeM('budModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="goalModal"><div class="modal">
-  <button class="mc" onclick="closeM('goalModal')">✕</button>
-  <div class="mt">Nova Meta</div>
-  <div class="frow"><div class="fg"><label class="fl">Nome</label><input type="text" class="fi" id="gNm" placeholder="Ex: Viagem..."></div><div class="fg"><label class="fl">Ícone</label><input type="text" class="fi" id="gIco" placeholder="🎯" maxlength="2"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Valor Total (R$)</label><input type="number" class="fi" id="gTgt"></div><div class="fg"><label class="fl">Já guardei (R$)</label><input type="number" class="fi" id="gCur"></div></div>
-  <div class="frow"><div class="fg"><label class="fl">Prazo</label><input type="date" class="fi" id="gDl"></div><div class="fg"><label class="fl">Aporte Mensal (R$)</label><input type="number" class="fi" id="gMon" placeholder="Automático"></div></div>
-  <div class="fg"><label class="fl">Descrição</label><input type="text" class="fi" id="gDesc" placeholder="Opcional..."></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveGoal()">Salvar</button><button class="btn btn-g" onclick="closeM('goalModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="connModal"><div class="modal">
-  <button class="mc" onclick="closeM('connModal')">✕</button>
-  <div class="mt">Conexão</div>
-  <div class="fg"><label class="fl">URL do Servidor</label><input type="text" class="fi" id="connUrl"></div>
-  <div class="fg"><label class="fl">Usuário</label><input type="text" class="fi" id="connUser" autocomplete="username"></div><div class="fg"><label class="fl">Senha</label><input type="password" class="fi" id="connPass" autocomplete="current-password"></div><div class="fg"><label class="fl">Código 2FA</label><input type="text" class="fi" id="connOtp" autocomplete="one-time-code" placeholder="Só se estiver ativo"></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="saveConn()">Salvar</button><button class="btn btn-g" onclick="closeM('connModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="importPreviewModal"><div class="modal">
-  <button class="mc" onclick="closeM('importPreviewModal')">✕</button>
-  <div class="mt">Prévia da importação</div><div class="ms">Escolha se você quer substituir tudo ou mesclar sem duplicar o que já estiver salvo.</div>
-  <div class="ss-r"><div><div class="ss-l">Arquivo</div><div class="ss-s" id="importPreviewName">—</div></div><span class="diag-pill" id="importPreviewVersion">—</span></div>
-  <div class="import-preview-grid">
-    <div class="import-preview-card"><div class="ss-l">Substituir tudo</div><div class="import-preview-main" id="importPreviewReplace">—</div><div class="ss-s">Apaga os dados atuais da conta e coloca o conteúdo do backup.</div></div>
-    <div class="import-preview-card"><div class="ss-l">Mesclar sem duplicar</div><div class="import-preview-main" id="importPreviewMerge">—</div><div class="ss-s">Mantém o que já existe e adiciona só o que for novo.</div></div>
-  </div>
-  <div class="import-preview-notes" id="importPreviewNotes"></div>
-  <div class="ma"><button class="btn btn-p" style="flex:1" onclick="confirmImportBackup('merge')">Mesclar</button><button class="btn btn-g" onclick="confirmImportBackup('replace')">Substituir</button><button class="btn btn-g" onclick="closeM('importPreviewModal')">Cancelar</button></div>
-</div></div>
-<div class="ov" id="importCenterModal"><div class="modal import-center-modal">
-  <button class="mc" onclick="closeM('importCenterModal')">✕</button>
-  <div class="import-modal-head">
-    <div>
-      <div class="mt">Importar transações</div>
-      <div class="ms">Escolha a fonte, prepare a revisão e confirme só o que deve entrar.</div>
-    </div>
-    <button class="btn btn-g btn-sm" onclick="openImportInbox()">Caixa de entrada</button>
-  </div>
-  <div class="import-center-toolbar" id="importCenterToolbar"></div>
-  <div class="import-center-grid">
-    <div class="import-center-pane">
-      <div class="import-pane-title"><strong>1. Fonte</strong><span>Arquivo, pasta ou texto copiado</span></div>
-      <div class="import-source-tabs" id="importSourceTabs"></div>
-      <div id="importSourceBody"></div>
-      <div class="import-source-actions">
-        <button class="btn btn-p btn-sm" onclick="parseImportDraft()">Preparar revisão</button>
-        <button class="btn btn-g btn-sm" onclick="clearImportDraft();renderImportCenter()">Limpar</button>
-      </div>
-      <div class="import-snapshots" id="importSnapshots"></div>
-    </div>
-    <div class="import-center-pane">
-      <div class="import-pane-title"><strong>2. Revisão</strong><span>Concilie duplicadas antes de importar</span></div>
-      <div class="import-review-head" id="importReviewHead"></div>
-      <div class="import-mapping" id="importMapping"></div>
-      <div class="import-review-list" id="importReviewList"></div>
-    </div>
-  </div>
-  <div class="ma import-actions-bar">
-    <button class="btn btn-p import-confirm-btn" onclick="confirmImportTransactions()">Importar revisão</button>
-    <button class="btn btn-g" onclick="saveCurrentImportProfile()">Salvar perfil</button>
-    <button class="btn btn-g" onclick="closeM('importCenterModal')">Fechar</button>
-  </div>
-</div></div>
-<div class="twrap" id="twrap"></div>
-<div class="undo-bar" id="undoBar"><span id="undoLabel">Ação removida</span><div class="undo-actions"><button class="btn btn-g btn-sm" onclick="undoLastAction()">Desfazer</button><button class="btn btn-g btn-sm" onclick="dismissUndo()">Fechar</button></div></div>
-<script src="app.js?v=4.3.2"></script>
-<script src="dashboard.js?v=4.3.2"></script>
-<script src="api.js?v=4.3.2"></script>
-<script src="storage.js?v=4.3.2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="charts.js?v=4.3.2"></script>
-<script src="components.js?v=4.3.2"></script>
-<script src="transactions.js?v=4.3.2"></script>
-<script src="future.js?v=4.3.2"></script>
-<script src="bootstrap.js?v=4.3.2"></script>
-<script src="boot.js?v=4.3.2"></script>
-<script src="next-theme.js?v=4.4.0-next"></script>
+      <button class="primary wide" value="default">Salvar</button>
+    </form>
+  </dialog>
+
+  <dialog class="sheet" id="billDialog">
+    <form method="dialog" class="sheet-card" id="billForm">
+      <div class="sheet-head"><div><span class="eyebrow">Conta fixa</span><h2>Nova conta</h2></div><button value="cancel" class="round">×</button></div>
+      <input name="title" placeholder="Nome da conta" required>
+      <div class="form-grid"><input name="amount" placeholder="Valor" inputmode="decimal" required><input name="due" type="date"></div>
+      <select name="category"></select>
+      <button class="primary wide" value="default">Salvar conta</button>
+    </form>
+  </dialog>
+
+  <script src="next-theme.js?v=5.0.0"></script>
 </body>
 </html>
-
-
-
-
