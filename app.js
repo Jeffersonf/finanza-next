@@ -1,5 +1,5 @@
 ﻿'use strict';
-const APP_VERSION='5.0.1-next';
+const APP_VERSION='5.1.0-next';
 const DEFAULT_API_URL='https://finanza-api.onrender.com';
 const CK='fz_cfg',LK='fz_local',CCK='fz_cats',VK='fz_view',AVK='fz_avatar',PRIVK='fz_privacy',CAR_KEY='fz_car',PAGE_KEY='fz_page';
 const RATES_KEY='fz_rates', WIDGET_ORDER_KEY='fz_widget_order', WIDGET_FILTER_KEY='fz_widget_filters', DUE_KEY='fz_due_items', TX_FILTERS_KEY='fz_tx_filters', COMMITMENTS_KEY='fz_commitments', SIDEBAR_SHORTCUTS_KEY='fz_sidebar_shortcuts';

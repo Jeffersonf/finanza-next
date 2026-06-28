@@ -1,18 +1,28 @@
 # Finanza Next
 
-Versão experimental visual do Finanza, publicada como app estático no GitHub Pages.
+Nova experiência visual do Finanza, mantida em um projeto independente para evoluir sem alterar o Finanza principal.
 
-Esta versão usa a base atual do Finanza com a skin `next.css`, inspirada em uma experiência mobile-first escura, direta e com cards grandes.
+O Next preserva conta, sincronização e recursos financeiros existentes, mas possui navegação, hierarquia, componentes e ritmo visual próprios. A interface segue uma linguagem mobile-first de alto contraste: fundo cinza-claro, cartões brancos, um cartão preto dominante e cor de progresso configurável.
 
-## Publicação
+## Web
 
-O app é servido diretamente a partir da raiz do repositório:
+O app estático é servido diretamente da raiz do repositório e publicado pelo GitHub Pages.
 
-- `index.html`
-- `styles.css`
-- `next.css`
-- scripts JavaScript do app atual
+Para testar localmente:
 
-## Desenvolvimento
+```powershell
+python -m http.server 4179 --bind 127.0.0.1
+```
 
-Para testar localmente, abra `index.html` em um navegador ou sirva a pasta com um servidor estático simples.
+Depois acesse `http://127.0.0.1:4179/`.
+
+## Android nativo
+
+O projeto Kotlin fica em `android-kotlin` e usa Android SDK 36, Java 17 e minSdk 26.
+
+```powershell
+cd android-kotlin
+.\gradlew.bat assembleDebug
+```
+
+O APK de desenvolvimento é gerado em `android-kotlin/app/build/outputs/apk/debug/app-debug.apk`.

@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '5.0.1-next';
+  const VERSION = '5.1.0-next';
   const HOME_ID = 'nextHome';
   const CHROME_ID = 'nextAppChrome';
   const LAUNCHER_ID = 'nextLauncher';
@@ -23,6 +23,7 @@
 
   let renderTimer = null;
   let lastHomeSignature = '';
+  let launcherReturnFocus = null;
 
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
     '&': '&amp;',
@@ -168,8 +169,17 @@
   const showLauncher = open => {
     const launcher = document.getElementById(LAUNCHER_ID);
     if (!launcher) return;
-    launcher.classList.toggle('open', open ?? !launcher.classList.contains('open'));
-    document.body.classList.toggle('next-launcher-open', launcher.classList.contains('open'));
+    const willOpen = open ?? !launcher.classList.contains('open');
+    if (willOpen) launcherReturnFocus = document.activeElement;
+    launcher.classList.toggle('open', willOpen);
+    launcher.setAttribute('aria-hidden', String(!willOpen));
+    document.body.classList.toggle('next-launcher-open', willOpen);
+    if (willOpen) {
+      requestAnimationFrame(() => launcher.querySelector('.next-launcher-sheet header button')?.focus());
+    } else if (launcherReturnFocus instanceof HTMLElement) {
+      launcherReturnFocus.focus();
+      launcherReturnFocus = null;
+    }
   };
 
   window.toggleNextLauncher = () => showLauncher();
@@ -205,7 +215,8 @@
       </button>
       <nav class="next-tabbar" aria-label="Navegação principal">
         ${primaryNav.map(([id, icon, label]) => `
-          <button type="button" class="${active === id ? 'active' : ''}" onclick="nextGo('${id}')">
+          <button type="button" class="${active === id ? 'active' : ''}" onclick="nextGo('${id}')"
+            ${active === id ? 'aria-current="page"' : ''} aria-label="${esc(label)}">
             <span>${icon}</span>
             <strong>${label}</strong>
           </button>
@@ -219,15 +230,16 @@
       launcher = document.createElement('div');
       launcher.id = LAUNCHER_ID;
       launcher.className = 'next-launcher';
+      launcher.setAttribute('aria-hidden', 'true');
       document.body.appendChild(launcher);
     }
     launcher.innerHTML = `
       <button class="next-launcher-backdrop" type="button" onclick="closeNextLauncher()" aria-label="Fechar"></button>
-      <section class="next-launcher-sheet" aria-label="Todos os módulos">
+      <section class="next-launcher-sheet" role="dialog" aria-modal="true" aria-labelledby="nextLauncherTitle">
         <div class="next-sheet-grabber"></div>
         <header>
-          <div><small>Seu espaço</small><h2>Todos os módulos</h2></div>
-          <button type="button" onclick="closeNextLauncher()">×</button>
+          <div><small>Seu espaço</small><h2 id="nextLauncherTitle">Todos os módulos</h2></div>
+          <button type="button" onclick="closeNextLauncher()" aria-label="Fechar módulos">×</button>
         </header>
         <div class="next-launcher-grid">
           ${launcherItems.map(([id, icon, label, sub]) => `
@@ -354,6 +366,13 @@
         </div>
         <button class="box-detail-button" type="button" onclick="showPage('budget')">Ver detalhes</button>
       </article>
+
+      <section class="box-quick-actions" aria-label="Ações rápidas">
+        <button type="button" onclick="openModal()"><span>+</span><strong>Gasto</strong></button>
+        <button type="button" onclick="openModal();setTyp('income')"><span>↑</span><strong>Receita</strong></button>
+        <button type="button" onclick="openDueModal()"><span>!</span><strong>Conta</strong></button>
+        <button type="button" onclick="openSrch()"><span>⌕</span><strong>Buscar</strong></button>
+      </section>
 
       <section class="box-section">
         <header>
@@ -489,6 +508,13 @@
       subtree: true,
       attributes: true,
       attributeFilter: ['class']
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && document.getElementById(LAUNCHER_ID)?.classList.contains('open')) {
+        event.preventDefault();
+        showLauncher(false);
+      }
     });
   };
 

@@ -41,6 +41,19 @@ body.next-visual {
   -webkit-font-smoothing: antialiased;
 }
 
+.next-visual :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--next-accent) 72%, #000);
+  outline-offset: 3px;
+}
+
+.next-visual button,
+.next-visual [role="button"],
+.next-visual a,
+.next-visual input,
+.next-visual select {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body.next-visual::before,
 body.next-visual::after {
   display: none !important;
@@ -383,6 +396,47 @@ body.next-visual::after {
   background: var(--box-dark);
   color: #fff;
   box-shadow: 0 20px 46px rgba(0, 0, 0, .12);
+}
+
+.box-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.box-quick-actions button {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  min-height: 88px;
+  padding: 12px 8px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--box-paper);
+  color: var(--box-ink);
+  cursor: pointer;
+  font: inherit;
+  box-shadow: var(--box-shadow);
+}
+
+.box-quick-actions span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: var(--box-soft);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.box-quick-actions button:first-child span {
+  background: var(--next-accent);
+}
+
+.box-quick-actions strong {
+  font-size: 12px;
 }
 
 .box-budget-top,
@@ -1341,6 +1395,25 @@ body.next-visual::after {
 
   .box-insight-strip {
     grid-template-columns: 1fr;
+  }
+
+  .box-quick-actions {
+    gap: 7px;
+  }
+
+  .box-quick-actions button {
+    min-height: 76px;
+    padding-inline: 4px;
+    border-radius: 18px;
+  }
+
+  .box-quick-actions span {
+    width: 34px;
+    height: 34px;
+  }
+
+  .box-quick-actions strong {
+    font-size: 10px;
   }
 
   .next-launcher-grid {
