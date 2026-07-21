@@ -58,19 +58,35 @@ fun HomeScreen(
     ) {
         item {
             if (finanza) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Início", style = MaterialTheme.typography.headlineMedium)
+                        Text("Dashboard", style = MaterialTheme.typography.headlineMedium)
                         Text(
-                            "Centro do dia para lançar, revisar e decidir seus gastos",
+                            "Visão geral das suas finanças",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f),
                             modifier = Modifier.padding(top = 3.dp)
                         )
                     }
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Text(
+                            period,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+                        )
+                    }
                     Button(
                         onClick = onAdd,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -79,19 +95,6 @@ fun HomeScreen(
                         Icon(Icons.Rounded.Add, contentDescription = null)
                         Text("Nova", modifier = Modifier.padding(start = 4.dp))
                     }
-                }
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    modifier = Modifier.padding(top = 14.dp)
-                ) {
-                    Text(
-                        period,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                    )
                 }
             } else {
                 Column {

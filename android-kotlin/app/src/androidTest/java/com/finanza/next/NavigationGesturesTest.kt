@@ -28,7 +28,7 @@ class NavigationGesturesTest {
 
     @Test
     fun swipingLeftMovesToNextScreen() {
-        composeRule.onNodeWithText("Atalhos do Finanza").assertIsDisplayed()
+        composeRule.onNodeWithTag("mainPager").assertIsDisplayed()
         composeRule.onNodeWithTag("mainPager").performTouchInput { swipeLeft(durationMillis = 1_000) }
         composeRule.waitUntil(5_000) {
             runCatching { composeRule.onNodeWithTag("accountsScreen").assertIsDisplayed() }.isSuccess
@@ -38,7 +38,7 @@ class NavigationGesturesTest {
 
     @Test
     fun tappingBottomNavigationChangesScreenWithoutLeavingTheScaffold() {
-        composeRule.onNodeWithText("Atalhos do Finanza").assertIsDisplayed()
+        composeRule.onNodeWithTag("mainPager").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Contas").performClick()
 
         composeRule.waitUntil(5_000) {

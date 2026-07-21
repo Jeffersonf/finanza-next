@@ -28,7 +28,7 @@ class DashboardWidgetsTest {
     fun editorExposesWebDashboardControls() {
         val edit = composeRule.onAllNodesWithText("Editar")
         if (edit.fetchSemanticsNodes().isNotEmpty()) edit[0].performClick()
-        else composeRule.onNodeWithContentDescription("Personalizar início").performClick()
+        else composeRule.onNodeWithContentDescription("Personalizar painel").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("Editar widgets").fetchSemanticsNodes().isNotEmpty()
         }

@@ -314,9 +314,18 @@ private fun DashboardManagerHeader(active: Int, total: Int, onEdit: () -> Unit) 
     val tokens = LocalAppExperienceTokens.current
     val finanza = LocalAppExperience.current == AppExperience.FINANZA
     if (finanza) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Widgets do painel",
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             IconButton(onClick = onEdit) {
-                Icon(Icons.Rounded.Tune, contentDescription = "Personalizar início", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Rounded.Tune, contentDescription = "Personalizar painel", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         return
