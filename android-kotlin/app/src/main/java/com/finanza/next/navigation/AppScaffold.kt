@@ -200,9 +200,8 @@ fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boo
                         navVisible = true
                         if (tab != selectedTab) {
                             selectedTab = tab
-                            scope.launch { pagerState.scrollToPage(tabs.indexOf(tab)) }
+                            scope.launch { pagerState.animateScrollToPage(tabs.indexOf(tab)) }
                         }
-                        actions.selectTab(tab)
                     }
                 )
             }
