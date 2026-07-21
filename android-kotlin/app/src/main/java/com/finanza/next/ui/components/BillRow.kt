@@ -62,8 +62,19 @@ fun AccountRow(item: AccountUi, onClick: () -> Unit) {
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(item.name, style = MaterialTheme.typography.bodyLarge)
-            Text(item.type, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.58f))
+            Text(accountSubtitle(item), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.58f))
         }
         Text(item.amount, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+private fun accountSubtitle(item: AccountUi): String {
+    if (!item.name.equals(item.type, ignoreCase = true)) return item.type
+
+    return when (item.type.lowercase()) {
+        "cartao", "cartão" -> "Cartão de crédito"
+        "reserva" -> "Conta de reserva"
+        "investimentos" -> "Carteira de investimentos"
+        else -> item.type
     }
 }

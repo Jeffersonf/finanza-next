@@ -175,6 +175,7 @@ O menu do Android deve mostrar apenas fluxos funcionais. Modulos futuros nao apa
 - analise Finanza clara e escura revisada no Xiaomi, incluindo legenda, barras e distribuicao por categoria; a preferencia final do aparelho voltou para Finanza escuro
 - login renderizado e verificado nos dois temas e nos modos claro/escuro, preservando entrada online e o modo local; a bateria instrumentada conta com 38 testes no Xiaomi
 - quatro aberturas frias consecutivas no Xiaomi ficaram entre 1,32 s e 1,40 s; a navegacao por toque e gesto e coberta pela bateria instrumentada
+- auditoria posterior das telas Contas e Analise no Xiaomi removeu a repeticao de tipo nas contas (por exemplo, `Cartao`/`Cartao`), preservando os dados e exibindo contexto financeiro; tres novas aberturas frias ficaram entre 1,32 s e 1,34 s
 - captura rapida validada por teste instrumentado no aparelho: valor -> descricao, sem etapas extras
 - teclado automatico, foco no valor, moeda em real e composicao visual validados no aparelho
 - tres providers de widget e atalho dinamico de captura confirmados pelo sistema
