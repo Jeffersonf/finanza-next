@@ -58,7 +58,17 @@ fun TransactionRow(item: TransactionUi, onClick: () -> Unit, modifier: Modifier 
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(item.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
-            Text(item.category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.58f), maxLines = 1)
+            if (finanza) {
+                Box(
+                    Modifier.padding(top = 4.dp).clip(CircleShape)
+                        .background(item.color.copy(alpha = 0.14f))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text(item.category, style = MaterialTheme.typography.labelSmall, color = item.color, maxLines = 1)
+                }
+            } else {
+                Text(item.category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.58f), maxLines = 1)
+            }
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(item.amount, fontWeight = FontWeight.SemiBold, color = amountColor)

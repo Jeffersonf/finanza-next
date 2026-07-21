@@ -175,6 +175,7 @@ O menu do Android deve mostrar apenas fluxos funcionais. Modulos futuros nao apa
 - a tela Contas do tema Finanza agora usa a grade compacta de carteiras do web, com icone, etiqueta de tipo, saldo e abertura do editor; o Next preserva sua lista original
 - Ajustes passa a usar o cabeçalho do Finanza web ("Configurações" e "App e preferências") somente nesse tema, sem alterar os grupos e controles do Next
 - os tokens claros do Finanza foram alinhados ao azul-gelo do web (`#F0F4FF`) e os estados de erro passaram a usar o coral Finanza nos modos claro e escuro, sem herdar a paleta iOS do Next
+- as transacoes do tema Finanza exibem a categoria como badge colorida, reproduzindo a hierarquia visual do historico web; o Next mantem a leitura compacta em texto
 - analise Finanza clara e escura revisada no Xiaomi, incluindo legenda, barras e distribuicao por categoria; a preferencia final do aparelho voltou para Finanza escuro
 - login renderizado e verificado nos dois temas e nos modos claro/escuro, preservando entrada online e o modo local; a bateria instrumentada conta com 38 testes no Xiaomi
 - quatro aberturas frias consecutivas no Xiaomi ficaram entre 1,32 s e 1,40 s; a navegacao por toque e gesto e coberta pela bateria instrumentada
