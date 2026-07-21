@@ -3,6 +3,7 @@ package com.finanza.next
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
@@ -33,5 +34,16 @@ class NavigationGesturesTest {
             runCatching { composeRule.onNodeWithText("Leitura do mês").assertIsDisplayed() }.isSuccess
         }
         composeRule.onNodeWithText("Leitura do mês").assertIsDisplayed()
+    }
+
+    @Test
+    fun tappingBottomNavigationChangesScreenWithoutLeavingTheScaffold() {
+        composeRule.onNodeWithText("Atalhos do Finanza").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Contas").performClick()
+
+        composeRule.waitUntil(5_000) {
+            runCatching { composeRule.onNodeWithText("Contas e carteiras").assertIsDisplayed() }.isSuccess
+        }
+        composeRule.onNodeWithText("Contas e carteiras").assertIsDisplayed()
     }
 }
