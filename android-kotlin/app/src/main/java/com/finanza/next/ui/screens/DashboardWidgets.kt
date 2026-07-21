@@ -304,6 +304,15 @@ private fun OverviewTile(
 @Composable
 private fun DashboardManagerHeader(active: Int, total: Int, onEdit: () -> Unit) {
     val tokens = LocalAppExperienceTokens.current
+    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    if (finanza) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Rounded.Tune, contentDescription = "Personalizar início", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        return
+    }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
             "$active de $total widgets",
