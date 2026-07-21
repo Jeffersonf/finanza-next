@@ -150,6 +150,10 @@ fun FinanceAppTheme(
         AppExperience.NEXT -> NextTokens
         AppExperience.FINANZA -> FinanzaTokens
     }
+    val typography = when (experience) {
+        AppExperience.NEXT -> AppTypography
+        AppExperience.FINANZA -> FinanzaTypography
+    }
     val view = LocalView.current
     SideEffect {
         val window = (view.context as? Activity)?.window ?: return@SideEffect
@@ -169,6 +173,6 @@ fun FinanceAppTheme(
         LocalAppExperience provides experience,
         LocalAppExperienceTokens provides tokens
     ) {
-        MaterialTheme(colorScheme = colors, typography = AppTypography, content = content)
+        MaterialTheme(colorScheme = colors, typography = typography, content = content)
     }
 }
