@@ -59,9 +59,9 @@ fun AnalysisScreen(income: String, spent: String, categories: List<CategoryUi>, 
             Text("Análise", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(18.dp))
             Row(Modifier.fillMaxWidth()) {
-                Summary("Entradas", income, Modifier.weight(1f))
+                Summary("Entradas", income, Modifier.weight(1f), income = true)
                 Spacer(Modifier.width(10.dp))
-                Summary("Saídas", spent, Modifier.weight(1f))
+                Summary("Saídas", spent, Modifier.weight(1f), income = false)
             }
             Text(if (finanza) "Fluxo dos últimos 6 meses" else "Últimos 6 meses", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 26.dp, bottom = 10.dp))
             trends.forEach { trend ->
@@ -72,7 +72,11 @@ fun AnalysisScreen(income: String, spent: String, categories: List<CategoryUi>, 
                     }
                     Spacer(Modifier.height(5.dp))
                     Box(Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f))) {
-                        Box(Modifier.fillMaxWidth(trend.incomeShare.coerceIn(0f, 1f)).height(5.dp).background(Color(0xFF34C759)))
+                        Box(
+                            Modifier.fillMaxWidth(trend.incomeShare.coerceIn(0f, 1f))
+                                .height(5.dp)
+                                .background(if (finanza) MaterialTheme.colorScheme.primary else Color(0xFF34C759))
+                        )
                     }
                     Spacer(Modifier.height(3.dp))
                     Box(Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f))) {
@@ -119,7 +123,7 @@ fun AnalysisScreen(income: String, spent: String, categories: List<CategoryUi>, 
 }
 
 @Composable
-private fun Summary(label: String, value: String, modifier: Modifier) {
+private fun Summary(label: String, value: String, modifier: Modifier, income: Boolean) {
     val tokens = LocalAppExperienceTokens.current
     val finanza = LocalAppExperience.current == AppExperience.FINANZA
     Column(
@@ -129,6 +133,11 @@ private fun Summary(label: String, value: String, modifier: Modifier) {
             .padding(if (tokens.denseLists) 16.dp else 18.dp)
     ) {
         Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.56f))
-        Text(value, style = MaterialTheme.typography.titleLarge, maxLines = 1)
+        Text(
+            value,
+            style = MaterialTheme.typography.titleLarge,
+            color = if (finanza && income) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            maxLines = 1
+        )
     }
 }

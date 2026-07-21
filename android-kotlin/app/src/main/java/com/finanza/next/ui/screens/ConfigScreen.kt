@@ -1,6 +1,7 @@
 package com.finanza.next.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -69,6 +70,7 @@ fun ConfigScreen(state: ConfigUiState, actions: ConfigActions) {
         Text("Ajustes", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 20.dp, top = 18.dp, bottom = 12.dp))
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp).clip(RoundedCornerShape(tokens.cardRadius + 2.dp)).background(if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
+                .border(1.dp, if (finanza) MaterialTheme.colorScheme.outlineVariant else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(tokens.cardRadius + 2.dp))
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

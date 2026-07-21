@@ -1,6 +1,7 @@
 package com.finanza.next.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,7 +48,8 @@ fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(tokens.cardRadius))
-            .background(if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface),
+            .background(if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
+            .border(1.dp, if (finanza) MaterialTheme.colorScheme.outlineVariant else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(tokens.cardRadius)),
         content = content
     )
 }

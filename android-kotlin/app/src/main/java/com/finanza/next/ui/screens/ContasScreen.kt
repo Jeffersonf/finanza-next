@@ -1,6 +1,7 @@
 package com.finanza.next.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -60,7 +61,9 @@ fun ContasScreen(
             Text("Contas", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(18.dp))
             Row(
-                Modifier.fillMaxWidth().clip(heroShape).background(heroColor).padding(22.dp),
+                Modifier.fillMaxWidth().clip(heroShape).background(heroColor)
+                    .border(1.dp, if (finanza) MaterialTheme.colorScheme.outlineVariant else androidx.compose.ui.graphics.Color.Transparent, heroShape)
+                    .padding(22.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
