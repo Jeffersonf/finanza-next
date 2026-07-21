@@ -167,6 +167,7 @@ O menu do Android deve mostrar apenas fluxos funcionais. Modulos futuros nao apa
 - captura visual posterior a instalacao confirma que nao ha ActionBar nativa nem titulo "Next" acima da interface Compose
 - dashboard, contas e analise do tema Finanza escuro revisados em Xiaomi Android 15; a barra inferior continua sendo o controle flutuante The Box compartilhado pelos dois temas
 - analise Finanza clara e escura revisada no Xiaomi, incluindo legenda, barras e distribuicao por categoria; a preferencia final do aparelho voltou para Finanza escuro
+- login renderizado e verificado nos dois temas e nos modos claro/escuro, preservando entrada online e o modo local; a bateria instrumentada conta com 38 testes no Xiaomi
 - quatro aberturas frias consecutivas no Xiaomi ficaram entre 1,32 s e 1,40 s; a navegacao por toque e gesto e coberta pela bateria instrumentada
 - captura rapida validada por teste instrumentado no aparelho: valor -> descricao, sem etapas extras
 - teclado automatico, foco no valor, moeda em real e composicao visual validados no aparelho
