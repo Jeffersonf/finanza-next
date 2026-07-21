@@ -29,6 +29,7 @@ O Android passa a ser **um unico app funcional com dois temas completos**. Next 
 - A Central Finanza organiza os modulos em uma grade compacta, preservando todas as entradas sem alongar a tela; rotulos e mensagens principais receberam revisao de acentuacao em portugues.
 - Estados vazios dos modulos agora seguem a hierarquia dos cards Finanza: icone nativo, contexto curto e uma unica acao de cadastro; a composicao foi revisada no Xiaomi Android 15 e a bateria instrumentada passou com 38 testes.
 - Os itens internos da Central Finanza receberam um layout proprio, mais proximo das linhas financeiras do web: icone, descricao, valor, status e acoes compactas, enquanto o tema Next preserva seus cards atuais.
+- O editor dos modulos agora limita a folha a 66% da tela, rola somente os campos e fixa a confirmacao na base, evitando folhas extensas e a perda da acao de salvar.
 
 ### Proximos marcos
 

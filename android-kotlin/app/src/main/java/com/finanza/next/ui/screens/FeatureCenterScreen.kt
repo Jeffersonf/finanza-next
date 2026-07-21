@@ -502,7 +502,7 @@ private fun FinanzaFeatureItemCard(
 private fun FeatureEditor(title: String, fields: List<FeatureFieldUi>, onDismiss: () -> Unit, onSave: (Map<String, String>) -> Boolean) {
     val values = remember(fields) { mutableStateMapOf<String, String>().apply { fields.forEach { put(it.key, it.value) } } }
     var validationError by remember(fields) { mutableStateOf(false) }
-    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.72f
+    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.66f
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val tokens = LocalAppExperienceTokens.current
     ModalBottomSheet(
@@ -511,34 +511,37 @@ private fun FeatureEditor(title: String, fields: List<FeatureFieldUi>, onDismiss
         containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = tokens.sheetRadius, topEnd = tokens.sheetRadius)
     ) {
-        Column(Modifier.fillMaxWidth().heightIn(max = maxHeight).verticalScroll(rememberScrollState()).imePadding().padding(horizontal = 18.dp).padding(bottom = 24.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 14.dp))
-            fields.forEach { field ->
-                if (field.kind == FeatureFieldKind.CHOICE) {
-                    Text(field.label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp, bottom = 5.dp))
-                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        field.options.forEach { option ->
-                            FilterChip(selected = values[field.key] == option, onClick = { values[field.key] = option }, label = { Text(option, maxLines = 1) })
-                        }
-                    }
-                } else {
-                    OutlinedTextField(
-                        value = values[field.key].orEmpty(),
-                        onValueChange = { values[field.key] = it },
-                        label = { Text(field.label) },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = when (field.kind) {
-                                FeatureFieldKind.MONEY -> KeyboardType.Decimal
-                                FeatureFieldKind.NUMBER -> KeyboardType.Number
-                                else -> KeyboardType.Text
+        Column(Modifier.fillMaxWidth().heightIn(max = maxHeight).imePadding().padding(horizontal = 18.dp).padding(bottom = 18.dp)) {
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 14.dp))
+                fields.forEach { field ->
+                    if (field.kind == FeatureFieldKind.CHOICE) {
+                        Text(field.label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp, bottom = 5.dp))
+                        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            field.options.forEach { option ->
+                                FilterChip(selected = values[field.key] == option, onClick = { values[field.key] = option }, label = { Text(option, maxLines = 1) })
                             }
+                        }
+                    } else {
+                        OutlinedTextField(
+                            value = values[field.key].orEmpty(),
+                            onValueChange = { values[field.key] = it },
+                            label = { Text(field.label) },
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = when (field.kind) {
+                                    FeatureFieldKind.MONEY -> KeyboardType.Decimal
+                                    FeatureFieldKind.NUMBER -> KeyboardType.Number
+                                    else -> KeyboardType.Text
+                                }
+                            )
                         )
-                    )
+                    }
                 }
             }
-            if (validationError) Text("Revise os campos obrigatorios e os valores informados.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            HorizontalDivider(Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            if (validationError) Text("Revise os campos obrigatórios e os valores informados.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 10.dp))
             Button(onClick = {
                 validationError = false
                 if (!onSave(values.toMap())) validationError = true
