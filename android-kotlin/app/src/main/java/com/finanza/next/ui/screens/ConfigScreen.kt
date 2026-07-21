@@ -109,14 +109,14 @@ fun ConfigScreen(state: ConfigUiState, actions: ConfigActions) {
             if (state.pendingSync > 0) SettingsRow("Pendencias locais", state.pendingSync.toString(), actions.sync)
             if (state.syncError.isNotBlank()) SettingsRow("Ultimo erro", state.syncError)
             SettingsRow("Compartilhar backup", onClick = actions.backup)
-            SettingsRow("Diagnostico", onClick = actions.diagnostics)
+            SettingsRow("Diagnóstico", onClick = actions.diagnostics)
             SettingsRow("Apagar dados locais", onClick = actions.clearData, showDivider = false)
         }
         SettingsSectionTitle("Seguranca")
         SettingsGroup {
             SettingsRow("Autenticação em duas etapas", if (state.twoFactor) "Ativa" else "Desativada", actions.security)
             if (state.role == "admin") {
-                SettingsRow("Administracao", state.role, actions.admin, showDivider = false)
+                SettingsRow("Administração", state.role, actions.admin, showDivider = false)
             } else {
                 SettingsRow("Perfil de acesso", state.role.ifBlank { "local" }, showDivider = false)
             }

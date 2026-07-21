@@ -298,7 +298,7 @@ class MainActivity : ComponentActivity() {
             val decoded = android.util.Base64.decode(raw, android.util.Base64.DEFAULT)
             JSONObject(decoded.toString(Charsets.UTF_8))
         }.getOrElse {
-            Toast.makeText(this, "Este convite nao e valido.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Este convite não é válido.", Toast.LENGTH_LONG).show()
             return
         }
         val people = payload.optJSONArray("people")?.length() ?: 0
@@ -308,7 +308,7 @@ class MainActivity : ComponentActivity() {
             addView(primaryButton("Aceitar convite") {
                 val mutation = featureStore.mergeSharedInvite(payload)
                 if (mutation == null) {
-                    Toast.makeText(this@MainActivity, "Nao foi possivel aplicar o convite.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@MainActivity, "Não foi possível aplicar o convite.", Toast.LENGTH_LONG).show()
                     return@primaryButton
                 }
                 syncFeatureMutationAsync(mutation)
@@ -316,7 +316,7 @@ class MainActivity : ComponentActivity() {
                 render()
                 Toast.makeText(this@MainActivity, "Convite aplicado.", Toast.LENGTH_SHORT).show()
             })
-            addView(tertiaryButton("Agora nao") { dialog.dismiss() })
+            addView(tertiaryButton("Agora não") { dialog.dismiss() })
         }
     }
 
@@ -864,7 +864,7 @@ class MainActivity : ComponentActivity() {
             val password = passInput.text.toString()
             val otp = otpInput.text.toString().trim()
             if (baseUrl.isBlank() || username.isBlank() || password.isBlank()) {
-                status.text = "Preencha URL, usuario e senha."
+                status.text = "Preencha URL, usuário e senha."
                 return@primaryButton
             }
             destination.text = "Destino ${urlHostLabel(baseUrl)}"
@@ -997,7 +997,7 @@ class MainActivity : ComponentActivity() {
             addView(username); addView(password); addView(confirmation); addView(recovery)
             addView(primaryButton("Alterar senha") {
                 if (password.text.toString() != confirmation.text.toString()) {
-                    Toast.makeText(this@MainActivity, "As senhas nao conferem.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "As senhas não conferem.", Toast.LENGTH_SHORT).show()
                     return@primaryButton
                 }
                 thread {
@@ -1080,7 +1080,7 @@ class MainActivity : ComponentActivity() {
 
     private fun showAdminDialog() {
         if (!isOnlineMode() || !FinanzaAccountRules.canAdmin(prefs.getString("role", "").orEmpty())) {
-            showInfo("Administracao", "Este recurso esta disponivel apenas para administradores online.")
+            showInfo("Administração", "Este recurso está disponível apenas para administradores online.")
             return
         }
         thread {
@@ -1096,13 +1096,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showAdminUsers(users: JSONArray, overview: JSONObject, audit: JSONArray) {
-        showAppDialog("Administracao", "Usuarios e niveis de acesso do ambiente online.") { dialog ->
+        showAppDialog("Administração", "Usuários e níveis de acesso do ambiente online.") { dialog ->
             val server = overview.optJSONObject("server")
             val transactions = overview.optJSONObject("transactions")
             addView(healthRow("API", "Servidor", if (server?.optString("status") == "ok") "Operacional" else "Sem diagnostico"))
-            addView(healthRow("TX", "Transacoes online", transactions?.optInt("total", 0)?.toString() ?: "0"))
+            addView(healthRow("TX", "Transações online", transactions?.optInt("total", 0)?.toString() ?: "0"))
             addView(healthRow("LOG", "Eventos de auditoria", audit.length().toString()))
-            addView(primaryButton("Novo usuario") { dialog.dismiss(); showCreateAdminUserDialog() })
+            addView(primaryButton("Novo usuário") { dialog.dismiss(); showCreateAdminUserDialog() })
             for (index in 0 until users.length()) {
                 val user = users.optJSONObject(index) ?: continue
                 addView(settingsCard(
@@ -1123,13 +1123,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showCreateAdminUserDialog() {
-        showAppDialog("Novo usuario", "Crie um acesso para o mesmo ambiente do Finanza.") { dialog ->
+        showAppDialog("Novo usuário", "Crie um acesso para o mesmo ambiente do Finanza.") { dialog ->
             val name = input("Nome", "")
             val username = input("Usuario", "")
             val password = input("Senha", "").apply { inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD }
             val role = input("Perfil (admin/editor/read/guest)", "editor")
             addView(name); addView(username); addView(password); addView(role)
-            addView(primaryButton("Criar usuario") {
+            addView(primaryButton("Criar usuário") {
                 thread {
                     runCatching { accountRepository.createUser(name.text.toString(), username.text.toString(), password.text.toString(), role.text.toString().trim()) }
                         .onSuccess { runOnUiThread { dialog.dismiss(); showAdminDialog() } }
@@ -1151,7 +1151,7 @@ class MainActivity : ComponentActivity() {
                     }
                 })
             }
-            addView(dangerButton("Excluir usuario") {
+            addView(dangerButton("Excluir usuário") {
                 thread {
                     runCatching { accountRepository.deleteUser(id, prefs.getString("user_remote_id", "").orEmpty()) }
                         .onSuccess { runOnUiThread { dialog.dismiss(); showAdminDialog() } }
@@ -1288,7 +1288,7 @@ class MainActivity : ComponentActivity() {
 
     private fun syncRemoteNow(silent: Boolean = false, onComplete: (() -> Unit)? = null, onError: ((String) -> Unit)? = null) {
         if (prefs.getBoolean("session_expired", false)) {
-            val message = "Sessao expirada. Entre novamente para enviar as pendencias."
+            val message = "Sessão expirada. Entre novamente para enviar as pendências."
             if (!silent) Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
             onError?.invoke(message)
             return
@@ -1440,7 +1440,7 @@ class MainActivity : ComponentActivity() {
                 enqueueCoreMutation(mode, entry, previous)
                 runOnUiThread {
                     rememberSyncError(mutation.exceptionOrNull()?.message ?: "Falha ao sincronizar lancamento.")
-                    Toast.makeText(this@MainActivity, "Nao foi possivel sincronizar agora. Seus dados locais foram mantidos.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Não foi possível sincronizar agora. Seus dados locais foram mantidos.", Toast.LENGTH_SHORT).show()
                     FinanzaWidgets.updateAll(this@MainActivity)
                 }
                 return@thread
@@ -1607,7 +1607,7 @@ class MainActivity : ComponentActivity() {
                 .onFailure {
                     featureStore.enqueue(mutation)
                     runOnUiThread {
-                        Toast.makeText(this@MainActivity, "Alteracao salva no aparelho e adicionada a fila de sincronizacao.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, "Alteração salva no aparelho e adicionada à fila de sincronização.", Toast.LENGTH_SHORT).show()
                         render()
                     }
                 }
@@ -1685,7 +1685,7 @@ class MainActivity : ComponentActivity() {
         runCatching {
             startActivity(Intent.createChooser(shareIntent, "Compartilhar backup"))
         }.onFailure {
-            Toast.makeText(this, "Nao foi possivel abrir o compartilhamento.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Não foi possível abrir o compartilhamento.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -1756,9 +1756,9 @@ class MainActivity : ComponentActivity() {
             if (entryFingerprint(candidate) in known) duplicateCount++
         }
         showAppDialog("Revisar backup", "Confira o conteudo antes de alterar os dados deste aparelho.") { dialog ->
-            addView(healthRow("\uD83E\uDDFE", "Transacoes", importedTransactions.length().toString()))
+            addView(healthRow("\uD83E\uDDFE", "Transações", importedTransactions.length().toString()))
             addView(healthRow("\uD83C\uDFE6", "Contas", (data.optJSONArray("accounts") ?: JSONArray()).length().toString()))
-            addView(healthRow("\uD83C\uDFAF", "Orcamentos e metas", "${(data.optJSONArray("budgets") ?: JSONArray()).length()} + ${(data.optJSONArray("goals") ?: JSONArray()).length()}"))
+            addView(healthRow("\uD83C\uDFAF", "Orçamentos e metas", "${(data.optJSONArray("budgets") ?: JSONArray()).length()} + ${(data.optJSONArray("goals") ?: JSONArray()).length()}"))
             addView(healthRow("\uD83D\uDCC5", "Vencimentos", ((data.optJSONArray("dueItems") ?: data.optJSONArray("future")) ?: JSONArray()).length().toString()))
             addView(body("$duplicateCount transacao(oes) ja existem e serao ignoradas ao mesclar.", 12, muted).apply { setPadding(0, dp(10), 0, dp(4)) })
             addView(primaryButton("Mesclar sem duplicar") { performBackupImport(data, true, dialog) })
@@ -1982,7 +1982,7 @@ class MainActivity : ComponentActivity() {
                 "full_import",
                 JSONObject().put("method", "PUT").put("path", FinanzaApiRoutes.IMPORT).put("body", payload)
             )
-            rememberSyncError(error.message ?: "Importacao aguardando sincronizacao.")
+            rememberSyncError(error.message ?: "Importação aguardando sincronização.")
         }
     }
 
@@ -2071,7 +2071,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showDataHealth() {
-        showAppDialog("Diagnostico", "Estado deste aparelho no Next.") { dialog ->
+        showAppDialog("Diagnóstico", "Estado deste aparelho no Finanza.") { dialog ->
             val lastSync = prefs.getString("last_sync_date", "")?.ifBlank { "Nunca" } ?: "Nunca"
             addView(healthRow("\uD83D\uDCCB", "Movimentos", entries().size.toString()))
             addView(healthRow("\uD83C\uDFE6", "Contas", accounts().size.toString()))
@@ -2875,7 +2875,7 @@ class MainActivity : ComponentActivity() {
             editProfile = ::showProfileDialog,
             openAccount = ::showOnlineAccessDialog,
             editBudget = {
-                showTextSetting("Orcamento mensal", prefs.getFloat("monthly_budget", 5000f).toString(), true) { raw ->
+                showTextSetting("Orçamento mensal", prefs.getFloat("monthly_budget", 5000f).toString(), true) { raw ->
                     raw.replace(",", ".").toFloatOrNull()?.takeIf { it > 0 }?.let { prefs.edit().putFloat("monthly_budget", it).apply() }
                     render()
                 }

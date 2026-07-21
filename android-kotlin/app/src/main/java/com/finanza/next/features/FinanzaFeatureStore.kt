@@ -409,7 +409,7 @@ class FinanzaFeatureStore(
             field("category", "Categoria"),
             field("limit", "Limite", kind = FeatureFieldKind.MONEY)
         )
-        return FeatureModuleUi("budgets", "Orcamentos", "Limites por categoria", "\uD83C\uDFAF", items(arrayKey("feature_budgets")) { item ->
+        return FeatureModuleUi("budgets", "Orçamentos", "Limites por categoria", "\uD83C\uDFAF", items(arrayKey("feature_budgets")) { item ->
             val limit = item.optDouble("limit")
             val spent = spending[item.optString("category")] ?: 0.0
             featureItem(item, item.optString("category", "Categoria"), "${money.format(spent)} de ${money.format(limit)}", money.format(limit), "\uD83C\uDFAF", fields,
@@ -462,7 +462,7 @@ class FinanzaFeatureStore(
             field("strategy", "Estrategia", "custom", FeatureFieldKind.CHOICE, listOf("custom", "snowball", "avalanche")),
             field("status", "Status", "active", FeatureFieldKind.CHOICE, listOf("active", "watch", "closed")), field("notes", "Observacao")
         )
-        return simpleMoneyModule("debts", "Dividas", "Parcelas e quitacao", "\uD83E\uDDFE", fields, "outstandingAmount", "nextDueDate", "Registrar parcela")
+        return simpleMoneyModule("debts", "Dívidas", "Parcelas e quitação", "\uD83E\uDDFE", fields, "outstandingAmount", "nextDueDate", "Registrar parcela")
     }
 
     private fun contractModule(): FeatureModuleUi {

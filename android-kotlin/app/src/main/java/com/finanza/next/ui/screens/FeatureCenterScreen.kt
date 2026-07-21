@@ -112,28 +112,42 @@ private fun FeatureHub(
             ScreenHeader(if (finanza) "Central Finanza" else "Central Next", if (finanza) "Módulos, dados e sincronização" else "Todos os módulos", onClose)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusPill(if (state.online) "Online" else "Local", if (state.online) Color(0xFF34C759) else Color(0xFFFF9F0A), Modifier.weight(1f))
-                StatusPill("${state.pendingSync} pendencias", MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+                StatusPill("${state.pendingSync} pendências", MaterialTheme.colorScheme.primary, Modifier.weight(1f))
             }
             Spacer(Modifier.height(16.dp))
         }
-        items(state.modules, key = { it.id }) { module ->
-            val tokens = LocalAppExperienceTokens.current
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 9.dp).clickable { onModule(module.id) },
-                shape = RoundedCornerShape(tokens.cardRadius),
-                color = if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
-                tonalElevation = 0.dp
-            ) {
-                Row(Modifier.padding(if (tokens.denseLists) 15.dp else 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.11f)),
-                        contentAlignment = Alignment.Center
-                    ) { Icon(featureIcon(module.id), contentDescription = null, modifier = Modifier.size(22.dp)) }
-                    Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                        Text(module.title, style = MaterialTheme.typography.titleMedium)
-                        Text(module.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.56f))
+        if (finanza) {
+            items(state.modules.chunked(2), key = { modules -> modules.joinToString("|") { it.id } }) { row ->
+                Row(
+                    Modifier.fillMaxWidth().padding(bottom = 9.dp),
+                    horizontalArrangement = Arrangement.spacedBy(9.dp)
+                ) {
+                    row.forEach { module ->
+                        FinanzaFeatureTile(module, { onModule(module.id) }, Modifier.weight(1f))
                     }
-                    Text(module.items.size.toString(), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f), fontWeight = FontWeight.SemiBold)
+                    if (row.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+        } else {
+            items(state.modules, key = { it.id }) { module ->
+                val tokens = LocalAppExperienceTokens.current
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 9.dp).clickable { onModule(module.id) },
+                    shape = RoundedCornerShape(tokens.cardRadius),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp
+                ) {
+                    Row(Modifier.padding(if (tokens.denseLists) 15.dp else 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.11f)),
+                            contentAlignment = Alignment.Center
+                        ) { Icon(featureIcon(module.id), contentDescription = null, modifier = Modifier.size(22.dp)) }
+                        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                            Text(module.title, style = MaterialTheme.typography.titleMedium)
+                            Text(module.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.56f))
+                        }
+                        Text(module.items.size.toString(), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f), fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
@@ -148,6 +162,31 @@ private fun FeatureHub(
                     ActionButton("Sincronizar agora", Icons.Rounded.Sync, actions.sync)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FinanzaFeatureTile(module: FeatureModuleUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val tokens = LocalAppExperienceTokens.current
+    Surface(
+        modifier = modifier.heightIn(min = 124.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(tokens.cardRadius),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(featureIcon(module.id), contentDescription = null, modifier = Modifier.size(19.dp)) }
+                Spacer(Modifier.weight(1f))
+                Text(module.items.size.toString(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.height(11.dp))
+            Text(module.title, style = MaterialTheme.typography.titleSmall, maxLines = 2)
+            Text(module.subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, modifier = Modifier.padding(top = 3.dp))
         }
     }
 }
@@ -192,7 +231,7 @@ private fun FeatureModuleScreen(module: FeatureModuleUi, actions: FeatureActions
             if (module.trends.isNotEmpty()) {
                 Surface(shape = RoundedCornerShape(tokens.cardRadius - 2.dp), color = if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface) {
                     Column(Modifier.fillMaxWidth().padding(if (tokens.denseLists) 14.dp else 16.dp)) {
-                        Text("Evolucao mensal", style = MaterialTheme.typography.titleSmall)
+                        Text("Evolução mensal", style = MaterialTheme.typography.titleSmall)
                         Row(Modifier.fillMaxWidth().height(108.dp).padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.Bottom) {
                             module.trends.forEach { trend ->
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
