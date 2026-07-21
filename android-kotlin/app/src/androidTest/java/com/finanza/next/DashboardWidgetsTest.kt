@@ -4,6 +4,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import org.junit.Rule
@@ -25,7 +26,9 @@ class DashboardWidgetsTest {
 
     @Test
     fun editorExposesWebDashboardControls() {
-        composeRule.onNodeWithText("Editar").performClick()
+        val edit = composeRule.onAllNodesWithText("Editar")
+        if (edit.fetchSemanticsNodes().isNotEmpty()) edit[0].performClick()
+        else composeRule.onNodeWithContentDescription("Personalizar início").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("Editar widgets").fetchSemanticsNodes().isNotEmpty()
         }

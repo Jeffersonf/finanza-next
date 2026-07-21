@@ -33,8 +33,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.finanza.next.ui.theme.LocalAppExperienceTokens
-import com.finanza.next.ui.theme.AppExperience
-import com.finanza.next.ui.theme.LocalAppExperience
 
 enum class AppTab(val label: String) { HOME("Início"), CONTAS("Contas"), ANALISE("Análise"), CONFIG("Ajustes") }
 
@@ -87,18 +85,12 @@ private fun NavItem(
     modifier: Modifier = Modifier
 ) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
     val contentColor = when {
-        selected && finanza -> MaterialTheme.colorScheme.onPrimary
         selected -> Color.White
         dark -> Color.White.copy(alpha = 0.58f)
         else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.56f)
     }
-    val selectedColor = when {
-        finanza -> MaterialTheme.colorScheme.primary
-        dark -> tokens.navSelectedDark
-        else -> tokens.navSelectedLight
-    }
+    val selectedColor = if (dark) tokens.navSelectedDark else tokens.navSelectedLight
 
     Box(
         modifier = modifier.fillMaxSize().clip(RoundedCornerShape(tokens.navSelectedRadius))

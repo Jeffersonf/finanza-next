@@ -38,7 +38,7 @@ class ExperienceThemeRenderTest {
             }
         }
 
-        composeRule.onNodeWithText("Voce").assertIsDisplayed()
+        composeRule.onNodeWithText(if (experience == AppExperience.FINANZA) "Início" else "Voce").assertIsDisplayed()
         composeRule.onNodeWithText("Atalhos do Finanza").assertIsDisplayed()
     }
 

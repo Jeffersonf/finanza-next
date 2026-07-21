@@ -370,6 +370,10 @@ class MainActivity : ComponentActivity() {
             @Suppress("DEPRECATION")
             window.navigationBarDividerColor = Color.TRANSPARENT
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isStatusBarContrastEnforced = false
+            window.isNavigationBarContrastEnforced = false
+        }
     }
 
     private fun render() {

@@ -31,9 +31,9 @@ class NavigationGesturesTest {
         composeRule.onNodeWithText("Atalhos do Finanza").assertIsDisplayed()
         composeRule.onNodeWithTag("mainPager").performTouchInput { swipeLeft(durationMillis = 1_000) }
         composeRule.waitUntil(5_000) {
-            runCatching { composeRule.onNodeWithText("Leitura do mês").assertIsDisplayed() }.isSuccess
+            runCatching { composeRule.onNodeWithText("Contas e carteiras").assertIsDisplayed() }.isSuccess
         }
-        composeRule.onNodeWithText("Leitura do mês").assertIsDisplayed()
+        composeRule.onNodeWithText("Contas e carteiras").assertIsDisplayed()
     }
 
     @Test

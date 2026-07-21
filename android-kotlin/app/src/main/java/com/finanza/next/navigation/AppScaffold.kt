@@ -25,9 +25,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -53,8 +50,6 @@ import com.finanza.next.ui.screens.FeatureCenterScreen
 import com.finanza.next.features.FeatureActions
 import com.finanza.next.features.FeatureCenterUiState
 import com.finanza.next.ui.theme.LocalAppExperienceTokens
-import com.finanza.next.ui.theme.AppExperience
-import com.finanza.next.ui.theme.LocalAppExperience
 
 data class AppUiState(
     val selectedTab: AppTab,
@@ -101,10 +96,6 @@ fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boo
     val tabs = AppTab.entries
     val scope = rememberCoroutineScope()
     val tokens = LocalAppExperienceTokens.current
-    val finanzaDark = LocalAppExperience.current == AppExperience.FINANZA && MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val finanzaBackground = MaterialTheme.colorScheme.background
-    val finanzaPrimary = MaterialTheme.colorScheme.primary
-    val finanzaTeal = MaterialTheme.colorScheme.tertiary
     val pagerState = rememberPagerState(
         initialPage = tabs.indexOf(selectedTab).coerceAtLeast(0),
         pageCount = { tabs.size }
@@ -147,31 +138,11 @@ fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boo
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = if (finanzaDark) Color.Transparent else MaterialTheme.colorScheme.background,
+        color = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) {
         Box(
             Modifier.fillMaxSize()
-                .then(
-                    if (finanzaDark) Modifier.drawBehind {
-                        drawRect(finanzaBackground)
-                        drawCircle(
-                            color = finanzaPrimary.copy(alpha = 0.08f),
-                            radius = size.width * 0.78f,
-                            center = Offset(size.width * 0.50f, -size.height * 0.10f)
-                        )
-                        drawCircle(
-                            color = finanzaTeal.copy(alpha = 0.055f),
-                            radius = size.width * 0.56f,
-                            center = Offset(size.width * 1.05f, size.height * 0.60f)
-                        )
-                        drawCircle(
-                            color = Color(0xFFA78BFA).copy(alpha = 0.045f),
-                            radius = size.width * 0.46f,
-                            center = Offset(-size.width * 0.05f, size.height * 0.88f)
-                        )
-                    } else Modifier
-                )
                 .statusBarsPadding()
                 .nestedScroll(scrollConnection)
         ) {
@@ -182,7 +153,6 @@ fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boo
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = tokens.navHeight + 20.dp)
                     .testTag("mainPager"),
                 key = { tabs[it] }
             ) { page ->

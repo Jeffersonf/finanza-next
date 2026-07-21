@@ -21,7 +21,8 @@ O Android passa a ser **um unico app funcional com dois temas completos**. Next 
 - As Fases 1 a 6 estao presentes no codigo e usam a mesma base de dados, sessao e sincronizacao.
 - A consolidacao visual e de desempenho e a entrega ativa: eliminar regressoes de navbar, modais e tema escuro antes de adicionar novas telas.
 - A navbar agora inicia em **Inicio** e a troca de aba nao reconstrói o estado financeiro; clique troca a pagina imediatamente e o gesto lateral continua habilitado.
-- A validacao em aparelho real fica pendente enquanto o telefone estiver desconectado. Build, lint e testes internos continuam obrigatorios a cada alteracao.
+- Nesta rodada, a navbar foi unificada como controle The Box nos dois temas, o espaco residual sob ela foi removido e a imposicao de contraste das barras do sistema foi desativada.
+- `assembleDebug` e testes JVM passaram. A repeticao dos testes instrumentados e das capturas no Xiaomi aguarda somente o aceite de instalacao do aparelho, que bloqueou a reinstalacao automatica apos a suite anterior.
 
 ### Proximos marcos
 
