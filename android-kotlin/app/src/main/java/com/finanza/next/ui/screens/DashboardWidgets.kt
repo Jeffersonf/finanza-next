@@ -138,6 +138,7 @@ fun DashboardWidgets(
     showManagerHeader: Boolean = true
 ) {
     val context = LocalContext.current
+    val finanza = LocalAppExperience.current == AppExperience.FINANZA
     var config by remember { mutableStateOf(loadDashboardWidgetConfig(context)) }
     var editing by remember { mutableStateOf(false) }
 
@@ -151,7 +152,14 @@ fun DashboardWidgets(
         DashboardManagerHeader(config.active.size, dashboardWidgetDefs.size) { editing = true }
         Spacer(Modifier.height(10.dp))
     }
-    config.order.filter(config.active::contains).filterNot(hiddenWidgetIds::contains).forEach { id ->
+    val orderedWidgetIds = config.order
+        .filter(config.active::contains)
+        .filterNot(hiddenWidgetIds::contains)
+        .let { ids ->
+            if (!finanza || "workbench" !in ids) ids
+            else ids.filterNot { it == "workbench" } + "workbench"
+        }
+    orderedWidgetIds.forEach { id ->
         when (id) {
             "workbench" -> DashboardWorkbench(onAccounts, onAnalysis, onFeatures, onSettings)
             "cards" -> HeroBalanceCard("Disponível", period, balance, income, spent)
