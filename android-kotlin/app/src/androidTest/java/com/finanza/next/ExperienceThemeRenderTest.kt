@@ -32,6 +32,20 @@ class ExperienceThemeRenderTest {
     @Test
     fun appScaffoldRendersInFinanzaDark() = render(AppExperience.FINANZA, dark = true)
 
+    @Test
+    fun finanzaDashboardUsesWebSummaryWithoutManagerStrip() {
+        composeRule.setContent {
+            FinanceAppTheme(darkTheme = true, experience = AppExperience.FINANZA) {
+                AppScaffold(emptyState(), emptyActions())
+            }
+        }
+
+        listOf("Saldo total", "Receitas", "Despesas", "A pagar", "Início").forEach { label ->
+            composeRule.onNodeWithText(label, ignoreCase = true).assertIsDisplayed()
+        }
+        check(composeRule.onAllNodesWithText("Widgets do painel").fetchSemanticsNodes().isEmpty())
+    }
+
     private fun render(experience: AppExperience, dark: Boolean) {
         composeRule.setContent {
             FinanceAppTheme(darkTheme = dark, experience = experience) {

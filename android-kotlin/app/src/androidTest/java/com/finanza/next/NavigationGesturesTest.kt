@@ -46,4 +46,9 @@ class NavigationGesturesTest {
         }
         composeRule.onNodeWithTag("accountsScreen").assertIsDisplayed()
     }
+
+    @Test
+    fun mainActivityHasNoNativeActionBar() {
+        check(composeRule.activity.actionBar == null)
+    }
 }
