@@ -81,29 +81,31 @@ fun ContasScreen(
                 Text("Planejamento", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f))
                 Text("Contas", style = MaterialTheme.typography.headlineMedium)
             }
-            Spacer(Modifier.height(18.dp))
-            Row(
-                Modifier.fillMaxWidth().clip(heroShape).background(heroColor)
-                    .border(1.dp, if (finanza) MaterialTheme.colorScheme.outlineVariant else androidx.compose.ui.graphics.Color.Transparent, heroShape)
-                    .padding(22.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(if (finanza) "VISÃO CONSOLIDADA" else period.uppercase(), color = heroMuted, style = MaterialTheme.typography.labelSmall)
-                    Text(total, color = heroInk, style = MaterialTheme.typography.headlineLarge)
-                    Spacer(Modifier.height(10.dp))
-                    Text(if (finanza) "Fatura paga: $paid" else "$paid pago", color = heroMuted, style = MaterialTheme.typography.bodySmall)
-                    Text(if (finanza) "Em aberto: $remaining" else "$remaining restante", color = heroMuted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(if (finanza) 16.dp else 18.dp))
+            if (!finanza) {
+                Row(
+                    Modifier.fillMaxWidth().clip(heroShape).background(heroColor)
+                        .border(1.dp, androidx.compose.ui.graphics.Color.Transparent, heroShape)
+                        .padding(22.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(period.uppercase(), color = heroMuted, style = MaterialTheme.typography.labelSmall)
+                        Text(total, color = heroInk, style = MaterialTheme.typography.headlineLarge)
+                        Spacer(Modifier.height(10.dp))
+                        Text("$paid pago", color = heroMuted, style = MaterialTheme.typography.bodySmall)
+                        Text("$remaining restante", color = heroMuted, style = MaterialTheme.typography.bodySmall)
+                    }
+                    CircularProgressRing(progress)
                 }
-                CircularProgressRing(progress)
+                Spacer(Modifier.height(25.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Suas contas", style = MaterialTheme.typography.titleMedium)
+                    Text("${accounts.size} ativas", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.52f))
+                }
+                Spacer(Modifier.height(6.dp))
             }
-            Spacer(Modifier.height(25.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(if (finanza) "Contas e carteiras" else "Suas contas", style = MaterialTheme.typography.titleMedium)
-                Text("${accounts.size} ativas", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.52f))
-            }
-            Spacer(Modifier.height(6.dp))
         }
         if (finanza) {
             items(accounts.chunked(2), key = { row -> row.joinToString(separator = "-") { it.id } }) { row ->
