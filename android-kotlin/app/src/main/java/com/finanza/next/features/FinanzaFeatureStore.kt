@@ -383,7 +383,7 @@ class FinanzaFeatureStore(
         for (index in 0 until incomingPeople.length()) incomingPeople.optJSONObject(index)?.let(::append)
         val next = JSONObject(current.toString())
             .put("mode", incoming.optString("mode", current.optString("mode", "couple")))
-            .put("name", incoming.optString("name", current.optString("name", "Meu espaco")))
+            .put("name", incoming.optString("name", current.optString("name", "Meu espaço")))
             .put("ownerPersonId", ownerId)
             .put("people", merged)
         prefs.edit().putString("feature_shared", normalizeShared(next).toString()).apply()
@@ -415,7 +415,7 @@ class FinanzaFeatureStore(
             featureItem(item, item.optString("category", "Categoria"), "${money.format(spent)} de ${money.format(limit)}", money.format(limit), "\uD83C\uDFAF", fields,
                 progress = if (limit > 0) (spent / limit).toFloat().coerceIn(0f, 1f) else 0f,
                 status = if (spent > limit) "Excedido" else "Disponivel")
-        }, fields, "Nenhum orcamento criado.")
+        }, fields, "Nenhum orçamento criado.")
     }
 
     private fun goalModule(): FeatureModuleUi {
@@ -424,7 +424,7 @@ class FinanzaFeatureStore(
             field("target", "Objetivo", kind = FeatureFieldKind.MONEY),
             field("current", "Guardado", kind = FeatureFieldKind.MONEY),
             field("deadline", "Prazo", LocalDate.now().plusMonths(6).toString(), FeatureFieldKind.DATE),
-            field("monthly", "Aporte mensal", kind = FeatureFieldKind.MONEY), field("desc", "Descricao")
+            field("monthly", "Aporte mensal", kind = FeatureFieldKind.MONEY), field("desc", "Descrição")
         )
         return FeatureModuleUi("goals", "Metas", "Objetivos e aportes", "\uD83C\uDFC1", items(arrayKey("feature_goals")) { item ->
             val target = item.optDouble("target")
@@ -441,10 +441,10 @@ class FinanzaFeatureStore(
             field("category", "Categoria"), field("renewalDate", "Proxima cobranca", LocalDate.now().plusMonths(1).toString(), FeatureFieldKind.DATE),
             field("billingDay", "Dia de cobranca", LocalDate.now().dayOfMonth.toString(), FeatureFieldKind.NUMBER),
             field("paymentMethod", "Forma de pagamento", "credit", FeatureFieldKind.CHOICE, listOf("credit", "debit", "pix", "cash")),
-            field("accountId", "Conta ou cartao"),
+            field("accountId", "Conta ou cartão"),
             field("status", "Status", "active", FeatureFieldKind.CHOICE, listOf("active", "paused", "cancelled")),
             field("usage", "Uso", "medium", FeatureFieldKind.CHOICE, listOf("high", "medium", "low")),
-            field("paymentPlace", "Onde paga"), field("notes", "Observacao")
+            field("paymentPlace", "Onde paga"), field("notes", "Observação")
         )
         return simpleMoneyModule("subscriptions", "Assinaturas", "Recorrencias e renovacoes", "\uD83D\uDD01", fields, "amount", "renewalDate")
     }
@@ -458,9 +458,9 @@ class FinanzaFeatureStore(
             field("totalInstallments", "Total de parcelas", kind = FeatureFieldKind.NUMBER),
             field("interestRate", "Juros ao mes", kind = FeatureFieldKind.NUMBER),
             field("nextDueDate", "Proximo vencimento", LocalDate.now().plusMonths(1).toString(), FeatureFieldKind.DATE),
-            field("accountId", "Conta ou cartao"),
+            field("accountId", "Conta ou cartão"),
             field("strategy", "Estrategia", "custom", FeatureFieldKind.CHOICE, listOf("custom", "snowball", "avalanche")),
-            field("status", "Status", "active", FeatureFieldKind.CHOICE, listOf("active", "watch", "closed")), field("notes", "Observacao")
+            field("status", "Status", "active", FeatureFieldKind.CHOICE, listOf("active", "watch", "closed")), field("notes", "Observação")
         )
         return simpleMoneyModule("debts", "Dívidas", "Parcelas e quitação", "\uD83E\uDDFE", fields, "outstandingAmount", "nextDueDate", "Registrar parcela")
     }
@@ -471,8 +471,8 @@ class FinanzaFeatureStore(
             field("monthlyAmount", "Valor mensal", kind = FeatureFieldKind.MONEY),
             field("renewalDate", "Renovacao", LocalDate.now().plusYears(1).toString(), FeatureFieldKind.DATE),
             field("adjustmentDate", "Reajuste", LocalDate.now().plusYears(1).toString(), FeatureFieldKind.DATE),
-            field("accountId", "Conta ou cartao"),
-            field("status", "Status", "active", FeatureFieldKind.CHOICE, listOf("active", "watch", "ended")), field("notes", "Observacao")
+            field("accountId", "Conta ou cartão"),
+            field("status", "Status", "active", FeatureFieldKind.CHOICE, listOf("active", "watch", "ended")), field("notes", "Observação")
         )
         return simpleMoneyModule("contracts", "Contratos", "Servicos e reajustes", "\uD83D\uDCC4", fields, "monthlyAmount", "renewalDate")
     }
@@ -486,7 +486,7 @@ class FinanzaFeatureStore(
         return FeatureModuleUi("shopping", "Compras", "Listas do dia a dia", "\uD83D\uDED2", items(shoppingItems()) { item ->
             featureItem(item, item.optString("name", "Item"), listOf(item.optString("qty"), item.optString("cat")).filter(String::isNotBlank).joinToString(" - "), "",
                 if (item.optBoolean("bought")) "\u2705" else "\uD83D\uDED2", fields, status = if (item.optBoolean("bought")) "Comprado" else "Pendente", primary = if (item.optBoolean("bought")) "Desmarcar" else "Comprar")
-        }, fields, "Sua lista esta vazia.")
+        }, fields, "Sua lista está vazia.")
     }
 
     private fun shoppingListModule(): FeatureModuleUi {
@@ -499,7 +499,7 @@ class FinanzaFeatureStore(
     private fun sharedModule(balances: Map<String, Double>, canWrite: Boolean): FeatureModuleUi {
         val fields = listOf(
             field("name", "Pessoa"),
-            field("permission", "Permissao", "editor", FeatureFieldKind.CHOICE, listOf("editor", "read", "guest")),
+            field("permission", "Permissão", "editor", FeatureFieldKind.CHOICE, listOf("editor", "read", "guest")),
             field("color", "Cor", "#0A84FF")
         )
         return FeatureModuleUi("shared", "Compartilhado", "Pessoas, gastos e acertos", "\uD83D\uDC65", items(sharedPeople()) { item ->
@@ -514,18 +514,18 @@ class FinanzaFeatureStore(
             featureItem(item, item.optString("name", "Pessoa"), permission, money.format(kotlin.math.abs(balance)), "\uD83D\uDC64", fields,
                 status = status, primary = if (owner || !canWrite) "" else "Registrar acerto",
                 canEdit = canWrite, canDelete = canWrite && !owner)
-        }, fields, "Adicione pessoas ao espaco compartilhado.", canCreate = canWrite)
+        }, fields, "Adicione pessoas ao espaço compartilhado.", canCreate = canWrite)
     }
 
     private fun sharedSpaceModule(canWrite: Boolean): FeatureModuleUi {
         val root = sharedState()
         val fields = listOf(
-            field("name", "Nome do espaco"),
+            field("name", "Nome do espaço"),
             field("mode", "Modo", "couple", FeatureFieldKind.CHOICE, listOf("couple", "family", "house"))
         )
         val item = FeatureItemUi(
             "shared_space",
-            root.optString("name", "Meu espaco").ifBlank { "Meu espaco" },
+            root.optString("name", "Meu espaço").ifBlank { "Meu espaço" },
             when (root.optString("mode", "couple")) { "family" -> "Familia"; "house" -> "Casa"; else -> "Casal" },
             "", "", null, "\uD83E\uDD1D",
             fields.map { it.copy(value = root.optString(it.key, it.value)) },
@@ -534,8 +534,8 @@ class FinanzaFeatureStore(
             canDelete = false
         )
         return FeatureModuleUi(
-            "shared_space", "Espaco compartilhado", "Nome, modo e convite", "\uD83E\uDD1D",
-            listOf(item), fields, "Configure o espaco compartilhado.", canCreate = false
+            "shared_space", "Espaço compartilhado", "Nome, modo e convite", "\uD83E\uDD1D",
+            listOf(item), fields, "Configure o espaço compartilhado.", canCreate = false
         )
     }
 
@@ -545,14 +545,14 @@ class FinanzaFeatureStore(
         }.map { it.id }
         val fields = listOf(
             field("type", "Registro", "expense", FeatureFieldKind.CHOICE, listOf("fuel", "expense")),
-            field("vehicleId", "Veiculo", defaultVehicleId(), FeatureFieldKind.CHOICE, vehicleIds.ifEmpty { listOf(defaultVehicleId()) }),
-            field("title", "Descricao"), field("date", "Data", LocalDate.now().toString(), FeatureFieldKind.DATE),
-            field("amount", "Valor", kind = FeatureFieldKind.MONEY), field("odometer", "Hodometro", kind = FeatureFieldKind.NUMBER),
+            field("vehicleId", "Veículo", defaultVehicleId(), FeatureFieldKind.CHOICE, vehicleIds.ifEmpty { listOf(defaultVehicleId()) }),
+            field("title", "Descrição"), field("date", "Data", LocalDate.now().toString(), FeatureFieldKind.DATE),
+            field("amount", "Valor", kind = FeatureFieldKind.MONEY), field("odometer", "Hodômetro", kind = FeatureFieldKind.NUMBER),
             field("fuelType", "Combustivel", "Gasolina", FeatureFieldKind.CHOICE, listOf("Gasolina", "Etanol", "Diesel", "GNV")),
             field("liters", "Litros", kind = FeatureFieldKind.NUMBER), field("pricePerLiter", "Preco por litro", kind = FeatureFieldKind.MONEY),
             field("accountId", "Conta usada"),
             field("category", "Tipo de despesa", "Maintenance", FeatureFieldKind.CHOICE, listOf("Maintenance", "Insurance", "Tax", "Parking", "Wash", "Fine", "Other")),
-            field("note", "Observacao")
+            field("note", "Observação")
         )
         val events = jsonObjects(carEvents())
         val total = events.sumOf { it.optDouble("amount") }
@@ -598,9 +598,9 @@ class FinanzaFeatureStore(
             }.joinToString(" - ")
             featureItem(item, item.optString("title", if (item.optString("type") == "fuel") "Abastecimento" else "Despesa"), detail, money.format(item.optDouble("amount")),
                 if (item.optString("type") == "fuel") "\u26FD" else "\uD83D\uDD27", fields, status = status)
-        }, fields, "Nenhum registro do veiculo.", insights = listOf(
-            FeatureInsightUi("Consumo medio", if (average > 0.0) String.format(Locale.US, "%.1f km/l", average) else "Sem dados", "Dois abastecimentos com hodometro"),
-            FeatureInsightUi("Custo por km", if (distance > 0.0) money.format(total / distance) else "Sem dados", if (distance > 0.0) "${distance.toInt()} km medidos" else "Informe o hodometro"),
+        }, fields, "Nenhum registro do veículo.", insights = listOf(
+            FeatureInsightUi("Consumo médio", if (average > 0.0) String.format(Locale.US, "%.1f km/l", average) else "Sem dados", "Dois abastecimentos com hodômetro"),
+            FeatureInsightUi("Custo por km", if (distance > 0.0) money.format(total / distance) else "Sem dados", if (distance > 0.0) "${distance.toInt()} km medidos" else "Informe o hodômetro"),
             FeatureInsightUi("Manutencao", money.format(maintenanceSpend), "Seguro, imposto e servicos no historico"),
             FeatureInsightUi("Proxima revisao", remainingService?.let { "${it.toInt()} km" } ?: "Sem previsao", nextServiceOdometer?.let { "Em ${it.toInt()} km" } ?: "Registre troca de oleo ou revisao")
         ), trends = months.map { month ->
@@ -616,12 +616,12 @@ class FinanzaFeatureStore(
     private fun vehicleModule(): FeatureModuleUi {
         val fields = listOf(
             field("name", "Nome"), field("plate", "Placa"), field("model", "Modelo e ano"),
-            field("odometer", "Hodometro atual", kind = FeatureFieldKind.NUMBER)
+            field("odometer", "Hodômetro atual", kind = FeatureFieldKind.NUMBER)
         )
-        return FeatureModuleUi("vehicles", "Veiculos", "Garagem e hodometro", "\uD83D\uDE99", items(carVehicles()) { item ->
-            featureItem(item, item.optString("name", "Veiculo"), listOf(item.optString("plate"), item.optString("model")).filter(String::isNotBlank).joinToString(" - "),
+        return FeatureModuleUi("vehicles", "Veículos", "Garagem e hodômetro", "\uD83D\uDE99", items(carVehicles()) { item ->
+            featureItem(item, item.optString("name", "Veículo"), listOf(item.optString("plate"), item.optString("model")).filter(String::isNotBlank).joinToString(" - "),
                 "${item.optDouble("odometer", 0.0).toInt()} km", "\uD83D\uDE99", fields)
-        }, fields, "Nenhum veiculo cadastrado.")
+        }, fields, "Nenhum veículo cadastrado.")
     }
 
     private fun simpleMoneyModule(id: String, title: String, subtitle: String, emoji: String, fields: List<FeatureFieldUi>, amountKey: String, dateKey: String, primary: String = "") =
@@ -836,7 +836,7 @@ class FinanzaFeatureStore(
         }
         return JSONObject(source.toString())
             .put("mode", source.optString("mode", "couple").takeIf { it in setOf("couple", "family", "house") } ?: "couple")
-            .put("name", source.optString("name", "Meu espaco").ifBlank { "Meu espaco" })
+            .put("name", source.optString("name", "Meu espaço").ifBlank { "Meu espaço" })
             .put("ownerPersonId", ownerId)
             .put("people", people)
     }

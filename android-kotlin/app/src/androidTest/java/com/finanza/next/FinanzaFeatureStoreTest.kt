@@ -130,7 +130,7 @@ class FinanzaFeatureStoreTest {
         assertEquals(false, shared.items.first().canEdit)
         assertEquals(true, state.modules.any { it.id == "shared_space" })
         assertEquals(listOf("active", "watch", "closed"), debtStatus.options)
-        assertEquals(true, car.insights.any { it.label == "Consumo medio" && it.value.contains("12.0") })
+        assertEquals(true, car.insights.any { it.label == "Consumo médio" && it.value.contains("12.0") })
         assertEquals(6, car.trends.size)
     }
 

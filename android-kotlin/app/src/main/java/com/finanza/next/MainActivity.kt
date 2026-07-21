@@ -303,8 +303,8 @@ class MainActivity : ComponentActivity() {
         }
         val people = payload.optJSONArray("people")?.length() ?: 0
         val name = payload.optString("name", "Finanza compartilhado")
-        showAppDialog("Entrar em $name?", "$people pessoas fazem parte deste espaco.") { dialog ->
-            addView(body("O convite sera mesclado ao seu espaco. Seus dados e seu perfil principal serao preservados.", 13, muted))
+        showAppDialog("Entrar em $name?", "$people pessoas fazem parte deste espaço.") { dialog ->
+            addView(body("O convite será mesclado ao seu espaço. Seus dados e seu perfil principal serão preservados.", 13, muted))
             addView(primaryButton("Aceitar convite") {
                 val mutation = featureStore.mergeSharedInvite(payload)
                 if (mutation == null) {
@@ -387,11 +387,11 @@ class MainActivity : ComponentActivity() {
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         val panel = dialogPanel()
         val allAccounts = accounts()
-        val titleInput = input("Descricao", existing?.title ?: "")
+        val titleInput = input("Descrição", existing?.title ?: "")
         val categoryInput = input("Categoria", existing?.category ?: "")
         val amountInput = input("Valor", existing?.amount?.toString() ?: "", true)
         val dateInput = input("Data (AAAA-MM-DD)", existing?.date ?: LocalDate.now().toString())
-        val noteInput = input("Observacao", existing?.note ?: "")
+        val noteInput = input("Observação", existing?.note ?: "")
         val installmentsInput = input("Parcelas", existing?.installmentTotal?.takeIf { it > 0 }?.toString() ?: "1", true)
         val recurrenceInput = input("Repetir por quantos meses", "1", true)
         val sharedPeople = featureStore.sharedPeopleOptions()
@@ -403,7 +403,7 @@ class MainActivity : ComponentActivity() {
             if (isEmpty()) addAll(sharedPeople.map { it.first })
         }
         val splitCheck = CheckBox(this).apply {
-            text = "Dividir igualmente no espaco compartilhado"
+            text = "Dividir igualmente no espaço compartilhado"
             setTextColor(ink)
             textSize = 13f
             isChecked = existing?.splitMeta?.isNotBlank() == true
@@ -494,7 +494,7 @@ class MainActivity : ComponentActivity() {
             val amount = amountInput.text.toString().replace(",", ".").toDoubleOrNull()
             val date = dateInput.text.toString().ifBlank { LocalDate.now().toString() }
             if (titleInput.text.isBlank() || amount == null || amount <= 0 || !validDate(date)) {
-                Toast.makeText(this, "Confira descricao, valor e data.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Confira descrição, valor e data.", Toast.LENGTH_SHORT).show()
                 return@primaryButton
             }
             val accountId = if (type == "due") "" else (selectedAccountId ?: allAccounts.firstOrNull()?.id).orEmpty()
@@ -597,7 +597,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showTextSetting(title: String, value: String, numeric: Boolean = false, onSave: (String) -> Unit) {
-        showAppDialog(title, "Atualize este campo no padrao do seu espaco.") { dialog ->
+        showAppDialog(title, "Atualize este campo no padrão do seu espaço.") { dialog ->
             val field = input(title, value, numeric).apply {
                 setText(value)
                 selectAll()
@@ -616,7 +616,7 @@ class MainActivity : ComponentActivity() {
             "checking" to "Conta corrente",
             "savings" to "Reserva",
             "investment" to "Investimento",
-            "credit" to "Cartao",
+            "credit" to "Cartão",
             "cash" to "Carteira"
         )
         val dialog = Dialog(this)
@@ -625,11 +625,11 @@ class MainActivity : ComponentActivity() {
         val nameInput = input("Nome da conta", existing?.name ?: "")
         val balanceInput = input("Saldo inicial", existing?.balance?.toString() ?: "", true)
         val yieldInput = input("Rendimento mensal (%)", existing?.yieldRate?.toString() ?: "", true)
-        val closingInput = input("Dia de fechamento do cartao", existing?.cardClosingDay?.takeIf { it > 0 }?.toString() ?: "", true)
-        val dueInput = input("Dia de vencimento do cartao", existing?.cardDueDay?.takeIf { it > 0 }?.toString() ?: "", true)
+        val closingInput = input("Dia de fechamento do cartão", existing?.cardClosingDay?.takeIf { it > 0 }?.toString() ?: "", true)
+        val dueInput = input("Dia de vencimento do cartão", existing?.cardDueDay?.takeIf { it > 0 }?.toString() ?: "", true)
         val last4Input = input("Ultimos 4 digitos", existing?.cardLast4 ?: "", true)
         val expiryInput = input("Validade MM/AA", existing?.cardExpiry ?: "")
-        val noteInput = input("Observacao", existing?.note ?: "")
+        val noteInput = input("Observação", existing?.note ?: "")
         var selectedType = existing?.type ?: "checking"
         panel.addView(ImageView(this).apply {
             setImageResource(android.R.drawable.ic_menu_manage)
@@ -654,7 +654,7 @@ class MainActivity : ComponentActivity() {
         panel.addView(accountTypePickerRow(types, selectedType) { selectedType = it })
         panel.addView(balanceInput)
         panel.addView(yieldInput)
-        panel.addView(body("Dados de cartao", 11, muted).apply { setPadding(0, dp(12), 0, dp(4)) })
+        panel.addView(body("Dados de cartão", 11, muted).apply { setPadding(0, dp(12), 0, dp(4)) })
         panel.addView(closingInput); panel.addView(dueInput); panel.addView(last4Input); panel.addView(expiryInput); panel.addView(noteInput)
         panel.addView(primaryButton("Salvar conta") {
             val name = nameInput.text.toString().trim()
@@ -681,7 +681,7 @@ class MainActivity : ComponentActivity() {
                 note = noteInput.text.toString().trim()
             )
             if (selectedType == "credit" && (account.cardClosingDay == 0 || account.cardDueDay == 0)) {
-                Toast.makeText(this, "Informe fechamento e vencimento do cartao.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Informe fechamento e vencimento do cartão.", Toast.LENGTH_SHORT).show()
                 return@primaryButton
             }
             saveAccount(account)
@@ -829,7 +829,7 @@ class MainActivity : ComponentActivity() {
         }
         val savedUrl = prefs.getString("api_url", "https://finanza-api.onrender.com") ?: "https://finanza-api.onrender.com"
         val urlInput = input("URL da API", savedUrl)
-        val userInput = input("Usuario", prefs.getString("login_name", "") ?: "")
+        val userInput = input("Usuário", prefs.getString("login_name", "") ?: "")
         val passInput = input("Senha", "").apply { inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD }
         val otpInput = input("Codigo 2FA (opcional)", "").apply { inputType = InputType.TYPE_CLASS_NUMBER }
         val status = body(if (prefs.getBoolean("online_mode", false)) onlineStatusText() else "Modo local ativo neste aparelho.", 12, muted).apply {
@@ -990,7 +990,7 @@ class MainActivity : ComponentActivity() {
 
     private fun showPasswordResetDialog() {
         showAppDialog("Alterar senha", "Use o codigo de recuperacao gerado para sua conta.") { dialog ->
-            val username = input("Usuario", prefs.getString("login_name", "").orEmpty())
+            val username = input("Usuário", prefs.getString("login_name", "").orEmpty())
             val password = input("Nova senha", "").apply { inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD }
             val confirmation = input("Confirmar nova senha", "").apply { inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD }
             val recovery = input("Codigo de recuperacao", "")
@@ -1018,7 +1018,7 @@ class MainActivity : ComponentActivity() {
 
     private fun showProfileDialog() {
         showAppDialog("Seu perfil", if (isOnlineMode()) "Dados da conta conectada e nome exibido neste aparelho." else "Perfil local deste aparelho.") { dialog ->
-            addView(healthRow("ID", "Usuario", prefs.getString("login_name", "Local").orEmpty().ifBlank { "Local" }))
+            addView(healthRow("ID", "Usuário", prefs.getString("login_name", "Local").orEmpty().ifBlank { "Local" }))
             addView(healthRow("ACL", "Acesso", if (isOnlineMode()) roleLabel(prefs.getString("role", "editor").orEmpty()) else "Local"))
             val name = input("Nome exibido", prefs.getString("user_name", "Voce").orEmpty())
             addView(name)
@@ -1125,7 +1125,7 @@ class MainActivity : ComponentActivity() {
     private fun showCreateAdminUserDialog() {
         showAppDialog("Novo usuário", "Crie um acesso para o mesmo ambiente do Finanza.") { dialog ->
             val name = input("Nome", "")
-            val username = input("Usuario", "")
+            val username = input("Usuário", "")
             val password = input("Senha", "").apply { inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD }
             val role = input("Perfil (admin/editor/read/guest)", "editor")
             addView(name); addView(username); addView(password); addView(role)
@@ -2311,7 +2311,7 @@ class MainActivity : ComponentActivity() {
             prefs.edit().putString("future", "[]").apply()
             listOf(
                 Entry(4, "Aluguel", "Moradia", 1280.0, "due", LocalDate.now().plusDays(3).toString()),
-                Entry(5, "Cartao", "Fatura", 860.0, "due", LocalDate.now().plusDays(8).toString())
+                Entry(5, "Cartão", "Fatura", 860.0, "due", LocalDate.now().plusDays(8).toString())
             ).forEach(::saveEntry)
         }
     }
@@ -2319,7 +2319,7 @@ class MainActivity : ComponentActivity() {
     private fun defaultAccounts(): List<Account> = listOf(
         Account("acc_main", "Principal", "\uD83C\uDFE6", "checking", 3200.0),
         Account("acc_save", "Reserva", "\uD83D\uDD12", "savings", 8400.0),
-        Account("acc_card", "Cartao", "\uD83D\uDCB3", "credit", -860.0)
+        Account("acc_card", "Cartão", "\uD83D\uDCB3", "credit", -860.0)
     )
 
    private fun accountPickerRow(items: List<Account>, selectedId: String?, onPick: (String) -> Unit): View {
@@ -2667,7 +2667,7 @@ class MainActivity : ComponentActivity() {
    private fun accountTypeLabel(type: String): String = when (type) {
         "savings" -> "Reserva"
         "investment" -> "Investimento"
-        "credit" -> "Cartao"
+        "credit" -> "Cartão"
         "cash" -> "Carteira"
         else -> "Conta corrente"
     }
@@ -2734,12 +2734,12 @@ class MainActivity : ComponentActivity() {
             billProgress = if (paidDueTotal + dueTotal > 0) (paidDueTotal / (paidDueTotal + dueTotal)).toFloat() else 0f,
             transactions = transactionItems.map(::composeTransaction),
             accounts = accountItems.map { account ->
-                AccountUi(account.id, account.name, accountTypeLabel(account.type), moneyText(accountEffectiveBalance(account)), account.type)
+                AccountUi(account.id, displayText(account.name), accountTypeLabel(account.type), moneyText(accountEffectiveBalance(account)), account.type)
             },
             bills = dueItems.map { entry ->
                 BillUi(
                     entry.id,
-                    entry.title,
+                    displayText(entry.title),
                     entry.category.ifBlank { "Geral" },
                     formatDate(entry.date),
                     moneyText(entry.amount),
@@ -2773,7 +2773,7 @@ class MainActivity : ComponentActivity() {
             paymentMethods = accountItems.map { account ->
                 PaymentMethodUi(
                     account.id,
-                    account.name,
+                    displayText(account.name),
                     if (account.type == "credit") Icons.Rounded.CreditCard else Icons.Rounded.AccountBalanceWallet
                 )
             }.ifEmpty { listOf(PaymentMethodUi("", "Principal")) },
@@ -2838,7 +2838,14 @@ class MainActivity : ComponentActivity() {
         val income = entry.type == "income"
         val formatted = if (privacyMode()) "R$ --" else "${if (income) "+" else "-"}${money.format(entry.amount)}"
         val category = FinanzaCategories.normalize(entry.category)
-        return TransactionUi(entry.id, entry.title, category, formatted, formatDate(entry.date), income, categoryColor(category))
+        return TransactionUi(entry.id, displayText(entry.title), category, formatted, formatDate(entry.date), income, categoryColor(category))
+    }
+
+    private fun displayText(value: String): String = when (value) {
+        "Cartao" -> "Cartão"
+        "Salario" -> "Salário"
+        "Voce" -> "Você"
+        else -> value
     }
 
     private fun sharedBalances(): Map<String, Double> {
@@ -2999,7 +3006,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showSharedSettlementDialog(personId: String) {
-        showAppDialog("Registrar acerto", "O lancamento entra no historico e sincroniza com o espaco compartilhado.") { dialog ->
+        showAppDialog("Registrar acerto", "O lançamento entra no histórico e sincroniza com o espaço compartilhado.") { dialog ->
             val balance = sharedBalances()[personId] ?: 0.0
             val amountInput = input("Valor", if (abs(balance) > 0.009) String.format(Locale.US, "%.2f", abs(balance)) else "", true)
             val ownerPaid = CheckBox(this@MainActivity).apply {
@@ -3014,18 +3021,18 @@ class MainActivity : ComponentActivity() {
                 val amount = amountInput.text.toString().replace(",", ".").toDoubleOrNull()
                 val meta = featureStore.settlementMeta(personId, ownerPaid.isChecked)
                 if (amount == null || amount <= 0 || meta == null) {
-                    Toast.makeText(this@MainActivity, "Confira o valor e o espaco compartilhado.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Confira o valor e o espaço compartilhado.", Toast.LENGTH_SHORT).show()
                     return@primaryButton
                 }
                 val entry = Entry(
                     id = System.currentTimeMillis(),
-                    title = "Acerto do espaco compartilhado",
+                    title = "Acerto do espaço compartilhado",
                     category = "Outros",
                     amount = amount,
                     type = if (ownerPaid.isChecked) "expense" else "income",
                     date = LocalDate.now().toString(),
                     accountId = defaultExpenseAccountId(),
-                    note = "Acerto do espaco compartilhado",
+                    note = "Acerto do espaço compartilhado",
                     splitMeta = meta.toString()
                 )
                 saveEntry(entry)
