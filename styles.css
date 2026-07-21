@@ -1217,7 +1217,7 @@ select.sel {
   backdrop-filter: blur(32px) saturate(200%);
   -webkit-backdrop-filter: blur(32px) saturate(200%);
   border: 1px solid var(--bd);
-  border-radius: 24px; padding: 18px; width: 290px;
+  border-radius: 20px; padding: 10px; width: min(420px, calc(100vw - 32px));
   box-shadow: 0 24px 64px var(--sh);
   animation: slideUp .22s cubic-bezier(.34,1.1,.64,1);
   display: none;
@@ -1252,7 +1252,12 @@ select.sel {
 .qa-key:hover { background: var(--bd); }
 .qa-key:active { transform: scale(.92); }
 .qa-key.del-k { background: rgba(245,112,90,.1); color: var(--dan); }
-.qa-note { width: 100%; background: var(--sf2); border: 1px solid var(--bd); border-radius: 12px; padding: 8px 12px; color: var(--tx); font-family: var(--font-ui); font-size: 12px; outline: none; margin-bottom: 10px; }
+.qa-fast-row { display: grid; grid-template-columns: 112px minmax(0,1fr); gap: 8px; margin-bottom: 8px; }
+.qa-amount-input,
+.qa-note { width: 100%; min-width: 0; height: 48px; background: var(--sf2); border: 1px solid var(--bd); border-radius: 14px; padding: 0 13px; color: var(--tx); font-family: var(--font-ui); font-size: 15px; outline: none; }
+.qa-amount-input { font-family: var(--font-money); font-weight: 800; }
+.qa-amount-input:focus,
+.qa-note:focus { border-color: rgba(200,245,90,.48); }
 .qa-note::placeholder { color: var(--mt); }
 .qa-save { width: 100%; padding: 11px; border-radius: var(--r-pill); border: none; cursor: pointer; background: linear-gradient(135deg, var(--ac), #a8e040); color: #0d0f14; font-family: var(--font-display); font-size: 14px; font-weight: 800; transition: all .15s; letter-spacing: 0; }
 .qa-save:hover { filter: brightness(1.08); }
@@ -2072,7 +2077,7 @@ select:focus-visible,
   .commit-actions { justify-content: flex-start; }
   .cv { font-size: 19px; }
   .qa-wrap { display: flex; bottom: calc(82px + env(safe-area-inset-bottom)); right: 16px; left: 16px; align-items: flex-end; }
-  .qa-panel { width: min(100%, 320px); max-height: calc(var(--app-vh) * 72); overflow-y: auto; }
+  .qa-panel { width: 100%; max-height: calc(var(--app-vh) * 72); overflow-y: auto; }
   .ti { align-items: flex-start; gap: 9px; }
   .tact { align-self: center; }
   .fr { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }

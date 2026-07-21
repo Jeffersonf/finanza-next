@@ -2360,12 +2360,20 @@ function toggleQA(){
   qaOpen=!qaOpen;
   document.getElementById('qaPanel').classList.toggle('open',qaOpen);
   const fab=document.getElementById('fabBtn');fab.classList.toggle('open',qaOpen);fab.textContent=qaOpen?'✕':'+';
-  if(qaOpen){qaVal='';qaSelCat='';renderQACats();updQADisp();}
+  if(qaOpen){
+    qaVal='';
+    const amountInput=document.getElementById('qaAmountInput');
+    if(amountInput)amountInput.value='';
+    const noteInput=document.getElementById('qaNote');
+    if(noteInput)noteInput.value='';
+    setTimeout(()=>amountInput?.focus(),80);
+  }
 }
 function qaType(t){
   qaTyp=t;
-  document.getElementById('qaE').className='qa-tb'+(t==='expense'?' active expense':'');
-  document.getElementById('qaI').className='qa-tb'+(t==='income'?' active income':'');
+  const exp=document.getElementById('qaE'),inc=document.getElementById('qaI');
+  if(exp)exp.className='qa-tb'+(t==='expense'?' active expense':'');
+  if(inc)inc.className='qa-tb'+(t==='income'?' active income':'');
   updQADisp();
 }
 function qaSelC(n){qaSelCat=qaSelCat===n?'':n;renderQACats();}
@@ -2375,24 +2383,47 @@ function qaK(k){
   else qaVal.length<8&&(qaVal+=k);
   updQADisp();
 }
+function qaFieldKey(e){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    if(e.target?.id==='qaAmountInput'&&!document.getElementById('qaNote')?.value.trim()){
+      document.getElementById('qaNote')?.focus();
+      return;
+    }
+    qaSave();
+    return;
+  }
+  if(e.key==='Escape'){e.preventDefault();toggleQA();return;}
+}
 function updQADisp(){
   const v=parseFloat(qaVal)||0;
   const el=document.getElementById('qaAmt');
+  if(!el)return;
   el.textContent=v?fmt(v):'R$ 0';
   el.className='qa-amt '+(qaTyp==='expense'?'expense':'income');
 }
+function qaAmountFromInput(){
+  const raw=(document.getElementById('qaAmountInput')?.value||'').trim();
+  const normalized=raw.includes(',')?raw.replace(/\./g,'').replace(',','.'):raw;
+  return parseFloat(normalized)||0;
+}
 async function qaSave(){
   if(!requireWriteAccess('lançar transações'))return;
-  const amount=parseFloat(qaVal)||0;
+  const amount=qaAmountFromInput();
   if(!amount){toast('Digite um valor','error');return;}
-  const cat=qaSelCat||'A classificar';
+  const cat='A classificar';
   const note=document.getElementById('qaNote').value.trim();
-  const pending=!qaSelCat;
-  const tx={id:uid(),type:qaTyp,desc:note||cat,amount,category:cat,date:today(),note:'',accountId:S.accounts[0]?.id||null,installmentGroup:null,installmentNum:null,installmentTotal:null,recurGroup:null,paid:false,pending};
-  if(cfg.mode==='api'){try{const r=await api('POST','/api/transactions',{type:qaTyp,description:tx.desc,amount,category:cat,date:tx.date,note:'',account_id:tx.accountId,paid:false,pending});S.transactions.unshift(nTx({...r,accountId:tx.accountId,pending}));}catch(e){toast('Erro: '+e.message,'error');return;}}
+  const desc=note||'Gasto rápido';
+  const tx={id:uid(),type:'expense',desc,amount,category:cat,date:today(),note:'',accountId:S.accounts[0]?.id||null,installmentGroup:null,installmentNum:null,installmentTotal:null,recurGroup:null,paid:false,pending:true};
+  if(cfg.mode==='api'){try{const r=await api('POST','/api/transactions',{type:'expense',description:tx.desc,amount,category:cat,date:tx.date,note:'',account_id:tx.accountId,paid:false,pending:true});S.transactions.unshift(nTx({...r,accountId:tx.accountId,pending:true}));}catch(e){toast('Erro: '+e.message,'error');return;}}
   else{S.transactions.unshift(tx);saveLocal();}
-  toast(`${fmt(amount)} salvo${pending?'  classifique depois':''} ✓`,'success');
-  qaVal='';qaSelCat='';document.getElementById('qaNote').value='';updQADisp();renderQACats();toggleQA();renderDash();
+  toast(`${fmt(amount)} salvo ✓`,'success');
+  qaVal='';
+  const amountInput=document.getElementById('qaAmountInput');
+  if(amountInput)amountInput.value='';
+  document.getElementById('qaNote').value='';
+  refreshAll();
+  toggleQA();
 }
 function renderSrchScopes(){
   const el=document.getElementById('srchScopes');

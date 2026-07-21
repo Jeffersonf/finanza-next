@@ -1,8 +1,13 @@
 # Finanza Next
 
-Nova experiência visual do Finanza, mantida em um projeto independente para evoluir sem alterar o Finanza principal.
+Um aplicativo Android nativo para os dados e regras do Finanza. A base funcional é única: login, sincronização, transações, contas, planejamento, módulos pessoais e espaços compartilhados são os mesmos em qualquer visual.
 
-O Next preserva conta, sincronização e recursos financeiros existentes, mas possui navegação, hierarquia, componentes e ritmo visual próprios. A interface segue uma linguagem mobile-first de alto contraste: fundo cinza-claro, cartões brancos, um cartão preto dominante e cor de progresso configurável.
+O app oferece dois temas completos, sem separar dados ou navegação em aplicativos diferentes:
+
+- **Next:** linguagem escura, direta e compacta.
+- **Finanza:** linguagem visual do Finanza web, com superfícies grafite translúcidas, lime, teal, roxo e navegação inferior inspirada na versão mobile do web.
+
+O tema é apenas uma camada de apresentação. Alterá-lo não altera conta, sessão, dados ou funcionalidades.
 
 ## Web
 

@@ -1,0 +1,74 @@
+package com.finanza.next.ui.screens
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.finanza.next.features.FeatureCenterUiState
+import com.finanza.next.ui.components.AccountUi
+import com.finanza.next.ui.components.BillUi
+import com.finanza.next.ui.components.TransactionUi
+
+@Composable
+fun HomeScreen(
+    userName: String,
+    greeting: String,
+    period: String,
+    balance: String,
+    income: String,
+    spent: String,
+    transactions: List<TransactionUi>,
+    accounts: List<AccountUi>,
+    bills: List<BillUi>,
+    categories: List<CategoryUi>,
+    features: FeatureCenterUiState,
+    onAdd: () -> Unit,
+    onAll: () -> Unit,
+    onTransaction: (Long) -> Unit,
+    onBill: (Long) -> Unit,
+    onFeatures: () -> Unit,
+    onAccounts: () -> Unit,
+    onAnalysis: () -> Unit,
+    onSettings: () -> Unit
+) {
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 108.dp)
+    ) {
+        item {
+            Column {
+                Text(greeting, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f))
+                Text(userName, style = MaterialTheme.typography.headlineMedium)
+            }
+            Spacer(Modifier.height(16.dp))
+            DashboardWidgets(
+                period = period,
+                balance = balance,
+                income = income,
+                spent = spent,
+                transactions = transactions,
+                accounts = accounts,
+                bills = bills,
+                categories = categories,
+                features = features,
+                onAdd = onAdd,
+                onAllTransactions = onAll,
+                onTransaction = onTransaction,
+                onBill = onBill,
+                onAccounts = onAccounts,
+                onAnalysis = onAnalysis,
+                onFeatures = onFeatures,
+                onSettings = onSettings
+            )
+        }
+    }
+}

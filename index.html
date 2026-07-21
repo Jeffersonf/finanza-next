@@ -11,7 +11,8 @@
 <meta name="theme-color" id="themeColorMeta" content="#f3f3f5">
 <meta name="app-version" content="5.0.1-next">
 <title>Next</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='10' fill='%2308090d'/%3E%3Ctext x='5' y='23' font-family='Arial Black' font-weight='900' font-size='17' fill='%23f5d94e'%3Enx%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="apple-touch-icon" href="./favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -31,17 +32,11 @@
 </nav>
 <div class="qa-wrap" id="qaWrap">
   <div class="qa-panel" id="qaPanel">
-    <div class="qa-type"><button class="qa-tb active expense" id="qaE" onclick="qaType('expense')">⬇ Despesa</button><button class="qa-tb income" id="qaI" onclick="qaType('income')">⬆ Receita</button></div>
-    <div class="qa-disp"><div class="qa-amt expense" id="qaAmt">R$ 0</div></div>
-    <div class="qa-cats" id="qaCats"></div>
-    <input class="qa-note" id="qaNote" placeholder="Descrição rápida (opcional)...">
-    <div class="qa-pad">
-      <button class="qa-key" onclick="qaK('7')">7</button><button class="qa-key" onclick="qaK('8')">8</button><button class="qa-key" onclick="qaK('9')">9</button>
-      <button class="qa-key" onclick="qaK('4')">4</button><button class="qa-key" onclick="qaK('5')">5</button><button class="qa-key" onclick="qaK('6')">6</button>
-      <button class="qa-key" onclick="qaK('1')">1</button><button class="qa-key" onclick="qaK('2')">2</button><button class="qa-key" onclick="qaK('3')">3</button>
-      <button class="qa-key" onclick="qaK('.')">.</button><button class="qa-key" onclick="qaK('0')">0</button><button class="qa-key del-k" onclick="qaK('del')">⌫</button>
+    <div class="qa-fast-row">
+      <input class="qa-amount-input" id="qaAmountInput" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="Valor" onkeydown="qaFieldKey(event)">
+      <input class="qa-note" id="qaNote" enterkeyhint="done" autocomplete="off" placeholder="O que foi?" onkeydown="qaFieldKey(event)">
     </div>
-    <button class="qa-save" onclick="qaSave()">Salvar ✓</button>
+    <button class="qa-save" onclick="qaSave()">Salvar gasto</button>
   </div>
   <button class="fab" id="fabBtn" onclick="toggleQA()">+</button>
 </div>
