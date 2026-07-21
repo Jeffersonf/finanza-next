@@ -252,9 +252,10 @@ private fun FeatureModuleScreen(module: FeatureModuleUi, actions: FeatureActions
         }
         if (module.items.isEmpty()) {
             item {
-                Surface(shape = RoundedCornerShape(tokens.cardRadius), color = if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface) {
-                    Text(module.emptyText, modifier = Modifier.fillMaxWidth().padding(24.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.58f))
-                }
+                FeatureEmptyState(
+                    module = module,
+                    onCreate = if (module.canCreate) ({ creating = true }) else null
+                )
             }
         }
         items(module.items, key = { it.id }) { item ->
@@ -283,6 +284,53 @@ private fun FeatureModuleScreen(module: FeatureModuleUi, actions: FeatureActions
                 saved
             }
         )
+    }
+}
+
+@Composable
+private fun FeatureEmptyState(module: FeatureModuleUi, onCreate: (() -> Unit)?) {
+    val tokens = LocalAppExperienceTokens.current
+    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    Surface(
+        shape = RoundedCornerShape(tokens.cardRadius),
+        color = if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
+        border = if (finanza) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                Modifier.size(46.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    featureIcon(module.id),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            Text(
+                module.emptyText,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 13.dp)
+            )
+            Text(
+                module.subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.58f),
+                modifier = Modifier.padding(top = 4.dp)
+            )
+            onCreate?.let {
+                Button(onClick = it, modifier = Modifier.padding(top = 18.dp)) {
+                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Adicionar")
+                }
+            }
+        }
     }
 }
 

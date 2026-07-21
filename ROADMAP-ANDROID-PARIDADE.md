@@ -27,6 +27,7 @@ O Android passa a ser **um unico app funcional com dois temas completos**. Next 
 - O painel Finanza agora reproduz a cabeca do dashboard web: titulo, resumo, periodo e acao `Nova` na mesma composicao; a personalizacao de widgets deixou de ocupar uma faixa vazia.
 - A Analise Finanza usa paineis de fluxo de caixa e distribuicao circular por categoria, em vez de uma lista extensa de barras; no tema claro, o acento e verde profundo e no escuro permanece lima, como no web.
 - A Central Finanza organiza os modulos em uma grade compacta, preservando todas as entradas sem alongar a tela; rotulos e mensagens principais receberam revisao de acentuacao em portugues.
+- Estados vazios dos modulos agora seguem a hierarquia dos cards Finanza: icone nativo, contexto curto e uma unica acao de cadastro; a composicao foi revisada no Xiaomi Android 15 e a bateria instrumentada passou com 38 testes.
 
 ### Proximos marcos
 
