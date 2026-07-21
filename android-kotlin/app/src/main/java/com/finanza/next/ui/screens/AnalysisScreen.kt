@@ -55,8 +55,18 @@ fun AnalysisScreen(income: String, spent: String, categories: List<CategoryUi>, 
         contentPadding = PaddingValues(start = 20.dp, top = 18.dp, end = 20.dp, bottom = 108.dp)
     ) {
         item {
-            Text(if (finanza) "RELATÓRIO FINANCEIRO" else "Leitura do mês", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f))
-            Text("Análise", style = MaterialTheme.typography.headlineMedium)
+            if (finanza) {
+                Text("Análise", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    "Entradas, saídas e evolução dos seus gastos",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f),
+                    modifier = Modifier.padding(top = 3.dp)
+                )
+            } else {
+                Text("Leitura do mês", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f))
+                Text("Análise", style = MaterialTheme.typography.headlineMedium)
+            }
             Spacer(Modifier.height(18.dp))
             Row(Modifier.fillMaxWidth()) {
                 Summary("Entradas", income, Modifier.weight(1f), income = true)

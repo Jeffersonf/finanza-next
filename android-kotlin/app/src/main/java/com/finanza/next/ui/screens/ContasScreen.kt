@@ -57,8 +57,23 @@ fun ContasScreen(
         contentPadding = PaddingValues(start = 20.dp, top = 18.dp, end = 20.dp, bottom = 108.dp)
     ) {
         item {
-            Text(if (finanza) "Patrimônio" else "Planejamento", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f))
-            Text("Contas", style = MaterialTheme.typography.headlineMedium)
+            if (finanza) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Contas", style = MaterialTheme.typography.headlineMedium)
+                        Text(
+                            "Corrente, poupança e cartão",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f),
+                            modifier = Modifier.padding(top = 3.dp)
+                        )
+                    }
+                    Button(onClick = onNewAccount) { Text("+ Nova conta") }
+                }
+            } else {
+                Text("Planejamento", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f))
+                Text("Contas", style = MaterialTheme.typography.headlineMedium)
+            }
             Spacer(Modifier.height(18.dp))
             Row(
                 Modifier.fillMaxWidth().clip(heroShape).background(heroColor)
@@ -86,8 +101,8 @@ fun ContasScreen(
         items(accounts, key = { it.id }) { item -> AccountRow(item) { onAccount(item.id) } }
         item {
             Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onNewAccount, modifier = Modifier.weight(1f)) { Text("Nova conta") }
-                OutlinedButton(onClick = onTransfer, modifier = Modifier.weight(1f)) { Text("Transferir") }
+                if (!finanza) Button(onClick = onNewAccount, modifier = Modifier.weight(1f)) { Text("Nova conta") }
+                OutlinedButton(onClick = onTransfer, modifier = if (finanza) Modifier.fillMaxWidth() else Modifier.weight(1f)) { Text("Transferir") }
             }
             Text(if (finanza) "Próximos vencimentos" else "Agenda financeira", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 10.dp, bottom = 10.dp))
         }
