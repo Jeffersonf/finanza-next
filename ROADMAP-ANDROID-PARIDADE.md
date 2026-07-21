@@ -25,6 +25,7 @@ O Android passa a ser **um unico app funcional com dois temas completos**. Next 
 - O tema especifico de Android 10+ preserva explicitamente `NoActionBar`; a barra nativa que exibia "Next" foi removida e a activity tambem a oculta defensivamente.
 - `assembleDebug`, testes JVM e 34 testes instrumentados passaram no Xiaomi Android 15, incluindo troca por toque e gesto entre abas.
 - O painel Finanza agora reproduz a cabeca do dashboard web: titulo, resumo, periodo e acao `Nova` na mesma composicao; a personalizacao de widgets deixou de ocupar uma faixa vazia.
+- A Analise Finanza usa paineis de fluxo de caixa e distribuicao circular por categoria, em vez de uma lista extensa de barras; no tema claro, o acento e verde profundo e no escuro permanece lima, como no web.
 
 ### Proximos marcos
 
@@ -165,6 +166,7 @@ O menu do Android deve mostrar apenas fluxos funcionais. Modulos futuros nao apa
 - APK final instalada e abertura principal validadas em Xiaomi Android 15
 - captura visual posterior a instalacao confirma que nao ha ActionBar nativa nem titulo "Next" acima da interface Compose
 - dashboard, contas e analise do tema Finanza escuro revisados em Xiaomi Android 15; a barra inferior continua sendo o controle flutuante The Box compartilhado pelos dois temas
+- analise Finanza clara e escura revisada no Xiaomi, incluindo legenda, barras e distribuicao por categoria; a preferencia final do aparelho voltou para Finanza escuro
 - quatro aberturas frias consecutivas no Xiaomi ficaram entre 1,32 s e 1,40 s; a navegacao por toque e gesto e coberta pela bateria instrumentada
 - captura rapida validada por teste instrumentado no aparelho: valor -> descricao, sem etapas extras
 - teclado automatico, foco no valor, moeda em real e composicao visual validados no aparelho

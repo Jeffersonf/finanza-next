@@ -1,6 +1,8 @@
 package com.finanza.next.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,7 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.finanza.next.ui.components.TransactionRow
 import com.finanza.next.ui.components.TransactionUi
@@ -73,8 +80,10 @@ fun AnalysisScreen(income: String, spent: String, categories: List<CategoryUi>, 
                 Spacer(Modifier.width(10.dp))
                 Summary("Saídas", spent, Modifier.weight(1f), income = false)
             }
-            Text(if (finanza) "Fluxo dos últimos 6 meses" else "Últimos 6 meses", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 26.dp, bottom = 10.dp))
-            trends.forEach { trend ->
+            Text(if (finanza) "Fluxo de caixa" else "Últimos 6 meses", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 26.dp, bottom = 10.dp))
+            if (finanza) {
+                FinanzaCashFlowChart(trends)
+            } else trends.forEach { trend ->
                 Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                     Row(Modifier.fillMaxWidth()) {
                         Text(trend.label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
@@ -85,7 +94,7 @@ fun AnalysisScreen(income: String, spent: String, categories: List<CategoryUi>, 
                         Box(
                             Modifier.fillMaxWidth(trend.incomeShare.coerceIn(0f, 1f))
                                 .height(5.dp)
-                                .background(if (finanza) MaterialTheme.colorScheme.primary else Color(0xFF34C759))
+                                .background(Color(0xFF34C759))
                         )
                     }
                     Spacer(Modifier.height(3.dp))
@@ -96,7 +105,9 @@ fun AnalysisScreen(income: String, spent: String, categories: List<CategoryUi>, 
             }
             Text("Por categoria", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 26.dp, bottom = 10.dp))
         }
-        items(categories, key = { it.name }) { category ->
+        if (finanza) {
+            item { FinanzaCategoryBreakdown(categories) }
+        } else items(categories, key = { it.name }) { category ->
             Column(Modifier.fillMaxWidth().padding(vertical = 7.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(10.dp).clip(RoundedCornerShape(5.dp)).background(category.color))
@@ -149,5 +160,112 @@ private fun Summary(label: String, value: String, modifier: Modifier, income: Bo
             color = if (finanza && income) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             maxLines = 1
         )
+    }
+}
+
+@Composable
+private fun FinanzaCashFlowChart(trends: List<MonthTrendUi>) {
+    val incomeColor = MaterialTheme.colorScheme.primary
+    val expenseColor = MaterialTheme.colorScheme.error
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Receitas vs despesas", style = MaterialTheme.typography.titleSmall)
+                    Text("Últimos 6 meses", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                LegendDot(incomeColor, "Entradas")
+                Spacer(Modifier.width(8.dp))
+                LegendDot(expenseColor, "Saídas")
+            }
+            Canvas(Modifier.fillMaxWidth().height(146.dp).padding(top = 14.dp)) {
+                val count = trends.size.coerceAtLeast(1)
+                val groupWidth = size.width / count
+                val baseline = size.height - 5.dp.toPx()
+                val chartHeight = baseline - 10.dp.toPx()
+                trends.forEachIndexed { index, trend ->
+                    val center = groupWidth * (index + 0.5f)
+                    val barWidth = (groupWidth * 0.23f).coerceAtMost(18.dp.toPx())
+                    val incomeHeight = chartHeight * trend.incomeShare.coerceIn(0f, 1f)
+                    val expenseHeight = chartHeight * trend.spentShare.coerceIn(0f, 1f)
+                    drawRoundRect(
+                        incomeColor,
+                        topLeft = Offset(center - barWidth - 2.dp.toPx(), baseline - incomeHeight),
+                        size = Size(barWidth, incomeHeight.coerceAtLeast(2.dp.toPx())),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(5.dp.toPx(), 5.dp.toPx())
+                    )
+                    drawRoundRect(
+                        expenseColor,
+                        topLeft = Offset(center + 2.dp.toPx(), baseline - expenseHeight),
+                        size = Size(barWidth, expenseHeight.coerceAtLeast(2.dp.toPx())),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(5.dp.toPx(), 5.dp.toPx())
+                    )
+                }
+            }
+            Row(Modifier.fillMaxWidth()) {
+                trends.forEach { trend ->
+                    Text(
+                        trend.label,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LegendDot(color: Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(7.dp).clip(RoundedCornerShape(4.dp)).background(color))
+        Text(label, modifier = Modifier.padding(start = 4.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun FinanzaCategoryBreakdown(categories: List<CategoryUi>) {
+    val visible = categories.filter { it.share > 0f }.take(5)
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(108.dp), contentAlignment = Alignment.Center) {
+                Canvas(Modifier.size(96.dp)) {
+                    var start = -90f
+                    visible.forEach { category ->
+                        val sweep = (category.share.coerceIn(0f, 1f) * 360f).coerceAtLeast(4f)
+                        drawArc(
+                            category.color,
+                            start + 2f,
+                            (sweep - 4f).coerceAtLeast(2f),
+                            false,
+                            style = Stroke(13.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                        start += sweep
+                    }
+                }
+                Text("Gastos", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Column(Modifier.weight(1f)) {
+                if (visible.isEmpty()) {
+                    Text("Sem gastos categorizados", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else visible.forEach { category ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(8.dp).clip(RoundedCornerShape(4.dp)).background(category.color))
+                        Text(category.name, modifier = Modifier.padding(start = 7.dp).weight(1f), style = MaterialTheme.typography.bodySmall)
+                        Text(category.amount, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            }
+        }
     }
 }

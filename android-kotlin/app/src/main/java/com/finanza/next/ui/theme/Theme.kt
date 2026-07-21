@@ -75,17 +75,17 @@ private val DarkColors = darkColorScheme(
 )
 
 private val FinanzaLightColors = lightColorScheme(
-    primary = FinanzaInkLight,
+    primary = FinanzaAccentLight,
     onPrimary = Color.White,
-    primaryContainer = FinanzaSurfaceVariantLight,
+    primaryContainer = FinanzaAccentSoft,
     onPrimaryContainer = FinanzaInkLight,
-    secondary = FinanzaMutedLight,
+    secondary = FinanzaTealLight,
     onSecondary = Color.White,
     secondaryContainer = FinanzaSurfaceVariantLight,
     onSecondaryContainer = FinanzaInkLight,
-    tertiary = FinanzaAccent,
-    onTertiary = Color.Black,
-    tertiaryContainer = FinanzaAccentSoft,
+    tertiary = FinanzaPurpleLight,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFEAE4FF),
     onTertiaryContainer = FinanzaInkLight,
     background = FinanzaBackgroundLight,
     surface = FinanzaSurfaceLight,
@@ -99,10 +99,10 @@ private val FinanzaLightColors = lightColorScheme(
     outline = Color(0xFFA7A7A7),
     outlineVariant = FinanzaDividerLight,
     scrim = Color.Black,
-    error = DangerRed,
+    error = FinanzaDangerLight,
     onError = Color.White,
     errorContainer = DangerRedBg,
-    onErrorContainer = DangerRed
+    onErrorContainer = FinanzaDangerLight
 )
 
 private val FinanzaDarkColors = darkColorScheme(
