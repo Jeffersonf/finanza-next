@@ -172,6 +172,7 @@ O menu do Android deve mostrar apenas fluxos funcionais. Modulos futuros nao apa
 - APK final instalada e abertura principal validadas em Xiaomi Android 15
 - captura visual posterior a instalacao confirma que nao ha ActionBar nativa nem titulo "Next" acima da interface Compose
 - o tema Finanza usa Syne nos titulos e DM Sans no conteudo, carregadas localmente e isoladas do tema Next
+- o cabecalho do dashboard Finanza concentra periodo, criacao e personalizacao; a faixa redundante "Widgets do painel" foi removida para espelhar a estrutura mobile do web
 - dashboard, contas e analise do tema Finanza escuro revisados em Xiaomi Android 15; a barra inferior continua sendo o controle flutuante The Box compartilhado pelos dois temas
 - a tela Contas do tema Finanza agora usa a grade compacta de carteiras do web, com icone, etiqueta de tipo, saldo e abertura do editor; o Next preserva sua lista original
 - Ajustes passa a usar o cabeçalho do Finanza web ("Configurações" e "App e preferências") somente nesse tema, sem alterar os grupos e controles do Next

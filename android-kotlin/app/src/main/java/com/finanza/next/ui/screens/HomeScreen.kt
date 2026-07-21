@@ -13,13 +13,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.finanza.next.features.FeatureCenterUiState
@@ -52,6 +58,7 @@ fun HomeScreen(
     onSettings: () -> Unit
 ) {
     val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    var editingDashboard by remember { mutableStateOf(false) }
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 108.dp)
@@ -70,6 +77,13 @@ fun HomeScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f),
                             modifier = Modifier.padding(top = 3.dp)
+                        )
+                    }
+                    IconButton(onClick = { editingDashboard = true }) {
+                        Icon(
+                            Icons.Rounded.Tune,
+                            contentDescription = "Personalizar painel",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Surface(
@@ -120,7 +134,10 @@ fun HomeScreen(
                 onAccounts = onAccounts,
                 onAnalysis = onAnalysis,
                 onFeatures = onFeatures,
-                onSettings = onSettings
+                onSettings = onSettings,
+                showManagerHeader = !finanza,
+                managerVisible = editingDashboard,
+                onManagerVisibleChange = { editingDashboard = it }
             )
         }
     }

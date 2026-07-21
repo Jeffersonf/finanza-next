@@ -135,12 +135,19 @@ fun DashboardWidgets(
     onFeatures: () -> Unit,
     onSettings: () -> Unit,
     hiddenWidgetIds: Set<String> = emptySet(),
-    showManagerHeader: Boolean = true
+    showManagerHeader: Boolean = true,
+    managerVisible: Boolean? = null,
+    onManagerVisibleChange: ((Boolean) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val finanza = LocalAppExperience.current == AppExperience.FINANZA
     var config by remember { mutableStateOf(loadDashboardWidgetConfig(context)) }
-    var editing by remember { mutableStateOf(false) }
+    var localEditing by remember { mutableStateOf(false) }
+    val editing = managerVisible ?: localEditing
+
+    fun setEditing(visible: Boolean) {
+        if (onManagerVisibleChange != null) onManagerVisibleChange(visible) else localEditing = visible
+    }
 
     fun update(next: DashboardWidgetConfig) {
         val normalized = normalizeDashboardWidgetConfig(next)
@@ -149,7 +156,7 @@ fun DashboardWidgets(
     }
 
     if (showManagerHeader) {
-        DashboardManagerHeader(config.active.size, dashboardWidgetDefs.size) { editing = true }
+        DashboardManagerHeader(config.active.size, dashboardWidgetDefs.size) { setEditing(true) }
         Spacer(Modifier.height(10.dp))
     }
     val orderedWidgetIds = config.order
@@ -179,7 +186,7 @@ fun DashboardWidgets(
     if (editing) {
         DashboardWidgetManager(
             config = config,
-            onDismiss = { editing = false },
+            onDismiss = { setEditing(false) },
             onUpdate = ::update
         )
     }
