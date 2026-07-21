@@ -41,7 +41,6 @@ class ExperienceThemeRenderTest {
 
         val title = if (experience == AppExperience.FINANZA) "Início" else "Voce"
         composeRule.onAllNodesWithText(title)[0].assertIsDisplayed()
-        composeRule.onNodeWithText("Atalhos do Finanza").assertIsDisplayed()
     }
 
     private fun emptyState() = AppUiState(

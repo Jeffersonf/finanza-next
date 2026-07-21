@@ -204,6 +204,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        actionBar?.hide()
         FinanzaPreferences.repairLegacyTypes(this)
         accentId = prefs.getString("accent", "green") ?: "green"
         activeTab = intent.getStringExtra("start_tab")?.takeIf { it in setOf("home", "accounts", "analysis", "settings") } ?: activeTab

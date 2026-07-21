@@ -22,7 +22,8 @@ O Android passa a ser **um unico app funcional com dois temas completos**. Next 
 - A consolidacao visual e de desempenho e a entrega ativa: eliminar regressoes de navbar, modais e tema escuro antes de adicionar novas telas.
 - A navbar agora inicia em **Inicio** e a troca de aba nao reconstrói o estado financeiro; clique troca a pagina imediatamente e o gesto lateral continua habilitado.
 - Nesta rodada, a navbar foi unificada como controle The Box nos dois temas, o espaco residual sob ela foi removido e a imposicao de contraste das barras do sistema foi desativada.
-- `assembleDebug` e testes JVM passaram. A repeticao dos testes instrumentados e das capturas no Xiaomi aguarda somente o aceite de instalacao do aparelho, que bloqueou a reinstalacao automatica apos a suite anterior.
+- O tema especifico de Android 10+ preserva explicitamente `NoActionBar`; a barra nativa que exibia "Next" foi removida e a activity tambem a oculta defensivamente.
+- `assembleDebug`, testes JVM e 34 testes instrumentados passaram no Xiaomi Android 15, incluindo troca por toque e gesto entre abas.
 
 ### Proximos marcos
 
@@ -161,6 +162,7 @@ O menu do Android deve mostrar apenas fluxos funcionais. Modulos futuros nao apa
 ## Validacao
 
 - APK final instalada e abertura principal validadas em Xiaomi Android 15
+- captura visual posterior a instalacao confirma que nao ha ActionBar nativa nem titulo "Next" acima da interface Compose
 - captura rapida validada por teste instrumentado no aparelho: valor -> descricao, sem etapas extras
 - teclado automatico, foco no valor, moeda em real e composicao visual validados no aparelho
 - tres providers de widget e atalho dinamico de captura confirmados pelo sistema
