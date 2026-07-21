@@ -176,6 +176,7 @@ O menu do Android deve mostrar apenas fluxos funcionais. Modulos futuros nao apa
 - o resumo do dashboard Finanza usa a grade mobile de quatro indicadores do web (saldo total, receitas, despesas e a pagar), enquanto o cartao compacto original permanece exclusivo do Next
 - Contas no tema Finanza inicia diretamente na grade de carteiras do web; o resumo consolidado redundante foi mantido apenas no Next, sem remover transferencia ou a agenda de vencimentos
 - a troca de aba por toque agora usa a mesma confirmacao unica do gesto lateral: o indicador responde de imediato, o pager anima a troca e os dados sao atualizados somente apos a pagina estabilizar
+- revisao visual por captura nativa no Xiaomi confirmou Dashboard e Contas Finanza escuros: titulo sem quebra, grade de contas legivel e barra The Box flutuante sem uma faixa de fundo adicional
 - dashboard, contas e analise do tema Finanza escuro revisados em Xiaomi Android 15; a barra inferior continua sendo o controle flutuante The Box compartilhado pelos dois temas
 - a tela Contas do tema Finanza agora usa a grade compacta de carteiras do web, com icone, etiqueta de tipo, saldo e abertura do editor; o Next preserva sua lista original
 - Ajustes passa a usar o cabeçalho do Finanza web ("Configurações" e "App e preferências") somente nesse tema, sem alterar os grupos e controles do Next

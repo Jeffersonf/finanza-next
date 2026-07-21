@@ -67,7 +67,7 @@ fun ContasScreen(
             if (finanza) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
                     Column(Modifier.weight(1f)) {
-                        Text("Contas", style = MaterialTheme.typography.headlineMedium)
+                        Text("Contas", style = MaterialTheme.typography.titleLarge, maxLines = 1)
                         Text(
                             "Corrente, poupança e cartão",
                             style = MaterialTheme.typography.bodySmall,

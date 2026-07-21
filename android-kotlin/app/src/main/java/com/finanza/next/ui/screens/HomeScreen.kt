@@ -71,7 +71,11 @@ fun HomeScreen(
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Dashboard", style = MaterialTheme.typography.headlineMedium)
+                        Text(
+                            "Dashboard",
+                            style = MaterialTheme.typography.titleLarge,
+                            maxLines = 1
+                        )
                         Text(
                             "Visão geral das suas finanças",
                             style = MaterialTheme.typography.bodySmall,
