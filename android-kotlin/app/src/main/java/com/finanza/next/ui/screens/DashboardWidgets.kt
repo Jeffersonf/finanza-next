@@ -195,6 +195,7 @@ private fun DashboardOverviewMosaic(
     balance: String,
     onAll: () -> Unit
 ) {
+    val finanza = LocalAppExperience.current == AppExperience.FINANZA
     val featureItems = features.modules
         .filter { it.id in setOf("subscriptions", "debts", "contracts") }
         .flatMap { module ->
@@ -249,24 +250,26 @@ private fun DashboardOverviewMosaic(
                     }
                 }
             }
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-                shape = RoundedCornerShape(LocalAppExperienceTokens.current.cardRadius - 5.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-            ) {
-                Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Entradas", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(income, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
-                    }
-                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Saídas", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(spent, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Black)
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("Disponível", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(balance, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black)
+            if (!finanza) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                    shape = RoundedCornerShape(LocalAppExperienceTokens.current.cardRadius - 5.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Entradas", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(income, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
+                        }
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Saídas", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(spent, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Black)
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("Disponível", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(balance, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black)
+                        }
                     }
                 }
             }

@@ -31,6 +31,7 @@ O Android passa a ser **um unico app funcional com dois temas completos**. Next 
 - Os itens internos da Central Finanza receberam um layout proprio, mais proximo das linhas financeiras do web: icone, descricao, valor, status e acoes compactas, enquanto o tema Next preserva seus cards atuais.
 - O editor dos modulos agora limita a folha a 66% da tela, rola somente os campos e fixa a confirmacao na base, evitando folhas extensas e a perda da acao de salvar.
 - Rótulos financeiros, formulários e dados de exemplo receberam revisão de português; valores antigos conhecidos, como `Cartao`, são apresentados como `Cartão` sem alterar nomes livres do usuário.
+- O dashboard Finanza não repete mais entradas, saídas e saldo dentro do mosaico de prioridades; a barra compartilhada The Box recebeu transparência real no escuro, preservando ordem, rótulos e auto-ocultação.
 
 ### Proximos marcos
 
