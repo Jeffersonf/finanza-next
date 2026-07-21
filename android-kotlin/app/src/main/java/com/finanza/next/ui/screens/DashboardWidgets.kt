@@ -24,8 +24,11 @@ import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.AccountBalanceWallet
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Analytics
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.GridView
@@ -169,7 +172,11 @@ fun DashboardWidgets(
     orderedWidgetIds.forEach { id ->
         when (id) {
             "workbench" -> DashboardWorkbench(onAccounts, onAnalysis, onFeatures, onSettings)
-            "cards" -> HeroBalanceCard("Disponível", period, balance, income, spent)
+            "cards" -> if (finanza) {
+                FinanzaSummaryGrid(balance, income, spent, bills)
+            } else {
+                HeroBalanceCard("Disponível", period, balance, income, spent)
+            }
             "commitments" -> DashboardBills(bills, onBill, onAccounts)
             "overview" -> DashboardOverviewMosaic(transactions, bills, features, income, spent, balance, onFeatures)
             "subscriptions" -> DashboardSubscriptions(features, onFeatures)
@@ -189,6 +196,101 @@ fun DashboardWidgets(
             onDismiss = { setEditing(false) },
             onUpdate = ::update
         )
+    }
+}
+
+@Composable
+private fun FinanzaSummaryGrid(
+    balance: String,
+    income: String,
+    spent: String,
+    bills: List<BillUi>
+) {
+    val dueTotal = moneyLabel(bills.sumOf { moneyNumber(it.amount) })
+    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            FinanzaSummaryCard(
+                "Saldo total",
+                balance,
+                "todas as contas",
+                Icons.Rounded.AccountBalanceWallet,
+                MaterialTheme.colorScheme.tertiary,
+                Modifier.weight(1f)
+            )
+            FinanzaSummaryCard(
+                "Receitas",
+                income,
+                "este mês",
+                Icons.Rounded.ArrowUpward,
+                MaterialTheme.colorScheme.primary,
+                Modifier.weight(1f)
+            )
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            FinanzaSummaryCard(
+                "Despesas",
+                spent,
+                "este mês",
+                Icons.Rounded.ArrowDownward,
+                MaterialTheme.colorScheme.error,
+                Modifier.weight(1f)
+            )
+            FinanzaSummaryCard(
+                "A pagar",
+                dueTotal,
+                "próximos vencimentos",
+                Icons.Rounded.CalendarMonth,
+                MaterialTheme.colorScheme.secondary,
+                Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun FinanzaSummaryCard(
+    label: String,
+    value: String,
+    detail: String,
+    icon: ImageVector,
+    accent: Color,
+    modifier: Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shadowElevation = 1.dp
+    ) {
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 13.dp)) {
+            Surface(shape = CircleShape, color = accent.copy(alpha = 0.13f)) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.padding(7.dp).size(18.dp)
+                )
+            }
+            Spacer(Modifier.height(13.dp))
+            Text(
+                label.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                maxLines = 1
+            )
+            Text(
+                detail,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+        }
     }
 }
 
