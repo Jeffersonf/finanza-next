@@ -67,7 +67,21 @@ fun ConfigScreen(state: ConfigUiState, actions: ConfigActions) {
     val experience = LocalAppExperience.current
     val finanza = experience.id == "finanza"
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 108.dp)) {
-        Text("Ajustes", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 20.dp, top = 18.dp, bottom = 12.dp))
+        Text(
+            if (finanza) "Configurações" else "Ajustes",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(start = 20.dp, top = 18.dp)
+        )
+        if (finanza) {
+            Text(
+                "App e preferências",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f),
+                modifier = Modifier.padding(start = 20.dp, top = 3.dp, bottom = 12.dp)
+            )
+        } else {
+            Spacer(Modifier.height(12.dp))
+        }
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp).clip(RoundedCornerShape(tokens.cardRadius + 2.dp)).background(if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
                 .border(1.dp, if (finanza) MaterialTheme.colorScheme.outlineVariant else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(tokens.cardRadius + 2.dp))
