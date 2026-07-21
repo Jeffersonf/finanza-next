@@ -50,6 +50,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -345,10 +346,14 @@ private fun FeatureItemCard(
 ) {
     val tokens = LocalAppExperienceTokens.current
     val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    if (finanza) {
+        FinanzaFeatureItemCard(moduleId, item, onEdit, onDelete, onPrimary, onSecondary)
+        return
+    }
     Surface(
         modifier = Modifier.fillMaxWidth().padding(bottom = 9.dp),
         shape = RoundedCornerShape(tokens.cardRadius),
-        color = if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
+        color = MaterialTheme.colorScheme.surface
     ) {
         Column(Modifier.padding(if (tokens.denseLists) 14.dp else 16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -382,6 +387,112 @@ private fun FeatureItemCard(
                 onSecondary?.let { OutlinedButton(onClick = it, modifier = Modifier.weight(1f)) { Text(item.secondaryAction) } }
                 if (item.canEdit) IconButton(onClick = onEdit) { Icon(Icons.Rounded.Edit, contentDescription = "Editar") }
                 if (item.canDelete) IconButton(onClick = onDelete) { Icon(Icons.Rounded.Delete, contentDescription = "Excluir", tint = MaterialTheme.colorScheme.error) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FinanzaFeatureItemCard(
+    moduleId: String,
+    item: FeatureItemUi,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onPrimary: (() -> Unit)?,
+    onSecondary: (() -> Unit)?
+) {
+    val tokens = LocalAppExperienceTokens.current
+    val statusColor = when (item.status.lowercase()) {
+        "excedido", "a pagar", "cancelled", "rejected" -> MaterialTheme.colorScheme.error
+        "comprado", "em dia", "active", "approved" -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.tertiary
+    }
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        shape = RoundedCornerShape(tokens.cardRadius),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(Modifier.padding(horizontal = 13.dp, vertical = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(statusColor.copy(alpha = 0.13f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        featureIcon(moduleId, when {
+                            item.status == "Comprado" -> "done"
+                            item.subtitle.contains("Combustível", true) -> "fuel"
+                            else -> ""
+                        }),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = statusColor
+                    )
+                }
+                Column(Modifier.weight(1f).padding(horizontal = 11.dp)) {
+                    Text(item.title, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                    if (item.subtitle.isNotBlank()) {
+                        Text(
+                            item.subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
+                }
+                if (item.value.isNotBlank()) {
+                    Text(item.value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                }
+            }
+            item.progress?.let {
+                LinearProgressIndicator(
+                    progress = { it },
+                    modifier = Modifier.fillMaxWidth().padding(top = 11.dp).height(5.dp).clip(RoundedCornerShape(3.dp)),
+                    color = statusColor,
+                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                )
+            }
+            if (item.status.isNotBlank() || onPrimary != null || onSecondary != null || item.canEdit || item.canDelete) {
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (item.status.isNotBlank()) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = statusColor.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                item.status,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = statusColor,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+                    Spacer(Modifier.weight(1f))
+                    onPrimary?.let {
+                        TextButton(onClick = it, contentPadding = PaddingValues(horizontal = 7.dp, vertical = 0.dp)) {
+                            Text(item.primaryAction, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                    onSecondary?.let {
+                        TextButton(onClick = it, contentPadding = PaddingValues(horizontal = 7.dp, vertical = 0.dp)) {
+                            Text(item.secondaryAction, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                    if (item.canEdit) {
+                        IconButton(onClick = onEdit, modifier = Modifier.size(34.dp)) {
+                            Icon(Icons.Rounded.Edit, contentDescription = "Editar", modifier = Modifier.size(18.dp))
+                        }
+                    }
+                    if (item.canDelete) {
+                        IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) {
+                            Icon(Icons.Rounded.Delete, contentDescription = "Excluir", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
             }
         }
     }
