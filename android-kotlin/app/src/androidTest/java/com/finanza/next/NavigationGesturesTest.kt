@@ -31,9 +31,9 @@ class NavigationGesturesTest {
         composeRule.onNodeWithText("Atalhos do Finanza").assertIsDisplayed()
         composeRule.onNodeWithTag("mainPager").performTouchInput { swipeLeft(durationMillis = 1_000) }
         composeRule.waitUntil(5_000) {
-            runCatching { composeRule.onNodeWithText("Contas e carteiras").assertIsDisplayed() }.isSuccess
+            runCatching { composeRule.onNodeWithTag("accountsScreen").assertIsDisplayed() }.isSuccess
         }
-        composeRule.onNodeWithText("Contas e carteiras").assertIsDisplayed()
+        composeRule.onNodeWithTag("accountsScreen").assertIsDisplayed()
     }
 
     @Test
@@ -42,8 +42,8 @@ class NavigationGesturesTest {
         composeRule.onNodeWithContentDescription("Contas").performClick()
 
         composeRule.waitUntil(5_000) {
-            runCatching { composeRule.onNodeWithText("Contas e carteiras").assertIsDisplayed() }.isSuccess
+            runCatching { composeRule.onNodeWithTag("accountsScreen").assertIsDisplayed() }.isSuccess
         }
-        composeRule.onNodeWithText("Contas e carteiras").assertIsDisplayed()
+        composeRule.onNodeWithTag("accountsScreen").assertIsDisplayed()
     }
 }

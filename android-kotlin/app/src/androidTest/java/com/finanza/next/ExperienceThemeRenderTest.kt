@@ -3,6 +3,7 @@ package com.finanza.next
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import com.finanza.next.features.FeatureCenterUiState
 import com.finanza.next.navigation.AppActions
 import com.finanza.next.navigation.AppScaffold
@@ -38,7 +39,8 @@ class ExperienceThemeRenderTest {
             }
         }
 
-        composeRule.onNodeWithText(if (experience == AppExperience.FINANZA) "Início" else "Voce").assertIsDisplayed()
+        val title = if (experience == AppExperience.FINANZA) "Início" else "Voce"
+        composeRule.onAllNodesWithText(title)[0].assertIsDisplayed()
         composeRule.onNodeWithText("Atalhos do Finanza").assertIsDisplayed()
     }
 

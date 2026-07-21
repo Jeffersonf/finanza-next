@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.finanza.next.ui.components.AccountRow
 import com.finanza.next.ui.components.AccountUi
@@ -53,7 +54,7 @@ fun ContasScreen(
     val heroMuted = if (finanza) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.62f)
     val heroInk = if (finanza) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.inverseOnSurface
     LazyColumn(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize().testTag("accountsScreen"),
         contentPadding = PaddingValues(start = 20.dp, top = 18.dp, end = 20.dp, bottom = 108.dp)
     ) {
         item {
