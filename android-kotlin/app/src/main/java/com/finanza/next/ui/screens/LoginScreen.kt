@@ -40,6 +40,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.finanza.next.ui.theme.AppExperience
+import com.finanza.next.ui.theme.LocalAppExperience
 
 @Composable
 fun LoginScreen(
@@ -54,7 +56,8 @@ fun LoginScreen(
     var username by remember { mutableStateOf(initialUsername) }
     var password by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
-    val cardColor = MaterialTheme.colorScheme.surface
+    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val cardColor = if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
     val pageColor = MaterialTheme.colorScheme.background
 
     Box(Modifier.fillMaxSize().background(pageColor).imePadding()) {
@@ -65,7 +68,7 @@ fun LoginScreen(
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(if (finanza) 20.dp else 28.dp),
                 color = cardColor,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {

@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,6 +54,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.finanza.next.ui.theme.LocalAppExperienceTokens
+import com.finanza.next.ui.theme.AppExperience
+import com.finanza.next.ui.theme.LocalAppExperience
 import kotlinx.coroutines.delay
 
 private enum class QuickStep { VALOR, DESCRICAO }
@@ -153,10 +156,13 @@ private fun QuickInputPanel(
     onConfirm: () -> Unit,
     visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
+    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val contentColor = if (finanza) MaterialTheme.colorScheme.onSurface else Color.White
+    val mutedColor = if (finanza) MaterialTheme.colorScheme.onSurfaceVariant else Color.White.copy(alpha = 0.88f)
     QuickGlassPanel {
         Text(
             prompt,
-            color = Color.White.copy(alpha = 0.88f),
+            color = mutedColor,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 11.dp)
@@ -167,7 +173,7 @@ private fun QuickInputPanel(
             modifier = Modifier.fillMaxWidth().height(54.dp).focusRequester(focusRequester),
             singleLine = true,
             textStyle = TextStyle(
-                color = Color.White,
+                color = contentColor,
                 fontSize = 27.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -182,7 +188,7 @@ private fun QuickInputPanel(
                     if (value.isBlank()) {
                         Text(
                             placeholder,
-                            color = Color.White.copy(alpha = 0.28f),
+                            color = if (finanza) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.52f) else Color.White.copy(alpha = 0.28f),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -229,9 +235,12 @@ private fun decimalAmount(rawDigits: String): String {
 @Composable
 private fun QuickGlassPanel(content: @Composable ColumnScope.() -> Unit) {
     val tokens = LocalAppExperienceTokens.current
+    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val panelColor = if (finanza) MaterialTheme.colorScheme.surfaceVariant else tokens.quickPanel
+    val panelBorder = if (finanza) MaterialTheme.colorScheme.outlineVariant else tokens.quickBorder
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(tokens.sheetRadius)).background(tokens.quickPanel)
-            .border(1.dp, tokens.quickBorder, RoundedCornerShape(tokens.sheetRadius)),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(tokens.sheetRadius)).background(panelColor)
+            .border(1.dp, panelBorder, RoundedCornerShape(tokens.sheetRadius)),
         content = content
     )
 }
@@ -239,12 +248,25 @@ private fun QuickGlassPanel(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 private fun QuickActions(enabled: Boolean, onCancel: () -> Unit, onConfirm: () -> Unit) {
     val tokens = LocalAppExperienceTokens.current
+    val finanza = LocalAppExperience.current == AppExperience.FINANZA
     Row(
         Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        QuickActionButton("Cancelar", tokens.quickSecondaryAction, true, onCancel, Modifier.weight(1f))
-        QuickActionButton("OK", tokens.quickPrimaryAction, enabled, onConfirm, Modifier.weight(1f))
+        QuickActionButton(
+            "Cancelar",
+            if (finanza) MaterialTheme.colorScheme.surface else tokens.quickSecondaryAction,
+            true,
+            onCancel,
+            Modifier.weight(1f)
+        )
+        QuickActionButton(
+            "OK",
+            if (finanza) MaterialTheme.colorScheme.primary else tokens.quickPrimaryAction,
+            enabled,
+            onConfirm,
+            Modifier.weight(1f)
+        )
     }
 }
 
