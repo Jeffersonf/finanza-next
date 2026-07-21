@@ -84,7 +84,7 @@ fun LoginScreen(
                         }
                     }
                     Spacer(Modifier.height(22.dp))
-                    Text("Finanza", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+                    Text("Finext", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
                     Text(
                         "Entre com a mesma conta usada no Finanza web.",
                         style = MaterialTheme.typography.bodyMedium,

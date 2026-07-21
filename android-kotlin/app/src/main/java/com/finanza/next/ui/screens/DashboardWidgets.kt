@@ -738,7 +738,7 @@ private fun WidgetEmpty(text: String) {
 
 @Composable
 private fun DashboardWidgetManager(config: DashboardWidgetConfig, onDismiss: () -> Unit, onUpdate: (DashboardWidgetConfig) -> Unit) {
-    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.70f
+    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.64f
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val tokens = LocalAppExperienceTokens.current
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(topStart = tokens.sheetRadius, topEnd = tokens.sheetRadius)) {

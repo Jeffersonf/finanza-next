@@ -39,7 +39,7 @@ class LoginScreenRenderTest {
             }
         }
 
-        composeRule.onNodeWithText("Finanza").assertIsDisplayed()
+        composeRule.onNodeWithText("Finext").assertIsDisplayed()
         composeRule.onNodeWithText("Entrar e sincronizar").assertIsDisplayed()
         composeRule.onNodeWithText("Usar somente neste aparelho").assertIsDisplayed()
     }

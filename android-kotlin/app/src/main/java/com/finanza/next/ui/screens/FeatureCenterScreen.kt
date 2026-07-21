@@ -502,7 +502,7 @@ private fun FinanzaFeatureItemCard(
 private fun FeatureEditor(title: String, fields: List<FeatureFieldUi>, onDismiss: () -> Unit, onSave: (Map<String, String>) -> Boolean) {
     val values = remember(fields) { mutableStateMapOf<String, String>().apply { fields.forEach { put(it.key, it.value) } } }
     var validationError by remember(fields) { mutableStateOf(false) }
-    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.66f
+    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.60f
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val tokens = LocalAppExperienceTokens.current
     ModalBottomSheet(

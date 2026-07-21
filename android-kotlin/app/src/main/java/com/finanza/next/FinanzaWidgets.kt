@@ -170,7 +170,7 @@ object FinanzaWidgets {
                 R.id.widget_agenda_meta,
                 if (nextDue != null) "${formatDate(nextDue.date)} - ${moneyText(prefs, nextDue.amount)}" else "Adicione vencimentos no app"
             )
-            setTextViewText(R.id.widget_agenda_category, nextDue?.category ?: "Next")
+            setTextViewText(R.id.widget_agenda_category, nextDue?.category ?: "Finext")
             setTextColor(R.id.widget_agenda_title, Color.WHITE)
             setTextColor(R.id.widget_agenda_count, Color.parseColor("#B8C1CC"))
             setTextColor(R.id.widget_agenda_name, Color.WHITE)

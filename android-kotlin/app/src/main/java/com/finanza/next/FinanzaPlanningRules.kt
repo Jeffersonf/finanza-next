@@ -38,4 +38,9 @@ internal object FinanzaPlanningRules {
             items.filter { it.type == "expense" }.sumOf { it.amount }
         )
     }
+
+    fun categoryShares(totals: Collection<Double>): List<Float> {
+        val total = totals.sum().coerceAtLeast(1.0)
+        return totals.map { value -> (value.coerceAtLeast(0.0) / total).toFloat() }
+    }
 }

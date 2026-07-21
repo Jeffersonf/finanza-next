@@ -32,6 +32,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.finanza.next.ui.theme.AppExperience
+import com.finanza.next.ui.theme.AppExperienceTokens
+import com.finanza.next.ui.theme.LocalAppExperience
 import com.finanza.next.ui.theme.LocalAppExperienceTokens
 
 enum class AppTab(val label: String) { HOME("Início"), CONTAS("Contas"), ANALISE("Análise"), CONFIG("Ajustes") }
@@ -45,37 +48,76 @@ fun BottomNavBar(selected: AppTab, onSelect: (AppTab) -> Unit, modifier: Modifie
         Triple(AppTab.CONFIG, Icons.Rounded.Settings, "Ajustes")
     )
     val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    val tokens = LocalAppExperienceTokens.current
+    val experience = LocalAppExperience.current
+    if (experience == AppExperience.FINANZA) {
+        ClassicBottomNavBar(items, selected, onSelect, dark, modifier)
+    } else {
+        ModernBottomNavBar(items, selected, onSelect, dark, LocalAppExperienceTokens.current, modifier)
+    }
+}
 
+@Composable
+private fun ModernBottomNavBar(
+    items: List<Triple<AppTab, ImageVector, String>>,
+    selected: AppTab,
+    onSelect: (AppTab) -> Unit,
+    dark: Boolean,
+    tokens: AppExperienceTokens,
+    modifier: Modifier
+) {
     Surface(
         modifier = modifier.fillMaxWidth().height(tokens.navHeight),
         shape = RoundedCornerShape(tokens.navRadius),
         color = MaterialTheme.colorScheme.surface.copy(alpha = if (dark) tokens.glassDarkAlpha else tokens.glassLightAlpha),
-        border = BorderStroke(
-            1.dp,
-            if (dark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.72f)
-        ),
+        border = BorderStroke(1.dp, if (dark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.72f)),
         shadowElevation = 4.dp,
         tonalElevation = 0.dp
     ) {
         Row(Modifier.fillMaxSize().padding(5.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             items.forEach { (tab, icon, label) ->
-                NavItem(
-                    selected = selected == tab,
-                    icon = icon,
-                    label = label,
-                    dark = dark,
-                    showLabel = tokens.showNavLabels,
-                    onClick = { onSelect(tab) },
-                    modifier = Modifier.weight(1f)
-                )
+                ModernNavItem(selected == tab, icon, label, dark, tokens.showNavLabels, { onSelect(tab) }, Modifier.weight(1f))
             }
         }
     }
 }
 
 @Composable
-private fun NavItem(
+private fun ClassicBottomNavBar(
+    items: List<Triple<AppTab, ImageVector, String>>,
+    selected: AppTab,
+    onSelect: (AppTab) -> Unit,
+    dark: Boolean,
+    modifier: Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth().height(64.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = if (dark) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
+        shadowElevation = 2.dp,
+        tonalElevation = 0.dp
+    ) {
+        Row(Modifier.fillMaxSize().padding(6.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            items.forEach { (tab, icon, label) ->
+                val isSelected = selected == tab
+                val tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxSize().clip(RoundedCornerShape(12.dp))
+                        .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = if (dark) 0.20f else 0.12f) else Color.Transparent)
+                        .clickable { onSelect(tab) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                        Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(19.dp))
+                        Text(label, color = tint, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, lineHeight = 12.sp, maxLines = 1)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModernNavItem(
     selected: Boolean,
     icon: ImageVector,
     label: String,
@@ -91,7 +133,6 @@ private fun NavItem(
         else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.56f)
     }
     val selectedColor = if (dark) tokens.navSelectedDark else tokens.navSelectedLight
-
     Box(
         modifier = modifier.fillMaxSize().clip(RoundedCornerShape(tokens.navSelectedRadius))
             .background(if (selected) selectedColor else Color.Transparent)
@@ -100,16 +141,7 @@ private fun NavItem(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Icon(icon, contentDescription = label, tint = contentColor, modifier = Modifier.size(18.dp))
-            if (showLabel) {
-                Text(
-                    label,
-                    color = contentColor,
-                    fontSize = 10.sp,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                    lineHeight = 12.sp,
-                    maxLines = 1
-                )
-            }
+            if (showLabel) Text(label, color = contentColor, fontSize = 10.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium, lineHeight = 12.sp, maxLines = 1)
         }
     }
 }

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Next</string>
+    <string name="app_name">Finext</string>
     <string name="widget_summary_desc">Resumo financeiro do mes</string>
     <string name="widget_agenda_desc">Proximos vencimentos e agenda</string>
     <string name="widget_quick_expense_desc">Atalho rapido para lancar gasto</string>
@@ -18,7 +18,7 @@
     <string name="widget_agenda_count_placeholder">0 item(ns) futuros</string>
     <string name="widget_agenda_name_placeholder">Sem contas na agenda</string>
     <string name="widget_agenda_meta_placeholder">Adicione vencimentos no app</string>
-    <string name="widget_agenda_category_placeholder">Next</string>
+    <string name="widget_agenda_category_placeholder">Finext</string>
     <string name="shortcut_quick_expense_short">Novo gasto</string>
     <string name="shortcut_quick_expense_long">Abrir folha rapida</string>
 </resources>

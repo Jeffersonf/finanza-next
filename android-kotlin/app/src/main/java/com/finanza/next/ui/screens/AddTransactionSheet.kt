@@ -57,7 +57,7 @@ data class PaymentMethodUi(val id: String, val name: String, val icon: ImageVect
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionSheet(methods: List<PaymentMethodUi>, onComplete: (String, String, String, PaymentMethodUi) -> Unit, onDismiss: () -> Unit) {
-    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.62f
+    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.56f
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val tokens = LocalAppExperienceTokens.current
     val finanza = LocalAppExperience.current == AppExperience.FINANZA

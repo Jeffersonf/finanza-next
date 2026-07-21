@@ -83,44 +83,11 @@ fun AnalysisScreen(income: String, spent: String, categories: List<CategoryUi>, 
             Text(if (finanza) "Fluxo de caixa" else "Últimos 6 meses", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 26.dp, bottom = 10.dp))
             if (finanza) {
                 FinanzaCashFlowChart(trends)
-            } else trends.forEach { trend ->
-                Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                    Row(Modifier.fillMaxWidth()) {
-                        Text(trend.label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                        Text("${trend.income} / ${trend.spent}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.56f))
-                    }
-                    Spacer(Modifier.height(5.dp))
-                    Box(Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f))) {
-                        Box(
-                            Modifier.fillMaxWidth(trend.incomeShare.coerceIn(0f, 1f))
-                                .height(5.dp)
-                                .background(Color(0xFF34C759))
-                        )
-                    }
-                    Spacer(Modifier.height(3.dp))
-                    Box(Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f))) {
-                        Box(Modifier.fillMaxWidth(trend.spentShare.coerceIn(0f, 1f)).height(5.dp).background(MaterialTheme.colorScheme.error))
-                    }
-                }
-            }
+            } else ModernCashFlowCard(trends)
             Text("Por categoria", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 26.dp, bottom = 10.dp))
         }
-        if (finanza) {
-            item { FinanzaCategoryBreakdown(categories) }
-        } else items(categories, key = { it.name }) { category ->
-            Column(Modifier.fillMaxWidth().padding(vertical = 7.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(10.dp).clip(RoundedCornerShape(5.dp)).background(category.color))
-                    Spacer(Modifier.width(9.dp))
-                    Text(category.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                    Text(category.amount, style = MaterialTheme.typography.bodyMedium)
-                }
-                Spacer(Modifier.height(7.dp))
-                Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))) {
-                    Box(Modifier.fillMaxWidth(category.share.coerceIn(0f, 1f)).height(6.dp).background(category.color))
-                }
-            }
-        }
+        if (finanza) item { FinanzaCategoryBreakdown(categories) }
+        else item { ModernCategoryBreakdown(categories) }
         item {
             Text("Movimentos", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 24.dp, bottom = 6.dp))
             OutlinedTextField(
@@ -222,6 +189,57 @@ private fun FinanzaCashFlowChart(trends: List<MonthTrendUi>) {
 }
 
 @Composable
+private fun ModernCashFlowCard(trends: List<MonthTrendUi>) {
+    val active = trends.filter { it.incomeShare > 0f || it.spentShare > 0f }
+    val tokens = LocalAppExperienceTokens.current
+    val expenseColor = MaterialTheme.colorScheme.error
+    Surface(
+        shape = RoundedCornerShape(tokens.cardRadius),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.70f))
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Entradas e saídas", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        if (active.size < 2) "O histórico aparece conforme os próximos meses forem registrados." else "Comparativo dos meses com movimentação.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+                LegendDot(Color(0xFF34C759), "Entradas")
+                Spacer(Modifier.width(8.dp))
+                LegendDot(expenseColor, "Saídas")
+            }
+            if (active.isEmpty()) {
+                Text("Ainda não há movimentações para analisar.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 28.dp))
+            } else {
+                Canvas(Modifier.fillMaxWidth().height(128.dp).padding(top = 16.dp)) {
+                    val groupWidth = size.width / active.size
+                    val baseline = size.height - 3.dp.toPx()
+                    val chartHeight = baseline - 8.dp.toPx()
+                    active.forEachIndexed { index, trend ->
+                        val center = groupWidth * (index + 0.5f)
+                        val barWidth = (groupWidth * 0.24f).coerceIn(14.dp.toPx(), 30.dp.toPx())
+                        val incomeHeight = chartHeight * trend.incomeShare.coerceIn(0f, 1f)
+                        val expenseHeight = chartHeight * trend.spentShare.coerceIn(0f, 1f)
+                        drawRoundRect(Color(0xFF34C759), Offset(center - barWidth - 3.dp.toPx(), baseline - incomeHeight), Size(barWidth, incomeHeight.coerceAtLeast(3.dp.toPx())), androidx.compose.ui.geometry.CornerRadius(5.dp.toPx(), 5.dp.toPx()))
+                        drawRoundRect(expenseColor, Offset(center + 3.dp.toPx(), baseline - expenseHeight), Size(barWidth, expenseHeight.coerceAtLeast(3.dp.toPx())), androidx.compose.ui.geometry.CornerRadius(5.dp.toPx(), 5.dp.toPx()))
+                    }
+                }
+                Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                    active.forEach { trend ->
+                        Text(trend.label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun LegendDot(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(7.dp).clip(RoundedCornerShape(4.dp)).background(color))
@@ -233,37 +251,67 @@ private fun LegendDot(color: Color, label: String) {
 private fun FinanzaCategoryBreakdown(categories: List<CategoryUi>) {
     val visible = categories.filter { it.share > 0f }.take(5)
     Surface(
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(108.dp), contentAlignment = Alignment.Center) {
-                Canvas(Modifier.size(96.dp)) {
-                    var start = -90f
-                    visible.forEach { category ->
-                        val sweep = (category.share.coerceIn(0f, 1f) * 360f).coerceAtLeast(4f)
-                        drawArc(
-                            category.color,
-                            start + 2f,
-                            (sweep - 4f).coerceAtLeast(2f),
-                            false,
-                            style = Stroke(13.dp.toPx(), cap = StrokeCap.Round)
-                        )
-                        start += sweep
+        Column(Modifier.padding(16.dp)) {
+            Text("Distribuição dos gastos", style = MaterialTheme.typography.titleSmall)
+            Text("Categorias com maior impacto no mês", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp, bottom = 10.dp))
+            if (visible.isEmpty()) {
+                Text("Sem gastos categorizados", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else visible.forEach { category ->
+                Column(Modifier.fillMaxWidth().padding(vertical = 7.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(28.dp).clip(RoundedCornerShape(9.dp)).background(category.color.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                            Box(Modifier.size(9.dp).clip(RoundedCornerShape(5.dp)).background(category.color))
+                        }
+                        Text(category.name, modifier = Modifier.padding(start = 9.dp).weight(1f), style = MaterialTheme.typography.bodyMedium)
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(category.amount, style = MaterialTheme.typography.labelLarge)
+                            Text("${(category.share.coerceIn(0f, 1f) * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Box(Modifier.fillMaxWidth().padding(top = 7.dp).height(5.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f))) {
+                        Box(Modifier.fillMaxWidth(category.share.coerceIn(0f, 1f)).height(5.dp).background(category.color))
                     }
                 }
-                Text("Gastos", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Column(Modifier.weight(1f)) {
-                if (visible.isEmpty()) {
-                    Text("Sem gastos categorizados", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else visible.forEach { category ->
-                    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(8.dp).clip(RoundedCornerShape(4.dp)).background(category.color))
-                        Text(category.name, modifier = Modifier.padding(start = 7.dp).weight(1f), style = MaterialTheme.typography.bodySmall)
-                        Text(category.amount, style = MaterialTheme.typography.labelMedium)
+        }
+    }
+}
+
+@Composable
+private fun ModernCategoryBreakdown(categories: List<CategoryUi>) {
+    val visible = categories.filter { it.share > 0f }.take(6)
+    val tokens = LocalAppExperienceTokens.current
+    Surface(
+        shape = RoundedCornerShape(tokens.cardRadius),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.70f))
+    ) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            if (visible.isEmpty()) {
+                Text("Sem gastos categorizados", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 12.dp))
+            } else visible.forEachIndexed { index, category ->
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(category.color.copy(alpha = 0.14f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(Modifier.size(10.dp).clip(RoundedCornerShape(5.dp)).background(category.color))
                     }
+                    Column(Modifier.padding(start = 10.dp).weight(1f)) {
+                        Text(category.name, style = MaterialTheme.typography.bodyLarge)
+                        Text("${(category.share.coerceIn(0f, 1f) * 100).toInt()}% das despesas", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Text(category.amount, style = MaterialTheme.typography.titleSmall)
+                }
+                if (index < visible.lastIndex) {
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)))
                 }
             }
         }

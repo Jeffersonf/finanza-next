@@ -80,7 +80,7 @@ import com.finanza.next.features.FinanzaFeatureStore
 private class DialogScrollView(context: Context) : ScrollView(context) {
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val available = View.MeasureSpec.getSize(heightMeasureSpec)
-        val maximum = (resources.displayMetrics.heightPixels * 0.72f).toInt()
+        val maximum = (resources.displayMetrics.heightPixels * 0.68f).toInt()
         val height = if (available > 0) minOf(available, maximum) else maximum
         super.onMeasure(widthMeasureSpec, View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.AT_MOST))
     }
@@ -385,7 +385,7 @@ class MainActivity : ComponentActivity() {
    private fun showEntryDialog(type: String, existing: Entry? = null) {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val panel = dialogPanel()
+        val panel = dialogPanel(dialog)
         val allAccounts = accounts()
         val titleInput = input("Descrição", existing?.title ?: "")
         val categoryInput = input("Categoria", existing?.category ?: "")
@@ -621,7 +621,7 @@ class MainActivity : ComponentActivity() {
         )
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val panel = dialogPanel()
+        val panel = dialogPanel(dialog)
         val nameInput = input("Nome da conta", existing?.name ?: "")
         val balanceInput = input("Saldo inicial", existing?.balance?.toString() ?: "", true)
         val yieldInput = input("Rendimento mensal (%)", existing?.yieldRate?.toString() ?: "", true)
@@ -784,23 +784,19 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showThemeDialog() {
-        showAppDialog("Tema do app", "Escolha a aparencia e a experiencia visual.") { dialog ->
-            addView(statusPill("Claro / escuro"))
-            addView(button("Claro", if (!isDarkTheme()) accent else paper2, if (!isDarkTheme()) ink else ink) {
+        showAppDialog("Aparência", "Defina o modo de cor e a linguagem visual do Finext.") { dialog ->
+            addView(dialogSectionLabel("Modo de cor"))
+            addView(dialogChoice("Claro", "Fundo claro e contraste suave", !isDarkTheme()) {
                 applyTheme("light")
                 dialog.dismiss()
             })
-            addView(button("Escuro", if (isDarkTheme()) accent else paper2, if (isDarkTheme()) ink else ink) {
+            addView(dialogChoice("Escuro", "Superfícies escuras e baixo brilho", isDarkTheme()) {
                 applyTheme("dark")
                 dialog.dismiss()
             })
-            addView(statusPill("Experiencia"))
+            addView(dialogSectionLabel("Tema", topMargin = 16))
             AppExperience.entries.forEach { experience ->
-                addView(button(
-                    "${experience.label} - ${experience.description}",
-                    if (visualExperience() == experience) accent else paper2,
-                    if (visualExperience() == experience && isDarkTheme()) Color.BLACK else ink
-                ) {
+                addView(dialogChoice(experience.label, experience.description, visualExperience() == experience) {
                     applyVisualExperience(experience)
                     dialog.dismiss()
                 })
@@ -809,7 +805,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun onlineStatusText(): String {
-        if (!prefs.getBoolean("online_mode", false)) return "Entre para sincronizar o Next com sua conta Finanza."
+        if (!prefs.getBoolean("online_mode", false)) return "Entre para sincronizar o Finext com sua conta Finanza."
         val name = prefs.getString("user_name", "Voce") ?: "Voce"
         val url = prefs.getString("api_url", "") ?: ""
         val host = urlHostLabel(url)
@@ -820,7 +816,7 @@ class MainActivity : ComponentActivity() {
     private fun showOnlineAccessDialog() {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val panel = dialogPanel().apply {
+        val panel = dialogPanel(dialog).apply {
             addView(statusPill(if (isOnlineMode()) "Conta conectada" else "Conta web"))
             addView(label(if (isOnlineMode()) "Sua conta Finanza" else "Entrar na sua conta", 27, ink, true).apply {
                 setPadding(0, dp(12), 0, 0)
@@ -888,7 +884,7 @@ class MainActivity : ComponentActivity() {
         panel.addView(connectButton)
         if (prefs.getBoolean("online_mode", false)) {
             panel.addView(secondaryButton("Sincronizar agora") {
-                status.text = "Sincronizando o Next..."
+                status.text = "Sincronizando o Finext..."
                 syncRemoteNow(
                     silent = true,
                     onComplete = { status.text = "Dados sincronizados com sucesso." },
@@ -1234,7 +1230,7 @@ class MainActivity : ComponentActivity() {
         })
     }
 
-    private fun dialogPanel(): LinearLayout = LinearLayout(this).apply {
+    private fun dialogPanel(dialog: Dialog? = null): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(20), dp(12), dp(20), dp(18))
         val fill = when {
@@ -1243,13 +1239,20 @@ class MainActivity : ComponentActivity() {
             isFinanzaExperience -> Color.argb(235, 255, 255, 255)
             else -> Color.argb(228, 255, 255, 255)
         }
-        background = rounded(fill, dp(if (isFinanzaExperience) 28 else 32), Color.argb(if (isDarkTheme()) 34 else 52, 255, 255, 255))
-        addView(View(this@MainActivity).apply {
-            background = rounded(if (isDarkTheme()) Color.argb(76, 255, 255, 255) else Color.argb(44, 25, 25, 29), dp(999), Color.TRANSPARENT)
-        }, LinearLayout.LayoutParams(dp(42), dp(5)).apply {
-            gravity = Gravity.CENTER_HORIZONTAL
-            setMargins(0, 0, 0, dp(10))
-        })
+        background = rounded(fill, dp(if (isFinanzaExperience) 22 else 26), Color.argb(if (isDarkTheme()) 34 else 52, 255, 255, 255))
+        val topRow = LinearLayout(this@MainActivity).apply {
+            gravity = Gravity.CENTER_VERTICAL
+            addView(View(this@MainActivity).apply {
+                background = rounded(if (isDarkTheme()) Color.argb(76, 255, 255, 255) else Color.argb(44, 25, 25, 29), dp(999), Color.TRANSPARENT)
+            }, LinearLayout.LayoutParams(dp(36), dp(4)).apply { gravity = Gravity.CENTER_VERTICAL })
+            addView(View(this@MainActivity), LinearLayout.LayoutParams(0, 1, 1f))
+            if (dialog != null) addView(iconButton("x", "Fechar") { dialog.dismiss() }.apply {
+                minimumWidth = dp(36); minimumHeight = dp(36)
+                textSize = 17f
+                background = rounded(if (isDarkTheme()) paper2 else Color.argb(214, 255, 255, 255), dp(14), line)
+            }, LinearLayout.LayoutParams(dp(36), dp(36)))
+        }
+        addView(topRow, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36)).apply { setMargins(0, 0, 0, dp(8)) })
     }
 
     private fun styleDialog(dialog: Dialog) {
@@ -1257,16 +1260,42 @@ class MainActivity : ComponentActivity() {
             dialog.window?.apply {
                 setBackgroundDrawableResource(android.R.color.transparent)
                 setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                setLayout((resources.displayMetrics.widthPixels * 0.94f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+                setLayout((resources.displayMetrics.widthPixels * 0.90f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
                 setGravity(Gravity.BOTTOM)
                 attributes = attributes.apply {
-                    width = (resources.displayMetrics.widthPixels * 0.94f).toInt()
+                    width = (resources.displayMetrics.widthPixels * 0.90f).toInt()
                     height = WindowManager.LayoutParams.WRAP_CONTENT
                     dimAmount = 0.34f
                 }
                 addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             }
         }
+    }
+
+    private fun dialogSectionLabel(text: String, topMargin: Int = 0): TextView = body(text, 12, muted).apply {
+        typeface = Typeface.DEFAULT_BOLD
+        setPadding(0, dp(topMargin), 0, dp(6))
+    }
+
+    private fun dialogChoice(title: String, subtitle: String, selected: Boolean, onClick: () -> Unit): View = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(dp(14), dp(12), dp(12), dp(12))
+        background = rounded(
+            if (selected) accent else if (isDarkTheme()) paper2 else Color.argb(210, 255, 255, 255),
+            dp(16),
+            if (selected) Color.argb(36, 255, 255, 255) else line
+        )
+        val selectedText = selected && (isDarkTheme() || isFinanzaExperience)
+        addView(LinearLayout(this@MainActivity).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(label(title, 15, if (selectedText) Color.BLACK else ink, true))
+            addView(body(subtitle, 12, if (selectedText) Color.argb(180, 0, 0, 0) else muted).apply { setPadding(0, dp(3), 0, 0) })
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        addView(label(if (selected) "Selecionado" else "", 11, if (selectedText) Color.BLACK else muted, true))
+        setOnClickListener { onClick() }
+    }.also { view ->
+        view.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, dp(6), 0, 0) }
     }
 
     private fun urlHostLabel(raw: String): String = runCatching {
@@ -2711,7 +2740,7 @@ class MainActivity : ComponentActivity() {
         }
         val categoryTotals = FinanzaPlanningRules.budgetSpending(planningTransactions, YearMonth.now(), LocalDate.now())
             .toList().sortedByDescending { it.second }
-        val maxCategory = categoryTotals.maxOfOrNull { it.second }?.coerceAtLeast(1.0) ?: 1.0
+        val categoryShares = FinanzaPlanningRules.categoryShares(categoryTotals.map { it.second })
         val trendRows = FinanzaPlanningRules.monthTotals(planningTransactions, YearMonth.now())
         val maxTrend = trendRows.maxOfOrNull { maxOf(it.income, it.expense) }?.coerceAtLeast(1.0) ?: 1.0
 
@@ -2746,8 +2775,8 @@ class MainActivity : ComponentActivity() {
                     if (runCatching { LocalDate.parse(entry.date).isBefore(LocalDate.now()) }.getOrDefault(false)) BillStatus.ATRASADO else BillStatus.PENDENTE
                 )
             },
-            categories = categoryTotals.take(8).map { (name, amount) ->
-                CategoryUi(name, moneyText(amount), (amount / maxCategory).toFloat(), categoryColor(name))
+            categories = categoryTotals.take(8).mapIndexed { index, (name, amount) ->
+                CategoryUi(name, moneyText(amount), categoryShares.getOrElse(index) { 0f }, categoryColor(name))
             },
             monthlyTrends = trendRows.map { totals ->
                 MonthTrendUi(

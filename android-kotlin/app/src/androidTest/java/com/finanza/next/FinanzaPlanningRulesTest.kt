@@ -39,6 +39,14 @@ class FinanzaPlanningRulesTest {
         assertEquals(200.0, totals[1].expense, 0.001)
     }
 
+    @Test
+    fun categorySharesUseTheTotalInsteadOfTheLargestCategory() {
+        val shares = FinanzaPlanningRules.categoryShares(listOf(286.75, 119.90))
+
+        assertEquals(0.705, shares[0].toDouble(), 0.002)
+        assertEquals(0.295, shares[1].toDouble(), 0.002)
+    }
+
     private fun tx(type: String, amount: Double, category: String, date: String, paid: Boolean = false) =
         FinanzaPlanningTransaction(type, amount, category, LocalDate.parse(date), paid)
 }

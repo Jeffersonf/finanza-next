@@ -100,7 +100,7 @@ fun ConfigScreen(state: ConfigUiState, actions: ConfigActions) {
         SettingsSectionTitle("Conta")
         SettingsGroup {
             SettingsRow("Seu perfil", state.userName, actions.editProfile)
-            SettingsRow("Conta Finanza", state.accountStatus, actions.openAccount, showDivider = false)
+            SettingsRow("Conta Finext", state.accountStatus, actions.openAccount, showDivider = false)
         }
         SettingsSectionTitle("Planejamento")
         SettingsGroup {

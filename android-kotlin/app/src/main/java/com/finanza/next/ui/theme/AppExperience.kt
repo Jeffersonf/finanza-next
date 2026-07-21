@@ -7,8 +7,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 enum class AppExperience(val id: String, val label: String, val description: String) {
-    NEXT("next", "Next", "Visual atual, direto e leve"),
-    FINANZA("finanza", "Finanza", "Visual completo inspirado no app web");
+    NEXT("next", "Moderno", "A linguagem fluida do Next"),
+    FINANZA("finanza", "Clássico", "A interface do Finanza web");
 
     companion object {
         fun fromId(id: String?): AppExperience = entries.firstOrNull { it.id == id } ?: NEXT
@@ -46,8 +46,8 @@ val NextTokens = AppExperienceTokens(
     navSelectedRadius = 18.dp,
     navSelectedLight = HeroCard.copy(alpha = 0.92f),
     navSelectedDark = Color(0xFF34343A).copy(alpha = 0.58f),
-    glassLightAlpha = 0.82f,
-    glassDarkAlpha = 0.62f,
+    glassLightAlpha = 0.94f,
+    glassDarkAlpha = 0.84f,
     quickPanel = Color(0xD9212228),
     quickBorder = Color.White.copy(alpha = 0.14f),
     quickSecondaryAction = Color.White.copy(alpha = 0.15f),
@@ -60,15 +60,14 @@ val FinanzaTokens = AppExperienceTokens(
     experience = AppExperience.FINANZA,
     cardRadius = 20.dp,
     sheetRadius = 24.dp,
-    // Navigation is a shared The Box control; themes only change the content behind it.
-    navRadius = 23.dp,
-    navHeight = 62.dp,
-    navHorizontalPadding = 10.dp,
-    navSelectedRadius = 18.dp,
-    navSelectedLight = Color(0xFF101113).copy(alpha = 0.88f),
-    navSelectedDark = Color(0xFF34343A).copy(alpha = 0.58f),
-    glassLightAlpha = 0.82f,
-    glassDarkAlpha = 0.62f,
+    navRadius = 16.dp,
+    navHeight = 64.dp,
+    navHorizontalPadding = 14.dp,
+    navSelectedRadius = 12.dp,
+    navSelectedLight = FinanzaAccentSoft,
+    navSelectedDark = FinanzaAccentSoftDark,
+    glassLightAlpha = 0.96f,
+    glassDarkAlpha = 0.96f,
     quickPanel = Color(0xE6141414),
     quickBorder = Color.White.copy(alpha = 0.18f),
     quickSecondaryAction = Color.White.copy(alpha = 0.16f),
