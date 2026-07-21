@@ -101,7 +101,7 @@ private val FinanzaLightColors = lightColorScheme(
     scrim = Color.Black,
     error = FinanzaDangerLight,
     onError = Color.White,
-    errorContainer = DangerRedBg,
+    errorContainer = FinanzaDangerLight.copy(alpha = 0.14f),
     onErrorContainer = FinanzaDangerLight
 )
 
@@ -130,10 +130,10 @@ private val FinanzaDarkColors = darkColorScheme(
     outline = Color(0xFF5D5D5F),
     outlineVariant = FinanzaDividerDark,
     scrim = Color.Black,
-    error = DangerRed,
-    onError = Color.Black,
-    errorContainer = DangerRedBg,
-    onErrorContainer = DangerRed
+    error = FinanzaDanger,
+    onError = FinanzaBackgroundDark,
+    errorContainer = FinanzaDanger.copy(alpha = 0.16f),
+    onErrorContainer = FinanzaDanger
 )
 
 @Composable
