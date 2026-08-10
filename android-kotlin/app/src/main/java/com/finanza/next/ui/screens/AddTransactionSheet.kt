@@ -1,6 +1,8 @@
 package com.finanza.next.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,7 +43,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -56,19 +59,33 @@ data class PaymentMethodUi(val id: String, val name: String, val icon: ImageVect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddTransactionSheet(methods: List<PaymentMethodUi>, onComplete: (String, String, String, PaymentMethodUi) -> Unit, onDismiss: () -> Unit) {
-    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.56f
+fun AddTransactionSheet(
+    methods: List<PaymentMethodUi>,
+    customCategories: List<String> = emptyList(),
+    onComplete: (String, String, String, PaymentMethodUi) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val web = LocalAppExperience.current == AppExperience.WEB
+    val maxHeight = with(LocalDensity.current) {
+        LocalWindowInfo.current.containerSize.height.toDp() * if (web) 0.52f else 0.56f
+    }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
-        scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = if (finanza) 0.56f else 0.32f),
+        containerColor = if (web) MaterialTheme.colorScheme.surface.copy(alpha = 0.98f) else MaterialTheme.colorScheme.surface,
+        scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = if (web) 0.48f else if (finanza) 0.56f else 0.32f),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = tokens.sheetRadius, topEnd = tokens.sheetRadius)
     ) {
-        AddTransactionFlow(methods, onComplete, onDismiss, Modifier.heightIn(max = maxHeight).padding(horizontal = 20.dp, vertical = 4.dp))
+        AddTransactionFlow(
+            methods = methods,
+            onComplete = onComplete,
+            onDismiss = onDismiss,
+            modifier = Modifier.heightIn(max = maxHeight).padding(horizontal = 20.dp, vertical = 4.dp),
+            customCategories = customCategories
+        )
     }
 }
 
@@ -77,11 +94,13 @@ fun AddTransactionFlow(
     methods: List<PaymentMethodUi>,
     onComplete: (String, String, String, PaymentMethodUi) -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    customCategories: List<String> = emptyList()
 ) {
     var step by remember { mutableStateOf(AddStep.VALOR) }
     var amount by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
 
@@ -137,6 +156,28 @@ fun AddTransactionFlow(
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { step = AddStep.PAGAMENTO })
                     )
+                    if (customCategories.isNotEmpty()) {
+                        Text(
+                            "Categoria",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
+                        )
+                        val availableCategories = customCategories.distinct()
+                        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                            availableCategories.forEachIndexed { index, category ->
+                                Surface(
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                                    color = if (selectedCategory == category) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                    modifier = Modifier
+                                        .padding(end = if (index < availableCategories.lastIndex) 6.dp else 0.dp)
+                                        .clickable { selectedCategory = category }
+                                ) {
+                                    Text(category, modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                                }
+                            }
+                        }
+                    }
                     StepActions("Voltar", "OK", true, { step = AddStep.VALOR }) { step = AddStep.PAGAMENTO }
                 }
                 AddStep.PAGAMENTO -> {
@@ -146,7 +187,7 @@ fun AddTransactionFlow(
                                 headlineContent = { Text(method.name, style = MaterialTheme.typography.bodyLarge) },
                                 leadingContent = { Icon(method.icon, null) },
                                 modifier = Modifier
-                                    .clickable { onComplete(amount, description, FinanzaCategories.infer(description), method) }
+                                    .clickable { onComplete(amount, description, selectedCategory.ifBlank { FinanzaCategories.infer(description) }, method) }
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
                         }

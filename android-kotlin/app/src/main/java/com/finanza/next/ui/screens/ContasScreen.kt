@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +34,7 @@ import com.finanza.next.ui.components.AccountRow
 import com.finanza.next.ui.components.AccountUi
 import com.finanza.next.ui.components.BillRow
 import com.finanza.next.ui.components.BillUi
+import com.finanza.next.ui.components.BillStatus
 import com.finanza.next.ui.components.CircularProgressRing
 import com.finanza.next.ui.components.accountIcon
 import com.finanza.next.ui.theme.AppExperience
@@ -54,7 +56,9 @@ fun ContasScreen(
     onBill: (Long) -> Unit
 ) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val experience = LocalAppExperience.current
+    val finanza = experience.usesFinanzaVisuals
+    val web = experience == AppExperience.WEB
     val heroShape = RoundedCornerShape(tokens.cardRadius + 8.dp)
     val heroColor = if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.inverseSurface
     val heroMuted = if (finanza) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.62f)
@@ -69,13 +73,13 @@ fun ContasScreen(
                     Column(Modifier.weight(1f)) {
                         Text("Contas", style = MaterialTheme.typography.titleLarge, maxLines = 1)
                         Text(
-                            "Corrente, poupança e cartão",
+                            if (web) "Corrente, poupança, cartão" else "Corrente, poupança e cartão",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f),
                             modifier = Modifier.padding(top = 3.dp)
                         )
                     }
-                    Button(onClick = onNewAccount) { Text("+ Nova conta") }
+                    Button(onClick = onNewAccount) { Text(if (web) "+ Nova Conta" else "+ Nova conta") }
                 }
             } else {
                 Text("Planejamento", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f))
@@ -114,13 +118,31 @@ fun ContasScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     row.forEach { item ->
-                        FinanzaAccountTile(item, Modifier.weight(1f)) { onAccount(item.id) }
+                        if (web) {
+                            FinanzaWebAccountTile(item, Modifier.weight(1f)) { onAccount(item.id) }
+                        } else {
+                            FinanzaAccountTile(item, Modifier.weight(1f)) { onAccount(item.id) }
+                        }
                     }
                     if (row.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
+            if (web && accounts.any { it.iconKey.equals("credit", ignoreCase = true) || it.type.equals("Cartão", ignoreCase = true) }) {
+                item {
+                    FinanzaWebCardCenter(
+                        cards = accounts.filter { it.iconKey.equals("credit", ignoreCase = true) || it.type.equals("Cartão", ignoreCase = true) },
+                        onNewCard = onNewAccount,
+                        onCard = onAccount
+                    )
+                }
+            }
         } else {
             items(accounts, key = { it.id }) { item -> AccountRow(item) { onAccount(item.id) } }
+        }
+        if (web) {
+            item {
+                FinanzaWebDueSummary(bills)
+            }
         }
         item {
             Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -133,6 +155,44 @@ fun ContasScreen(
         items(bills, key = { it.id }) { item -> BillRow(item, { onBill(item.id) }, Modifier.padding(bottom = 10.dp)) }
     }
 }
+
+@Composable
+private fun FinanzaWebDueSummary(bills: List<BillUi>) {
+    val total = bills.sumOf { webBillAmount(it.amount) }
+    val overdue = bills.count { it.status == BillStatus.ATRASADO }
+    val next = bills.firstOrNull()?.let { "${it.name} • ${it.due}" } ?: "Nenhum vencimento"
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WebDueStat("Compromissos", webBillMoney(total), MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
+        WebDueStat("Vencidos", overdue.toString(), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+        WebDueStat("Próximo", next, MaterialTheme.colorScheme.primary, Modifier.weight(1.2f))
+    }
+}
+
+@Composable
+private fun WebDueStat(label: String, value: String, accent: androidx.compose.ui.graphics.Color, modifier: Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.labelLarge, color = accent, fontWeight = FontWeight.Bold, maxLines = 2)
+        }
+    }
+}
+
+private fun webBillAmount(raw: String): Double = raw
+    .replace("R$", "", ignoreCase = true)
+    .replace(".", "")
+    .replace(',', '.')
+    .trim()
+    .toDoubleOrNull()
+    ?: 0.0
+
+private fun webBillMoney(value: Double): String = java.text.NumberFormat
+    .getCurrencyInstance(java.util.Locale("pt", "BR"))
+    .format(value)
 
 @Composable
 private fun FinanzaAccountTile(item: AccountUi, modifier: Modifier = Modifier, onClick: () -> Unit) {
@@ -166,6 +226,104 @@ private fun FinanzaAccountTile(item: AccountUi, modifier: Modifier = Modifier, o
         Column {
             Text(item.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
             Text(item.amount, style = MaterialTheme.typography.titleMedium, color = if (item.amount.startsWith("-")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun FinanzaWebAccountTile(item: AccountUi, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(18.dp)
+    val amountColor = if (item.amount.startsWith("-")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    Column(
+        modifier = modifier
+            .height(152.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.88f))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.14f), shape)
+            .clickable(onClick = onClick)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(34.dp).clip(RoundedCornerShape(11.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.13f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(accountIcon(item.iconKey), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                }
+                Text(
+                    accountTypeTag(item.type),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clip(RoundedCornerShape(7.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f))
+                        .padding(horizontal = 7.dp, vertical = 4.dp),
+                    maxLines = 1
+                )
+            }
+            Column {
+                Text(item.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(item.amount, style = MaterialTheme.typography.titleMedium, color = amountColor, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                Text("Saldo disponível", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 3.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun FinanzaWebCardCenter(
+    cards: List<AccountUi>,
+    onNewCard: () -> Unit,
+    onCard: (String) -> Unit
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.88f))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Central de cartões", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "Fechamento, vencimento, validade e final do cartão",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 3.dp)
+                )
+            }
+            OutlinedButton(onClick = onNewCard) { Text("Novo cartão") }
+        }
+        Spacer(Modifier.height(12.dp))
+        cards.forEachIndexed { index, card ->
+            if (index > 0) Spacer(Modifier.height(8.dp))
+            Surface(
+                modifier = Modifier.fillMaxWidth().clickable { onCard(card.id) },
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f)
+            ) {
+                Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(accountIcon(card.iconKey), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                    Column(Modifier.padding(start = 10.dp).weight(1f)) {
+                        Text(card.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        Text(
+                            listOfNotNull(
+                                card.cardLast4.takeIf { it.isNotBlank() }?.let { "final $it" },
+                                card.cardExpiry.takeIf { it.isNotBlank() }?.let { "validade $it" }
+                            ).joinToString(" • ").ifBlank { "Dados do cartão" },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Fecha ${card.cardClosingDay.takeIf { it in 1..31 } ?: "—"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Vence ${card.cardDueDay.takeIf { it in 1..31 } ?: "—"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
         }
     }
 }

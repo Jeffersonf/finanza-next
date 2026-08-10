@@ -25,6 +25,12 @@ class LoginScreenRenderTest {
     @Test
     fun loginRendersInFinanzaDark() = render(AppExperience.FINANZA, dark = true)
 
+    @Test
+    fun loginRendersInFinanzaWebLight() = render(AppExperience.WEB, dark = false)
+
+    @Test
+    fun loginRendersInFinanzaWebDark() = render(AppExperience.WEB, dark = true)
+
     private fun render(experience: AppExperience, dark: Boolean) {
         composeRule.setContent {
             FinanceAppTheme(darkTheme = dark, experience = experience) {

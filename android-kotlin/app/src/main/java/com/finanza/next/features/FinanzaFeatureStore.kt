@@ -26,6 +26,8 @@ class FinanzaFeatureStore(
     ): FeatureCenterUiState {
         return FeatureCenterUiState(
             modules = listOf(
+                calendarModule(),
+                categoryModule(),
                 budgetModule(spendingByCategory),
                 goalModule(),
                 subscriptionModule(),
@@ -39,9 +41,27 @@ class FinanzaFeatureStore(
                 carModule()
             ),
             pendingSync = queue().length(),
-            online = online
+            online = online,
+            importSummary = ImportSummaryUi(
+                title = prefs.getString("last_import_title", "Nenhuma importação recente") ?: "Nenhuma importação recente",
+                detail = prefs.getString("last_import_detail", "PDF, texto, Pix, OCR, QR, CSV, OFX e backup JSON podem ser revisados antes de entrar.")
+                    ?: "PDF, texto, Pix, OCR, QR, CSV, OFX e backup JSON podem ser revisados antes de entrar.",
+                timestamp = prefs.getString("last_import_at", "") ?: "",
+                history = importHistory()
+            )
         )
     }
+
+    private fun calendarModule(): FeatureModuleUi = FeatureModuleUi(
+        id = "calendar",
+        title = "Agenda",
+        subtitle = "Calendário de gastos e vencimentos",
+        emoji = "",
+        items = emptyList(),
+        newFields = emptyList(),
+        emptyText = "",
+        canCreate = false
+    )
 
     fun save(moduleId: String, itemId: String?, values: Map<String, String>): FeatureMutation? {
         if (moduleId == "shared_space") {
@@ -55,6 +75,7 @@ class FinanzaFeatureStore(
         }
         val target = when (moduleId) {
             "budgets" -> arrayKey("feature_budgets")
+            "categories" -> arrayKey("feature_categories")
             "goals" -> arrayKey("feature_goals")
             "subscriptions", "debts", "contracts" -> commitmentArray(moduleId)
             "shopping_lists" -> shoppingLists()
@@ -112,6 +133,7 @@ class FinanzaFeatureStore(
         if (moduleId == "shared" && sharedState().optString("ownerPersonId") == itemId) return null
         val target = when (moduleId) {
             "budgets" -> arrayKey("feature_budgets")
+            "categories" -> arrayKey("feature_categories")
             "goals" -> arrayKey("feature_goals")
             "subscriptions", "debts", "contracts" -> commitmentArray(moduleId)
             "shopping_lists" -> shoppingLists()
@@ -262,31 +284,45 @@ class FinanzaFeatureStore(
     }
 
     fun applyRemote(budgets: JSONArray, goals: JSONArray, state: JSONObject) {
-        prefs.edit()
+        val settings = state.optJSONObject("settings") ?: JSONObject()
+        val rates = settings.optJSONObject("rates") ?: JSONObject()
+        val editor = prefs.edit()
             .putString("feature_budgets", normalizeBudgets(budgets).toString())
             .putString("feature_goals", normalizeGoals(goals).toString())
-            .putString("feature_shopping", normalizeShopping(state.optJSONObject("shopping") ?: JSONObject()).toString())
-            .putString("feature_car", normalizeCar(state.optJSONObject("car") ?: state.optJSONObject("vehicle") ?: JSONObject()).toString())
-            .putString("feature_shared", normalizeShared(remoteShared(state)).toString())
-            .putString("feature_commitments", normalizeCommitments(remoteCommitments(state)).toString())
-            .apply()
+        state.optJSONArray("categories")?.let { editor.putString("feature_categories", normalizeCategories(it).toString()) }
+        state.optJSONObject("shopping")?.let { editor.putString("feature_shopping", normalizeShopping(it).toString()) }
+        (state.optJSONObject("car") ?: state.optJSONObject("vehicle") ?: state.optJSONObject("vehicles") ?: rates.optJSONObject("car"))?.let {
+            editor.putString("feature_car", normalizeCar(it).toString())
+        }
+        if (settings.has("sharedSpace") || settings.has("shared_space") || rates.has("sharedSpace") || rates.has("shared_space")) {
+            editor.putString("feature_shared", normalizeShared(remoteShared(state)).toString())
+        }
+        if (settings.has("commitments") || settings.has("commitmentCenter")) {
+            editor.putString("feature_commitments", normalizeCommitments(remoteCommitments(state)).toString())
+        }
+        editor.apply()
     }
 
     fun statePayload(baseState: JSONObject): JSONObject {
         val payload = JSONObject(baseState.toString())
         val settings = payload.optJSONObject("settings") ?: JSONObject()
         val rates = settings.optJSONObject("rates") ?: JSONObject()
+        val monthlyIncomeCents = prefs.getLong("monthly_income_cents", 0L)
+        settings.put("monthly_income_cents", monthlyIncomeCents)
+        rates.put("monthly_income_cents", monthlyIncomeCents)
         rates.put("sharedSpace", sharedState()).put("shared_space", sharedState())
         settings.put("rates", rates)
         settings.put("sharedSpace", sharedState()).put("shared_space", sharedState())
         settings.put("commitments", commitments())
         payload.put("shopping", shopping())
         payload.put("car", car())
+        payload.put("categories", categories())
         payload.put("settings", settings)
         return payload
     }
 
     fun backupPayload(): JSONObject = JSONObject().apply {
+        put("categories", categories())
         put("budgets", arrayKey("feature_budgets"))
         put("goals", arrayKey("feature_goals"))
         put("shopping", shopping())
@@ -392,6 +428,7 @@ class FinanzaFeatureStore(
 
     fun importBackup(data: JSONObject, merge: Boolean) {
         val settings = data.optJSONObject("settings") ?: JSONObject()
+        importArray("feature_categories", normalizeCategories(data.optJSONArray("categories") ?: data.optJSONArray("customCategories") ?: JSONArray()), merge)
         importArray("feature_budgets", data.optJSONArray("budgets") ?: JSONArray(), merge)
         importArray("feature_goals", data.optJSONArray("goals") ?: JSONArray(), merge)
         importObject("feature_shopping", normalizeShopping(data.optJSONObject("shopping") ?: JSONObject()), merge, listOf("lists", "items"))
@@ -401,6 +438,19 @@ class FinanzaFeatureStore(
         if (shared.length() > 0 || !merge) prefs.edit().putString("feature_shared", normalizeShared(shared).toString()).apply()
         if (commitments.length() > 0 || !merge) {
             importObject("feature_commitments", commitments, merge, COMMITMENT_MODULES.toList())
+        }
+    }
+
+    private fun importHistory(): List<ImportEventUi> {
+        val source = runCatching { JSONArray(prefs.getString("import_history", "[]")) }.getOrDefault(JSONArray())
+        return (0 until source.length()).mapNotNull { index ->
+            source.optJSONObject(index)?.let { item ->
+                ImportEventUi(
+                    title = item.optString("title"),
+                    detail = item.optString("detail"),
+                    timestamp = item.optString("timestamp")
+                ).takeIf { it.title.isNotBlank() }
+            }
         }
     }
 
@@ -416,6 +466,32 @@ class FinanzaFeatureStore(
                 progress = if (limit > 0) (spent / limit).toFloat().coerceIn(0f, 1f) else 0f,
                 status = if (spent > limit) "Excedido" else "Disponivel")
         }, fields, "Nenhum orçamento criado.")
+    }
+
+    private fun categoryModule(): FeatureModuleUi {
+        val fields = listOf(
+            field("name", "Nome"),
+            field("ico", "Ícone", "Etiqueta"),
+            field("color", "Cor", "#5AF5C8")
+        )
+        return FeatureModuleUi(
+            "categories",
+            "Categorias",
+            "Categorias personalizadas do Finanza",
+            "",
+            items(categories()) { item ->
+                featureItem(
+                    item,
+                    item.optString("name", "Categoria"),
+                    "Personalizada",
+                    "",
+                    "",
+                    fields
+                )
+            },
+            fields,
+            "Nenhuma categoria personalizada criada."
+        )
     }
 
     private fun goalModule(): FeatureModuleUi {
@@ -662,6 +738,7 @@ class FinanzaFeatureStore(
     }
 
     private fun arrayKey(key: String) = runCatching { JSONArray(prefs.getString(key, "[]")) }.getOrDefault(JSONArray())
+    private fun categories() = arrayKey("feature_categories")
     private fun commitments() = runCatching { JSONObject(prefs.getString("feature_commitments", "{}") ?: "{}") }.getOrDefault(JSONObject())
     private fun commitmentArray(key: String) = commitments().optJSONArray(key) ?: JSONArray()
     private fun shopping() = runCatching { JSONObject(prefs.getString("feature_shopping", "{}") ?: "{}") }.getOrDefault(JSONObject())
@@ -676,6 +753,7 @@ class FinanzaFeatureStore(
 
     private fun persistTarget(moduleId: String, target: JSONArray) {
         when (moduleId) {
+            "categories" -> prefs.edit().putString("feature_categories", target.toString()).apply()
             "budgets" -> prefs.edit().putString("feature_budgets", target.toString()).apply()
             "goals" -> prefs.edit().putString("feature_goals", target.toString()).apply()
             "subscriptions", "debts", "contracts" -> {
@@ -739,6 +817,7 @@ class FinanzaFeatureStore(
 
     private fun validItem(moduleId: String, item: JSONObject): Boolean = when (moduleId) {
         "budgets" -> item.optString("category").isNotBlank() && item.optDouble("limit") > 0.0
+        "categories" -> item.optString("name").isNotBlank()
         "goals" -> item.optString("name").isNotBlank() && item.optDouble("target") > 0.0 && runCatching { LocalDate.parse(item.optString("deadline")) }.isSuccess
         "subscriptions" -> item.optString("name").isNotBlank() && item.optDouble("amount") >= 0.0 && item.optInt("billingDay") in 1..31
         "debts" -> item.optString("name").isNotBlank() && item.optDouble("outstandingAmount") >= 0.0 && item.optInt("totalInstallments") > 0
@@ -892,6 +971,15 @@ class FinanzaFeatureStore(
         JSONObject(item.toString())
             .put("category", item.optString("category", "A classificar"))
             .put("limit", item.optDouble("limit", 0.0))
+    }
+
+    private fun normalizeCategories(source: JSONArray) = mapArray(source) { item ->
+        JSONObject(item.toString())
+            .put("id", item.optString("id").ifBlank { localId("category") })
+            .put("name", item.optString("name", item.optString("label", "Categoria")).trim())
+            .put("ico", item.optString("icon", item.optString("ico", "Etiqueta")))
+            .put("color", item.optString("color", item.optString("col", "#5AF5C8")))
+            .put("custom", true)
     }
 
     private fun normalizeGoals(source: JSONArray) = mapArray(source) { item ->

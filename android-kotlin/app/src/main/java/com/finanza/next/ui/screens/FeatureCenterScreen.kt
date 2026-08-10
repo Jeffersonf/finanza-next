@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.FactCheck
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
@@ -62,7 +63,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -82,16 +84,25 @@ fun FeatureCenterScreen(
     state: FeatureCenterUiState,
     actions: FeatureActions,
     initialModuleId: String? = null,
+    initialImportCenter: Boolean = false,
+    onCalendar: () -> Unit = {},
     onClose: () -> Unit
 ) {
     var selectedModuleId by remember { mutableStateOf(initialModuleId) }
+    var importCenterOpen by remember(initialImportCenter) { mutableStateOf(initialImportCenter) }
     val selected = state.modules.firstOrNull { it.id == selectedModuleId }
     BackHandler {
-        if (selected != null) selectedModuleId = null else onClose()
+        when {
+            selected != null -> selectedModuleId = null
+            importCenterOpen -> importCenterOpen = false
+            else -> onClose()
+        }
     }
 
-    if (selected == null) {
-        FeatureHub(state, { selectedModuleId = it }, actions, onClose)
+    if (importCenterOpen) {
+        ImportCenterScreen(state.importSummary, actions) { importCenterOpen = false }
+    } else if (selected == null) {
+        FeatureHub(state, { moduleId -> if (moduleId == "calendar") onCalendar() else selectedModuleId = moduleId }, actions, onClose)
     } else {
         FeatureModuleScreen(selected, actions) { selectedModuleId = null }
     }
@@ -104,7 +115,8 @@ private fun FeatureHub(
     actions: FeatureActions,
     onClose: () -> Unit
 ) {
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
+    val web = LocalAppExperience.current == AppExperience.WEB
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, top = 10.dp, end = 16.dp, bottom = 28.dp)
@@ -124,7 +136,11 @@ private fun FeatureHub(
                     horizontalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
                     row.forEach { module ->
-                        FinanzaFeatureTile(module, { onModule(module.id) }, Modifier.weight(1f))
+                        if (web) {
+                            FinanzaWebFeatureTile(module, { onModule(module.id) }, Modifier.weight(1f))
+                        } else {
+                            FinanzaFeatureTile(module, { onModule(module.id) }, Modifier.weight(1f))
+                        }
                     }
                     if (row.size == 1) Spacer(Modifier.weight(1f))
                 }
@@ -155,12 +171,70 @@ private fun FeatureHub(
         item {
             val tokens = LocalAppExperienceTokens.current
             Text("Dados", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp, bottom = 8.dp))
-            Surface(shape = RoundedCornerShape(tokens.cardRadius), color = if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface) {
-                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ActionButton("Importar backup JSON", Icons.Rounded.Download, actions.importBackup)
-                    ActionButton("Importar CSV ou OFX", Icons.Rounded.Upload, actions.importTransactions)
-                    ActionButton("Exportar backup completo", Icons.Rounded.Download, actions.exportBackup)
-                    ActionButton("Sincronizar agora", Icons.Rounded.Sync, actions.sync)
+            ImportCenterPanel(state.importSummary, actions, if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
+        }
+    }
+}
+
+@Composable
+private fun ImportCenterScreen(summary: com.finanza.next.features.ImportSummaryUi, actions: FeatureActions, onBack: () -> Unit) {
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, top = 10.dp, end = 16.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            ScreenHeader("Importar dados", "Revise antes de adicionar ao seu histórico", onBack)
+            ImportCenterPanel(summary, actions, if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
+        }
+    }
+}
+
+@Composable
+private fun ImportCenterPanel(
+    summary: com.finanza.next.features.ImportSummaryUi,
+    actions: FeatureActions,
+    color: Color
+) {
+    val tokens = LocalAppExperienceTokens.current
+    Surface(shape = RoundedCornerShape(tokens.cardRadius), color = color) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ImportCenterStatus(summary)
+            ActionButton("Importar backup JSON", Icons.Rounded.Download, actions.importBackup)
+            ActionButton("Importar CSV ou OFX", Icons.Rounded.Upload, actions.importTransactions)
+            ActionButton("Importar PDF ou extrato", Icons.Rounded.Upload, actions.importPdf)
+            ActionButton("Importar texto, Pix, OCR ou QR", Icons.Rounded.Upload, actions.importText)
+            ActionButton("Exportar backup completo", Icons.Rounded.Download, actions.exportBackup)
+            ActionButton("Sincronizar agora", Icons.Rounded.Sync, actions.sync)
+        }
+    }
+}
+
+@Composable
+private fun ImportCenterStatus(summary: com.finanza.next.features.ImportSummaryUi) {
+    Column {
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(11.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.AutoMirrored.Rounded.FactCheck, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Column(Modifier.padding(start = 9.dp).weight(1f)) {
+                Text(summary.title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(summary.detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f))
+            }
+            if (summary.timestamp.isNotBlank()) {
+                Text(summary.timestamp, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.62f))
+            }
+        }
+        if (summary.history.isNotEmpty()) {
+            Text("Histórico de importações", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 11.dp, bottom = 3.dp))
+            summary.history.take(4).forEach { item ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(item.title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                    Text(item.timestamp, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -193,12 +267,48 @@ private fun FinanzaFeatureTile(module: FeatureModuleUi, onClick: () -> Unit, mod
 }
 
 @Composable
+private fun FinanzaWebFeatureTile(module: FeatureModuleUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.heightIn(min = 120.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.06f)),
+        shadowElevation = 1.dp
+    ) {
+        Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(34.dp).clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.13f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(featureIcon(module.id), contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                }
+                Spacer(Modifier.weight(1f))
+                Text(
+                    module.items.size.toString(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clip(RoundedCornerShape(7.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                )
+            }
+            Column(Modifier.padding(top = 10.dp)) {
+                Text(module.title, style = MaterialTheme.typography.titleSmall, maxLines = 2)
+                Text(module.subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, modifier = Modifier.padding(top = 3.dp))
+            }
+        }
+    }
+}
+
+@Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun FeatureModuleScreen(module: FeatureModuleUi, actions: FeatureActions, onBack: () -> Unit) {
     var editing by remember { mutableStateOf<FeatureItemUi?>(null) }
     var creating by remember { mutableStateOf(false) }
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, top = 10.dp, end = 16.dp, bottom = 28.dp)
@@ -291,7 +401,7 @@ private fun FeatureModuleScreen(module: FeatureModuleUi, actions: FeatureActions
 @Composable
 private fun FeatureEmptyState(module: FeatureModuleUi, onCreate: (() -> Unit)?) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     Surface(
         shape = RoundedCornerShape(tokens.cardRadius),
         color = if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
@@ -345,7 +455,7 @@ private fun FeatureItemCard(
     onSecondary: (() -> Unit)?
 ) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     if (finanza) {
         FinanzaFeatureItemCard(moduleId, item, onEdit, onDelete, onPrimary, onSecondary)
         return
@@ -402,6 +512,7 @@ private fun FinanzaFeatureItemCard(
     onSecondary: (() -> Unit)?
 ) {
     val tokens = LocalAppExperienceTokens.current
+    val web = LocalAppExperience.current == AppExperience.WEB
     val statusColor = when (item.status.lowercase()) {
         "excedido", "a pagar", "cancelled", "rejected" -> MaterialTheme.colorScheme.error
         "comprado", "em dia", "active", "approved" -> MaterialTheme.colorScheme.primary
@@ -409,9 +520,12 @@ private fun FinanzaFeatureItemCard(
     }
     Surface(
         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-        shape = RoundedCornerShape(tokens.cardRadius),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        shape = RoundedCornerShape(if (web) 14.dp else tokens.cardRadius),
+        color = if (web) MaterialTheme.colorScheme.surface.copy(alpha = 0.90f) else MaterialTheme.colorScheme.surfaceVariant,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (web) MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.06f) else MaterialTheme.colorScheme.outlineVariant
+        )
     ) {
         Column(Modifier.padding(horizontal = 13.dp, vertical = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -502,13 +616,17 @@ private fun FinanzaFeatureItemCard(
 private fun FeatureEditor(title: String, fields: List<FeatureFieldUi>, onDismiss: () -> Unit, onSave: (Map<String, String>) -> Boolean) {
     val values = remember(fields) { mutableStateMapOf<String, String>().apply { fields.forEach { put(it.key, it.value) } } }
     var validationError by remember(fields) { mutableStateOf(false) }
-    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.60f
+    val web = LocalAppExperience.current == AppExperience.WEB
+    val maxHeight = with(LocalDensity.current) {
+        LocalWindowInfo.current.containerSize.height.toDp() * if (web) 0.54f else 0.60f
+    }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val tokens = LocalAppExperienceTokens.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = if (web) MaterialTheme.colorScheme.surface.copy(alpha = 0.98f) else MaterialTheme.colorScheme.surface,
+        scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = if (web) 0.48f else 0.56f),
         shape = RoundedCornerShape(topStart = tokens.sheetRadius, topEnd = tokens.sheetRadius)
     ) {
         Column(Modifier.fillMaxWidth().heightIn(max = maxHeight).imePadding().padding(horizontal = 18.dp).padding(bottom = 18.dp)) {

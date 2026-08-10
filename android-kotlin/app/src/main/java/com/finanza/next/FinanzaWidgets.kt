@@ -32,6 +32,14 @@ object FinanzaWidgets {
     private val money = NumberFormat.getCurrencyInstance(ptBr)
     private val shortDate = DateTimeFormatter.ofPattern("dd MMM", ptBr)
 
+    private data class WidgetPalette(
+        val light: Boolean,
+        val primaryText: Int,
+        val secondaryText: Int,
+        val accent: Int,
+        val backgroundRes: Int
+    )
+
     fun updateAll(context: Context) {
         FinanzaPreferences.repairLegacyTypes(context)
         updateAllSafely(context)
@@ -56,10 +64,12 @@ object FinanzaWidgets {
     fun quickExpenseRemoteViews(context: Context): RemoteViews {
         FinanzaPreferences.repairLegacyTypes(context)
         val prefs = FinanzaPreferences.get(context)
+        val palette = widgetPalette(prefs)
         return RemoteViews(context.packageName, R.layout.widget_quick_expense).apply {
-            setTextColor(R.id.widget_quick_title, Color.WHITE)
-            setTextColor(R.id.widget_quick_subtitle, Color.parseColor("#B8C1CC"))
-            setTextColor(R.id.widget_quick_account, Color.parseColor("#EFF5FF"))
+            applyWidgetSurface(R.id.widget_quick_root, palette)
+            setTextColor(R.id.widget_quick_title, palette.primaryText)
+            setTextColor(R.id.widget_quick_subtitle, palette.secondaryText)
+            setTextColor(R.id.widget_quick_account, palette.primaryText)
             setTextColor(R.id.widget_quick_mark, Color.parseColor("#08110B"))
             setTextColor(R.id.widget_quick_button, Color.parseColor("#08110B"))
             setTextViewText(R.id.widget_quick_title, context.getString(R.string.widget_quick_title))
@@ -121,31 +131,38 @@ object FinanzaWidgets {
     fun summaryRemoteViews(context: Context): RemoteViews {
         FinanzaPreferences.repairLegacyTypes(context)
         val prefs = FinanzaPreferences.get(context)
+        val palette = widgetPalette(prefs)
         val monthlyBudget = prefs.getFloat("monthly_budget", 5000f).toDouble()
+        val configuredIncome = prefs.getLong("monthly_income_cents", 0L)
+            .takeIf { it > 0L }
+            ?.div(100.0)
         val userName = prefs.getString("user_name", "Voce") ?: "Voce"
-        val accent = accentColor(prefs.getString("accent", "green") ?: "green")
+        val accent = if (palette.light) palette.accent else accentColor(prefs.getString("accent", "green") ?: "green")
 
         val entries = parseEntries(prefs.getString("entries", "[]"))
-        val monthEntries = entries.filter { isCurrentMonth(it.date) }
+        val monthEntries = entries.filter { isCurrentMonth(it.date) && !isFutureDate(it.date) && !it.paid }
         val income = monthEntries.filter { it.type == "income" }.sumOf { it.amount }
         val spent = monthEntries.filter { it.type == "expense" }.sumOf { it.amount }
-        val available = monthlyBudget + income - spent
+        val base = configuredIncome ?: monthlyBudget
+        val available = if (configuredIncome != null) base - spent else base + income - spent
         val dueCount = parseDueItems(prefs.getString("future", "[]")).count {
             runCatching { LocalDate.parse(it.date) <= LocalDate.now().plusDays(7) }.getOrDefault(false)
         }
-        val progress = if (monthlyBudget > 0) ((spent / monthlyBudget) * 100).toInt().coerceIn(0, 100) else 0
+        val progress = if (base > 0) ((spent / base) * 100).toInt().coerceIn(0, 100) else 0
 
         return RemoteViews(context.packageName, R.layout.widget_summary).apply {
+            applyWidgetSurface(R.id.widget_root, palette)
             setTextViewText(R.id.widget_title, firstName(userName))
             setTextViewText(R.id.widget_amount, moneyText(prefs, available))
             setTextViewText(R.id.widget_spent, "Gasto: ${moneyText(prefs, spent)}")
-            setTextViewText(R.id.widget_budget, "Base: ${moneyText(prefs, monthlyBudget)}")
-            setTextViewText(R.id.widget_due, "$dueCount vencimento(s) em breve")
-            setTextColor(R.id.widget_title, Color.WHITE)
-            setTextColor(R.id.widget_amount, Color.WHITE)
-            setTextColor(R.id.widget_spent, Color.parseColor("#B8C1CC"))
-            setTextColor(R.id.widget_budget, Color.parseColor("#B8C1CC"))
-            setTextColor(R.id.widget_due, Color.parseColor("#EEF3F7"))
+            setTextViewText(R.id.widget_budget, "${if (configuredIncome != null) "Renda" else "Base"}: ${moneyText(prefs, base)}")
+            val dueLabel = if (dueCount == 1) "1 vencimento em breve" else "$dueCount vencimentos em breve"
+            setTextViewText(R.id.widget_due, dueLabel)
+            setTextColor(R.id.widget_title, palette.primaryText)
+            setTextColor(R.id.widget_amount, palette.primaryText)
+            setTextColor(R.id.widget_spent, palette.secondaryText)
+            setTextColor(R.id.widget_budget, palette.secondaryText)
+            setTextColor(R.id.widget_due, palette.primaryText)
             setProgressBar(R.id.widget_progress, 100, progress, false)
             setInt(R.id.widget_accent, "setBackgroundColor", accent)
             setOnClickPendingIntent(R.id.widget_root, openAppIntent(context))
@@ -155,6 +172,7 @@ object FinanzaWidgets {
     fun agendaRemoteViews(context: Context): RemoteViews {
         FinanzaPreferences.repairLegacyTypes(context)
         val prefs = FinanzaPreferences.get(context)
+        val palette = widgetPalette(prefs)
         val dueItems = parseDueItems(prefs.getString("future", "[]"))
             .sortedBy { it.date }
         val nextDue = dueItems.firstOrNull()
@@ -163,18 +181,20 @@ object FinanzaWidgets {
         }
 
         return RemoteViews(context.packageName, R.layout.widget_agenda).apply {
+            applyWidgetSurface(R.id.widget_agenda_root, palette)
             setTextViewText(R.id.widget_agenda_title, "Agenda financeira")
-            setTextViewText(R.id.widget_agenda_count, "$pending item(ns) futuros")
+            val pendingLabel = if (pending == 1) "1 item futuro" else "$pending itens futuros"
+            setTextViewText(R.id.widget_agenda_count, pendingLabel)
             setTextViewText(R.id.widget_agenda_name, nextDue?.name ?: "Sem contas na agenda")
             setTextViewText(
                 R.id.widget_agenda_meta,
                 if (nextDue != null) "${formatDate(nextDue.date)} - ${moneyText(prefs, nextDue.amount)}" else "Adicione vencimentos no app"
             )
             setTextViewText(R.id.widget_agenda_category, nextDue?.category ?: "Finext")
-            setTextColor(R.id.widget_agenda_title, Color.WHITE)
-            setTextColor(R.id.widget_agenda_count, Color.parseColor("#B8C1CC"))
-            setTextColor(R.id.widget_agenda_name, Color.WHITE)
-            setTextColor(R.id.widget_agenda_meta, Color.parseColor("#B8C1CC"))
+            setTextColor(R.id.widget_agenda_title, palette.primaryText)
+            setTextColor(R.id.widget_agenda_count, palette.secondaryText)
+            setTextColor(R.id.widget_agenda_name, palette.primaryText)
+            setTextColor(R.id.widget_agenda_meta, palette.secondaryText)
             setTextColor(R.id.widget_agenda_category, Color.parseColor("#08110B"))
             setInt(R.id.widget_agenda_category, "setBackgroundColor", Color.parseColor("#F4CF45"))
             setOnClickPendingIntent(R.id.widget_agenda_root, openAppIntent(context))
@@ -257,6 +277,32 @@ object FinanzaWidgets {
     private fun moneyText(prefs: android.content.SharedPreferences, value: Double): String =
         if (prefs.getBoolean("privacy_mode", false)) "R$ --" else money.format(value)
 
+    private fun widgetPalette(prefs: android.content.SharedPreferences): WidgetPalette {
+        val web = prefs.getString("visual_experience", "next") == "web"
+        val light = prefs.getString("theme_mode", "light") != "dark"
+        return if (light) {
+            WidgetPalette(
+                light = true,
+                primaryText = Color.parseColor("#11170D"),
+                secondaryText = Color.parseColor("#63705D"),
+                accent = if (web) Color.parseColor("#3F7D00") else accentColor(prefs.getString("accent", "green") ?: "green"),
+                backgroundRes = if (web) R.drawable.widget_finanza_web_light_background else R.drawable.widget_light_background
+            )
+        } else {
+            WidgetPalette(
+                light = false,
+                primaryText = Color.WHITE,
+                secondaryText = Color.parseColor("#B8C1CC"),
+                accent = accentColor(prefs.getString("accent", "green") ?: "green"),
+                backgroundRes = R.drawable.widget_background
+            )
+        }
+    }
+
+    private fun RemoteViews.applyWidgetSurface(viewId: Int, palette: WidgetPalette) {
+        setInt(viewId, "setBackgroundResource", palette.backgroundRes)
+    }
+
     private fun defaultAccountId(prefs: android.content.SharedPreferences): String {
         val accounts = runCatching { JSONArray(prefs.getString("accounts", "[]")) }.getOrDefault(JSONArray())
         return accounts.optJSONObject(0)?.optString("id").orEmpty()
@@ -272,6 +318,12 @@ object FinanzaWidgets {
     private fun inferCategory(prefs: android.content.SharedPreferences, title: String): String {
         val normalized = title.trim().lowercase()
         if (normalized.isBlank()) return "A classificar"
+        val customCategories = runCatching { JSONArray(prefs.getString("feature_categories", "[]")) }.getOrDefault(JSONArray())
+        val matchingCustomCategory = (0 until customCategories.length())
+            .mapNotNull { customCategories.optJSONObject(it)?.optString("name")?.trim()?.takeIf(String::isNotBlank) }
+            .sortedByDescending(String::length)
+            .firstOrNull { normalized.contains(it.lowercase()) }
+        if (matchingCustomCategory != null) return matchingCustomCategory
         val entries = runCatching { JSONArray(prefs.getString("entries", "[]")) }.getOrDefault(JSONArray())
         for (index in entries.length() - 1 downTo 0) {
             val item = entries.optJSONObject(index) ?: continue
@@ -327,6 +379,10 @@ object FinanzaWidgets {
         parsed.month == LocalDate.now().month && parsed.year == LocalDate.now().year
     }.getOrDefault(false)
 
+    private fun isFutureDate(date: String): Boolean = runCatching {
+        LocalDate.parse(date).isAfter(LocalDate.now())
+    }.getOrDefault(false)
+
     private fun formatDate(date: String): String = runCatching {
         LocalDate.parse(date).format(shortDate).replaceFirstChar { if (it.isLowerCase()) it.titlecase(ptBr) else it.toString() }
     }.getOrDefault(date)
@@ -340,7 +396,8 @@ object FinanzaWidgets {
                     WidgetEntry(
                         amount = item.optDouble("amount", 0.0),
                         type = item.optString("type", "expense"),
-                        date = item.optString("date", LocalDate.now().toString()).take(10)
+                        date = item.optString("date", LocalDate.now().toString()).take(10),
+                        paid = item.optBoolean("paid", false)
                     )
                 )
             }
@@ -367,7 +424,8 @@ object FinanzaWidgets {
     private data class WidgetEntry(
         val amount: Double,
         val type: String,
-        val date: String
+        val date: String,
+        val paid: Boolean
     )
 
     private data class WidgetDueItem(

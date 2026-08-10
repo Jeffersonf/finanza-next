@@ -24,6 +24,11 @@ class NavigationGesturesTest {
             offline[0].performClick()
             composeRule.waitForIdle()
         }
+        val skipOnboarding = composeRule.onAllNodesWithText("Pular")
+        if (skipOnboarding.fetchSemanticsNodes().isNotEmpty()) {
+            skipOnboarding[0].performClick()
+            composeRule.waitForIdle()
+        }
     }
 
     @Test

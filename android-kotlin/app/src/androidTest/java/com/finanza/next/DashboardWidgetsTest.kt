@@ -36,6 +36,10 @@ class DashboardWidgetsTest {
         check(composeRule.onAllNodesWithText("Atalhos do Finanza").fetchSemanticsNodes().size >= 2)
         composeRule.onNodeWithText("Essencial").fetchSemanticsNode()
         composeRule.onNodeWithText("Todos").fetchSemanticsNode()
+        composeRule.onNodeWithText("Renovações próximas").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Taxa de economia").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Ritmo semanal").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Gráficos").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Concluir").performScrollTo().assertIsDisplayed()
     }
 }

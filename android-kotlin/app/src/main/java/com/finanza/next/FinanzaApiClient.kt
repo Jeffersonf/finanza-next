@@ -17,7 +17,7 @@ class FinanzaApiClient(private val prefs: SharedPreferences) {
 
     fun requestJson(method: String, path: String, body: JSONObject? = null): JSONObject {
         val baseUrl = prefs.getString("api_url", "")?.removeSuffix("/").orEmpty()
-        check(baseUrl.isNotBlank()) { "Servidor do Finanza nao configurado." }
+        check(baseUrl.isNotBlank()) { "Servidor do Finanza não configurado." }
         return try {
             executeJson(method, baseUrl + path, prefs.getString("api_key", "").orEmpty(), body)
         } catch (error: FinanzaAuthenticationException) {
@@ -41,7 +41,7 @@ class FinanzaApiClient(private val prefs: SharedPreferences) {
         }
 
         fun verifySession(baseUrl: String, apiKey: String): JSONObject {
-            require(apiKey.isNotBlank()) { "O servidor nao retornou uma chave de acesso." }
+            require(apiKey.isNotBlank()) { "O servidor não retornou uma chave de acesso." }
             return executeJson("GET", "${baseUrl.removeSuffix("/")}/api/me", apiKey, null)
         }
 
@@ -108,7 +108,7 @@ class FinanzaAuthenticationException(message: String) : FinanzaApiException(Http
 
 internal fun finanzaApiException(status: Int, message: String): FinanzaApiException =
     if (status == HttpURLConnection.HTTP_UNAUTHORIZED) {
-        FinanzaAuthenticationException(message.ifBlank { "Sessao expirada. Entre novamente." })
+        FinanzaAuthenticationException(message.ifBlank { "Sessão expirada. Entre novamente." })
     } else {
         FinanzaApiException(status, message.ifBlank { "Falha HTTP $status" })
     }
@@ -116,7 +116,7 @@ internal fun finanzaApiException(status: Int, message: String): FinanzaApiExcept
 internal fun markAuthenticationExpired(prefs: SharedPreferences, message: String) {
     prefs.edit()
         .putBoolean("session_expired", true)
-        .putString("last_sync_error", message.ifBlank { "Sessao expirada. Entre novamente." })
+        .putString("last_sync_error", message.ifBlank { "Sessão expirada. Entre novamente." })
         .apply()
 }
 

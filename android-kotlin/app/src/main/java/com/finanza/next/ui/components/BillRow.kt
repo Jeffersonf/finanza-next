@@ -26,12 +26,23 @@ import com.finanza.next.ui.theme.LocalAppExperience
 import com.finanza.next.ui.theme.LocalAppExperienceTokens
 
 data class BillUi(val id: Long, val name: String, val category: String, val due: String, val amount: String, val status: BillStatus)
-data class AccountUi(val id: String, val name: String, val type: String, val amount: String, val iconKey: String)
+data class AccountUi(
+    val id: String,
+    val name: String,
+    val type: String,
+    val amount: String,
+    val iconKey: String,
+    val cardClosingDay: Int = 0,
+    val cardDueDay: Int = 0,
+    val cardLast4: String = "",
+    val cardExpiry: String = "",
+    val yieldRate: Double = 0.0
+)
 
 @Composable
 fun BillRow(item: BillUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     Row(
         modifier.fillMaxWidth().clip(RoundedCornerShape(tokens.cardRadius)).background(if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick).padding(if (tokens.denseLists) 15.dp else 16.dp),

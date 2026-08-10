@@ -1,4 +1,4 @@
-package com.finanza.next.ui.components
+﻿package com.finanza.next.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,25 +31,46 @@ import com.finanza.next.ui.theme.LocalAppExperienceTokens
 @Composable
 fun SettingsSectionTitle(title: String) {
     val tokens = LocalAppExperienceTokens.current
+    val web = LocalAppExperience.current == AppExperience.WEB
     Text(
-        title.uppercase(),
-        style = MaterialTheme.typography.titleSmall,
+        if (web) title else title.uppercase(),
+        style = if (web) MaterialTheme.typography.labelLarge else MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (tokens.denseLists) 0.54f else 0.60f),
-        modifier = Modifier.padding(start = 20.dp, top = if (tokens.denseLists) 22.dp else 24.dp, bottom = 7.dp)
+        modifier = Modifier.padding(
+            start = if (web) 16.dp else 20.dp,
+            top = if (web) 20.dp else if (tokens.denseLists) 22.dp else 24.dp,
+            bottom = if (web) 6.dp else 7.dp
+        )
     )
 }
 
 @Composable
 fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val experience = LocalAppExperience.current
+    val finanza = experience.usesFinanzaVisuals
+    val web = experience == AppExperience.WEB
     Column(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(tokens.cardRadius))
-            .background(if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
-            .border(1.dp, if (finanza) MaterialTheme.colorScheme.outlineVariant else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(tokens.cardRadius)),
+            .clip(RoundedCornerShape(if (web) 14.dp else tokens.cardRadius))
+            .background(
+                when {
+                    web -> MaterialTheme.colorScheme.surface.copy(alpha = 0.90f)
+                    finanza -> MaterialTheme.colorScheme.surfaceVariant
+                    else -> MaterialTheme.colorScheme.surface
+                }
+            )
+            .border(
+                1.dp,
+                when {
+                    web -> androidx.compose.ui.graphics.Color.Transparent
+                    finanza -> MaterialTheme.colorScheme.outlineVariant
+                    else -> androidx.compose.ui.graphics.Color.Transparent
+                },
+                RoundedCornerShape(if (web) 14.dp else tokens.cardRadius)
+            ),
         content = content
     )
 }
@@ -64,9 +85,11 @@ fun SettingsRow(
     showDivider: Boolean = true
 ) {
     val tokens = LocalAppExperienceTokens.current
+    val web = LocalAppExperience.current == AppExperience.WEB
     Column {
         Row(
-            Modifier.fillMaxWidth().clickable(enabled = onClick != null) { onClick?.invoke() }.padding(horizontal = 16.dp, vertical = if (tokens.denseLists) 15.dp else 16.dp),
+            Modifier.fillMaxWidth().clickable(enabled = onClick != null) { onClick?.invoke() }
+                .padding(horizontal = if (web) 14.dp else 16.dp, vertical = if (web) 14.dp else if (tokens.denseLists) 15.dp else 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {

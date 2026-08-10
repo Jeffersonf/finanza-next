@@ -14,7 +14,9 @@ O backend nao esta neste repositorio, portanto estes contratos devem ser confirm
 
 ## Nucleo financeiro
 
-- `GET /api/transactions?limit=1000`
+- `GET /api/transactions?limit=1000&offset=<n>`: a resposta traz `data` e pode trazer `total`. A API limita cada pagina a 1.000 itens e aceita `offset` para carregar as paginas seguintes.
+- O Android junta as paginas por `offset` enquanto `total` indicar que ainda ha registros e elimina transacoes repetidas pelo `id`. Quando o backend publicar `next_cursor` ou `nextCursor`, o cursor recebe prioridade para evitar instabilidade durante alteracoes concorrentes.
+- O bootstrap web continua compativel com cursor; uma evolucao futura deve adotar o mesmo cursor no web e no Android, mas o Android ja nao fica limitado a primeira pagina.
 - `POST /api/transactions`
 - `PUT /api/transactions/{id}`
 - `DELETE /api/transactions/{id}`
@@ -25,6 +27,7 @@ O backend nao esta neste repositorio, portanto estes contratos devem ser confirm
 - `GET /api/state`
 - `PUT /api/state`
 - Blocos observados: `accounts`, `categories`, `shopping`, `car` e `settings`.
+- Categorias personalizadas sao sincronizadas em `categories` e tambem entram no backup completo do Android.
 - O Android clona o estado recebido e preserva inclusive blocos desconhecidos antes de executar `PUT`.
 - Contas alteram apenas `accounts`; vencimentos alteram apenas os campos Android dentro de `settings`.
 
@@ -44,8 +47,8 @@ O backend nao esta neste repositorio, portanto estes contratos devem ser confirm
 ## Importacao e backup
 
 - `PUT /api/import`: recebe o backup completo usado pelo web.
-- O Android aceita backup JSON, CSV delimitado por virgula ou ponto e virgula e OFX/QFX.
-- CSV e OFX passam por previa, deduplicacao exata e escolha entre manter o atual ou usar o importado em conflitos.
+- O Android aceita backup JSON, CSV delimitado por virgula ou ponto e virgula, OFX/QFX, PDF com texto selecionavel e texto copiado, inclusive descricoes de Pix.
+- CSV, OFX, PDF e texto passam por previa, deduplicacao exata e escolha entre manter o atual ou usar o importado em conflitos. PDF escaneado deve passar por OCR antes de ser importado como texto.
 - Importacoes feitas offline permanecem locais e uma unica versao atualizada do backup fica na fila para envio.
 
 ## Modulos no estado agregado

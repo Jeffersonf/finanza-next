@@ -113,6 +113,25 @@ class FinanzaFeatureStoreTest {
     }
 
     @Test
+    fun importCenterExposesLastImportAndRecentHistory() {
+        prefs.edit()
+            .putString("last_import_title", "12 lançamentos importados")
+            .putString("last_import_detail", "CSV aplicado sem duplicar lançamentos existentes.")
+            .putString("last_import_at", "2026-07-22")
+            .putString("import_history", JSONArray()
+                .put(JSONObject().put("title", "12 lançamentos importados").put("detail", "CSV").put("timestamp", "2026-07-22"))
+                .put(JSONObject().put("title", "Backup mesclado").put("detail", "JSON").put("timestamp", "2026-07-21"))
+                .toString())
+            .commit()
+
+        val state = store.buildUiState(emptyMap(), online = false)
+
+        assertEquals("12 lançamentos importados", state.importSummary.title)
+        assertEquals(2, state.importSummary.history.size)
+        assertEquals("Backup mesclado", state.importSummary.history[1].title)
+    }
+
+    @Test
     fun navigationExposesSharedModulesWithReadOnlyPermissionsAndCarInsights() {
         val data = backup("a")
         data.getJSONObject("car").put("events", JSONArray()

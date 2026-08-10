@@ -7,6 +7,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -47,9 +48,15 @@ import com.finanza.next.ui.screens.HomeScreen
 import com.finanza.next.ui.screens.PaymentMethodUi
 import com.finanza.next.ui.screens.MonthTrendUi
 import com.finanza.next.ui.screens.FeatureCenterScreen
+import com.finanza.next.ui.screens.FinanceCalendarEventUi
+import com.finanza.next.ui.screens.FinanceCalendarScreen
+import com.finanza.next.ui.screens.FinanceCalendarSource
+import com.finanza.next.ui.screens.TransactionHistoryScreen
 import com.finanza.next.features.FeatureActions
 import com.finanza.next.features.FeatureCenterUiState
 import com.finanza.next.ui.theme.LocalAppExperienceTokens
+import com.finanza.next.ui.theme.LocalAppExperience
+import com.finanza.next.ui.theme.AppExperience
 
 data class AppUiState(
     val selectedTab: AppTab,
@@ -59,6 +66,7 @@ data class AppUiState(
     val balance: String,
     val accountsTotal: String,
     val income: String,
+    val monthlyIncome: String = "R$ 0,00",
     val spent: String,
     val paid: String,
     val remaining: String,
@@ -70,7 +78,8 @@ data class AppUiState(
     val monthlyTrends: List<MonthTrendUi>,
     val config: ConfigUiState,
     val paymentMethods: List<PaymentMethodUi>,
-    val features: FeatureCenterUiState
+    val features: FeatureCenterUiState,
+    val calendarEvents: List<FinanceCalendarEventUi>
 )
 
 data class AppActions(
@@ -89,13 +98,19 @@ data class AppActions(
 @Composable
 fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boolean = false, initialFeatureModule: String? = null) {
     var showAddSheet by remember { mutableStateOf(false) }
-    var showFeatures by remember { mutableStateOf(initialShowFeatures) }
+    // Calendar is a dedicated interactive surface, not a generic feature form.
+    var showFeatures by remember { mutableStateOf(initialShowFeatures && initialFeatureModule != "calendar") }
+    var showCalendar by remember { mutableStateOf(initialFeatureModule == "calendar") }
+    var showHistory by remember { mutableStateOf(false) }
+    var showImportCenter by remember { mutableStateOf(false) }
     var navVisible by remember { mutableStateOf(true) }
     var refreshing by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf(state.selectedTab) }
     val tabs = AppTab.entries
     val scope = rememberCoroutineScope()
     val tokens = LocalAppExperienceTokens.current
+    val experience = LocalAppExperience.current
+    val isFullWidthNavigation = experience != AppExperience.NEXT
     val pagerState = rememberPagerState(
         initialPage = tabs.indexOf(selectedTab).coerceAtLeast(0),
         pageCount = { tabs.size }
@@ -146,14 +161,41 @@ fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boo
                 .statusBarsPadding()
                 .nestedScroll(scrollConnection)
         ) {
-        if (showFeatures) {
-            FeatureCenterScreen(state.features, actions.features, initialFeatureModule) { showFeatures = false }
+        if (showHistory) {
+            TransactionHistoryScreen(
+                transactions = state.transactions,
+                accounts = state.accounts,
+                onTransaction = actions.openTransaction,
+                onQuickAdd = { showAddSheet = true },
+                onClose = { showHistory = false }
+            )
+        } else if (showCalendar) {
+            FinanceCalendarScreen(
+                events = state.calendarEvents,
+                onEvent = { event ->
+                    if (event.source == FinanceCalendarSource.DUE) actions.openBill(event.id) else actions.openTransaction(event.id)
+                },
+                onQuickAdd = { showAddSheet = true },
+                onClose = { showCalendar = false; showFeatures = true }
+            )
+        } else if (showFeatures || showImportCenter) {
+            FeatureCenterScreen(
+                state = state.features,
+                actions = actions.features,
+                initialModuleId = initialFeatureModule,
+                initialImportCenter = showImportCenter,
+                onCalendar = { showCalendar = true },
+                onClose = { showFeatures = false; showImportCenter = false }
+            )
         } else {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxSize()
                     .testTag("mainPager"),
+                // Keep one adjacent page warm for a fluid swipe without composing
+                // all four heavy destinations on every tab change.
+                beyondViewportPageCount = 1,
                 key = { tabs[it] }
             ) { page ->
                 PullToRefreshBox(
@@ -167,11 +209,11 @@ fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boo
                     modifier = Modifier.fillMaxSize()
                 ) {
                     when (tabs[page]) {
-                        AppTab.HOME -> HomeScreen(
-                    state.userName, state.greeting, state.period, state.balance, state.income, state.spent,
-                    state.transactions, state.accounts, state.bills, state.categories, state.features,
-                    { showAddSheet = true }, { actions.selectTab(AppTab.ANALISE) },
-                    actions.openTransaction, actions.openBill, { showFeatures = true },
+                    AppTab.HOME -> HomeScreen(
+                    state.userName, state.greeting, state.period, state.balance, state.income, state.monthlyIncome, state.spent,
+                    state.transactions, state.accounts, state.bills, state.categories, state.monthlyTrends, state.features,
+                    { showAddSheet = true }, { showHistory = true },
+                    actions.openTransaction, actions.openBill, { showFeatures = true }, { showImportCenter = true },
                     { actions.selectTab(AppTab.CONTAS) }, { actions.selectTab(AppTab.ANALISE) },
                     { actions.selectTab(AppTab.CONFIG) }
                 )
@@ -179,7 +221,7 @@ fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boo
                     state.period, state.accountsTotal, state.billProgress, state.paid, state.remaining,
                     state.accounts, state.bills, actions.newAccount, actions.transferAccounts, actions.openAccount, actions.openBill
                 )
-                        AppTab.ANALISE -> AnalysisScreen(state.income, state.spent, state.categories, state.monthlyTrends, state.transactions, actions.openTransaction)
+                        AppTab.ANALISE -> AnalysisScreen(state.income, state.spent, state.categories, state.monthlyTrends, state.transactions, state.accounts, actions.openTransaction)
                         AppTab.CONFIG -> ConfigScreen(state.config, actions.config)
                     }
                 }
@@ -187,10 +229,13 @@ fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boo
         }
 
             AnimatedVisibility(
-                visible = navVisible && !showFeatures,
+                visible = navVisible && !showFeatures && !showCalendar && !showHistory,
                 modifier = Modifier.align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(horizontal = tokens.navHorizontalPadding, vertical = 10.dp),
+                    .then(
+                        if (isFullWidthNavigation) Modifier.fillMaxWidth()
+                        else Modifier.padding(horizontal = tokens.navHorizontalPadding, vertical = 10.dp)
+                    ),
                 enter = slideInVertically { it } + fadeIn(),
                 exit = slideOutVertically { it } + fadeOut()
             ) {
@@ -200,7 +245,7 @@ fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boo
                         navVisible = true
                         if (tab != selectedTab) {
                             selectedTab = tab
-                            scope.launch { pagerState.animateScrollToPage(tabs.indexOf(tab)) }
+                            scope.launch { pagerState.scrollToPage(tabs.indexOf(tab)) }
                         }
                     }
                 )
@@ -211,6 +256,10 @@ fun AppScaffold(state: AppUiState, actions: AppActions, initialShowFeatures: Boo
     if (showAddSheet) {
         AddTransactionSheet(
             methods = state.paymentMethods,
+            customCategories = state.features.modules.firstOrNull { it.id == "categories" }
+                ?.items
+                ?.map { it.title }
+                .orEmpty(),
             onComplete = { amount, description, category, method ->
                 if (actions.saveExpense(amount, description, category, method)) showAddSheet = false
             },

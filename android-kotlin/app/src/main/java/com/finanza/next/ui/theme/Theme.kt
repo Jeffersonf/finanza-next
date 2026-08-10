@@ -136,30 +136,98 @@ private val FinanzaDarkColors = darkColorScheme(
     onErrorContainer = FinanzaDanger
 )
 
+private val FinanzaWebLightColors = lightColorScheme(
+    primary = FinanzaWebAccentLight,
+    onPrimary = Color.White,
+    primaryContainer = FinanzaWebAccentSoft,
+    onPrimaryContainer = FinanzaWebInkLight,
+    secondary = FinanzaWebTealLight,
+    onSecondary = Color.White,
+    secondaryContainer = FinanzaWebSurfaceVariantLight,
+    onSecondaryContainer = FinanzaWebInkLight,
+    tertiary = FinanzaWebPurpleLight,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFEAE4FF),
+    onTertiaryContainer = FinanzaWebInkLight,
+    background = FinanzaWebBackgroundLight,
+    surface = FinanzaWebSurfaceLight,
+    onBackground = FinanzaWebInkLight,
+    onSurface = FinanzaWebInkLight,
+    surfaceVariant = FinanzaWebSurfaceVariantLight,
+    onSurfaceVariant = FinanzaWebMutedLight,
+    inverseSurface = FinanzaWebInkLight,
+    inverseOnSurface = FinanzaWebInkDark,
+    inversePrimary = Color.White,
+    outline = Color(0xFF92A184),
+    outlineVariant = FinanzaWebDividerLight,
+    scrim = Color.Black,
+    error = FinanzaWebDangerLight,
+    onError = Color.White,
+    errorContainer = FinanzaWebDangerLight.copy(alpha = 0.14f),
+    onErrorContainer = FinanzaWebDangerLight
+)
+
+private val FinanzaWebDarkColors = darkColorScheme(
+    primary = FinanzaWebAccent,
+    onPrimary = FinanzaWebBackgroundDark,
+    primaryContainer = FinanzaWebAccentSoftDark,
+    onPrimaryContainer = FinanzaWebAccent,
+    secondary = FinanzaWebTeal,
+    onSecondary = Color(0xFF071611),
+    secondaryContainer = FinanzaWebSurfaceVariantDark,
+    onSecondaryContainer = FinanzaWebInkDark,
+    tertiary = FinanzaWebPurple,
+    onTertiary = Color(0xFF161126),
+    tertiaryContainer = FinanzaWebSurfaceVariantDark,
+    onTertiaryContainer = FinanzaWebPurple,
+    background = FinanzaWebBackgroundDark,
+    surface = FinanzaWebSurfaceDark,
+    onBackground = FinanzaWebInkDark,
+    onSurface = FinanzaWebInkDark,
+    surfaceVariant = FinanzaWebSurfaceVariantDark,
+    onSurfaceVariant = FinanzaWebMutedDark,
+    inverseSurface = FinanzaWebSurfaceDark,
+    inverseOnSurface = FinanzaWebInkDark,
+    inversePrimary = FinanzaWebAccent,
+    outline = Color(0xFF5D655B),
+    outlineVariant = FinanzaWebDividerDark,
+    scrim = Color.Black,
+    error = FinanzaWebDanger,
+    onError = FinanzaWebBackgroundDark,
+    errorContainer = FinanzaWebDanger.copy(alpha = 0.16f),
+    onErrorContainer = FinanzaWebDanger
+)
+
 @Composable
 fun FinanceAppTheme(
     darkTheme: Boolean,
     experience: AppExperience = AppExperience.NEXT,
+    edgeToEdge: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colors = when (experience) {
         AppExperience.NEXT -> if (darkTheme) DarkColors else LightColors
         AppExperience.FINANZA -> if (darkTheme) FinanzaDarkColors else FinanzaLightColors
+        AppExperience.WEB -> if (darkTheme) FinanzaWebDarkColors else FinanzaWebLightColors
     }
     val tokens = when (experience) {
         AppExperience.NEXT -> NextTokens
         AppExperience.FINANZA -> FinanzaTokens
+        AppExperience.WEB -> FinanzaWebTokens
     }
     val typography = when (experience) {
         AppExperience.NEXT -> AppTypography
         AppExperience.FINANZA -> FinanzaTypography
+        AppExperience.WEB -> FinanzaTypography
     }
     val view = LocalView.current
     SideEffect {
         val window = (view.context as? Activity)?.window ?: return@SideEffect
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = android.graphics.Color.TRANSPARENT
-        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        WindowCompat.setDecorFitsSystemWindows(window, !edgeToEdge)
+        if (edgeToEdge) {
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isStatusBarContrastEnforced = false
             window.isNavigationBarContrastEnforced = false

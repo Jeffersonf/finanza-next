@@ -1,4 +1,4 @@
-package com.finanza.next.ui.screens
+﻿package com.finanza.next.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -12,6 +12,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -63,13 +65,15 @@ private enum class QuickStep { VALOR, DESCRICAO }
 @Composable
 fun QuickExpenseFlow(
     methods: List<PaymentMethodUi>,
-    onComplete: (String, String, PaymentMethodUi) -> Unit,
+    onComplete: (String, String, String, PaymentMethodUi) -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    customCategories: List<String> = emptyList()
 ) {
     var step by remember { mutableStateOf(QuickStep.VALOR) }
     var amountDigits by remember { mutableStateOf("0") }
     var description by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
 
@@ -134,7 +138,16 @@ fun QuickExpenseFlow(
                     onConfirm = {
                         methods.firstOrNull()?.let { method ->
                             keyboard?.hide()
-                            onComplete(decimalAmount(amountDigits), description, method)
+                            onComplete(decimalAmount(amountDigits), description, selectedCategory, method)
+                        }
+                    },
+                    supportingContent = if (customCategories.isEmpty()) null else {
+                        {
+                            QuickCategorySuggestions(
+                                categories = customCategories,
+                                selectedCategory = selectedCategory,
+                                onSelect = { selectedCategory = it }
+                            )
                         }
                     }
                 )
@@ -154,9 +167,10 @@ private fun QuickInputPanel(
     onValueChange: (String) -> Unit,
     onCancel: () -> Unit,
     onConfirm: () -> Unit,
-    visualTransformation: VisualTransformation = VisualTransformation.None
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    supportingContent: (@Composable ColumnScope.() -> Unit)? = null
 ) {
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     val contentColor = if (finanza) MaterialTheme.colorScheme.onSurface else Color.White
     val mutedColor = if (finanza) MaterialTheme.colorScheme.onSurfaceVariant else Color.White.copy(alpha = 0.88f)
     QuickGlassPanel {
@@ -197,7 +211,51 @@ private fun QuickInputPanel(
                 }
             }
         )
+        supportingContent?.invoke(this)
         QuickActions(confirmEnabled, onCancel, onConfirm)
+    }
+}
+
+@Composable
+private fun QuickCategorySuggestions(
+    categories: List<String>,
+    selectedCategory: String,
+    onSelect: (String) -> Unit
+) {
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
+    val selectedColor = if (finanza) MaterialTheme.colorScheme.primaryContainer else Color.White.copy(alpha = 0.19f)
+    val defaultColor = if (finanza) MaterialTheme.colorScheme.surface else Color.White.copy(alpha = 0.08f)
+    val labelColor = if (finanza) MaterialTheme.colorScheme.onSurfaceVariant else Color.White.copy(alpha = 0.72f)
+    Text(
+        "Categoria opcional",
+        color = labelColor,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Medium,
+        modifier = Modifier.padding(start = 16.dp, top = 2.dp, bottom = 5.dp)
+    )
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        categories.forEach { category ->
+            val selected = category == selectedCategory
+            Box(
+                Modifier
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (selected) selectedColor else defaultColor)
+                    .clickable { onSelect(if (selected) "" else category) }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    category,
+                    color = if (finanza) MaterialTheme.colorScheme.onSurface else Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                    maxLines = 1
+                )
+            }
+        }
     }
 }
 
@@ -235,7 +293,7 @@ private fun decimalAmount(rawDigits: String): String {
 @Composable
 private fun QuickGlassPanel(content: @Composable ColumnScope.() -> Unit) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     val panelColor = if (finanza) MaterialTheme.colorScheme.surfaceVariant else tokens.quickPanel
     val panelBorder = if (finanza) MaterialTheme.colorScheme.outlineVariant else tokens.quickBorder
     Column(
@@ -248,7 +306,7 @@ private fun QuickGlassPanel(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 private fun QuickActions(enabled: Boolean, onCancel: () -> Unit, onConfirm: () -> Unit) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     Row(
         Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)

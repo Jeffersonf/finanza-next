@@ -1,4 +1,4 @@
-package com.finanza.next.ui.components
+﻿package com.finanza.next.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
@@ -23,7 +23,7 @@ enum class BillStatus { ATRASADO, PAGO, PENDENTE }
 @Composable
 fun StatusBadge(status: BillStatus, modifier: Modifier = Modifier) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     val colors = when (status) {
         BillStatus.ATRASADO -> (if (finanza) MaterialTheme.colorScheme.error.copy(alpha = 0.14f) else DangerRedBg) to (if (finanza) MaterialTheme.colorScheme.error else DangerRed)
         BillStatus.PAGO -> (if (finanza) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else SuccessGreenBg) to (if (finanza) MaterialTheme.colorScheme.primary else SuccessGreen)

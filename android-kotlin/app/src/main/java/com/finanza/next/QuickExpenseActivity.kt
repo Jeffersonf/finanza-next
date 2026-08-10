@@ -54,12 +54,18 @@ class QuickExpenseActivity : ComponentActivity() {
         }
 
         val methods = paymentMethods()
+        val customCategories = customCategories()
         setContent {
-            FinanceAppTheme(darkTheme = isDarkTheme(), experience = visualExperience()) {
+            FinanceAppTheme(
+                darkTheme = isDarkTheme(),
+                experience = visualExperience(),
+                edgeToEdge = false
+            ) {
                 QuickExpenseFlow(
                     methods = methods,
-                    onComplete = { rawAmount, rawDescription, method ->
-                        saveAndClose(rawAmount, rawDescription, "", method)
+                    customCategories = customCategories,
+                    onComplete = { rawAmount, rawDescription, category, method ->
+                        saveAndClose(rawAmount, rawDescription, category, method)
                     },
                     onDismiss = ::finish,
                     modifier = Modifier.padding(horizontal = 30.dp, vertical = 14.dp)
@@ -103,6 +109,21 @@ class QuickExpenseActivity : ComponentActivity() {
                 add(PaymentMethodUi(id, name, if (type == "credit") Icons.Rounded.CreditCard else Icons.Rounded.AccountBalanceWallet))
             }
         }.ifEmpty { listOf(PaymentMethodUi("", "Principal")) }
+    }
+
+    private fun customCategories(): List<String> {
+        val categories = runCatching {
+            JSONArray(prefs.getString("feature_categories", "[]"))
+        }.getOrDefault(JSONArray())
+        return (0 until categories.length())
+            .mapNotNull { index ->
+                categories.optJSONObject(index)
+                    ?.optString("name")
+                    ?.trim()
+                    ?.takeIf(String::isNotBlank)
+            }
+            .distinct()
+            .take(8)
     }
 
     private fun saveQuickExpense(amount: Double, title: String, category: String, accountId: String): Long {
@@ -152,6 +173,12 @@ class QuickExpenseActivity : ComponentActivity() {
 
     private fun inferQuickCategory(title: String): String {
         val normalized = title.trim().lowercase()
+        val customCategories = runCatching { JSONArray(prefs.getString("feature_categories", "[]")) }.getOrDefault(JSONArray())
+        val matchingCustomCategory = (0 until customCategories.length())
+            .mapNotNull { customCategories.optJSONObject(it)?.optString("name")?.trim()?.takeIf(String::isNotBlank) }
+            .sortedByDescending(String::length)
+            .firstOrNull { normalized.contains(it.lowercase()) }
+        if (matchingCustomCategory != null) return matchingCustomCategory
         val entries = runCatching { JSONArray(prefs.getString("entries", "[]")) }.getOrDefault(JSONArray())
         for (index in entries.length() - 1 downTo 0) {
             val item = entries.optJSONObject(index) ?: continue

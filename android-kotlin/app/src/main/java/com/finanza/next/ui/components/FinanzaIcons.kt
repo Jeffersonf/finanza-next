@@ -2,6 +2,7 @@ package com.finanza.next.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
+import androidx.compose.material.icons.automirrored.rounded.Label
 import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.AccountBalanceWallet
 import androidx.compose.material.icons.rounded.Build
@@ -30,7 +31,9 @@ import androidx.compose.material.icons.rounded.Work
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.finanza.next.FinanzaCategories
+import com.finanza.next.ui.theme.AppExperience
 import com.finanza.next.ui.theme.CategoryColors
+import com.finanza.next.ui.theme.FinanzaWebCategoryColors
 
 fun categoryIcon(category: String): ImageVector = when (FinanzaCategories.normalize(category)) {
     "Alimentacao" -> Icons.Rounded.Restaurant
@@ -48,9 +51,10 @@ fun categoryIcon(category: String): ImageVector = when (FinanzaCategories.normal
     else -> Icons.Rounded.MoreHoriz
 }
 
-fun categoryColor(category: String): Color {
-    val index = Math.floorMod(FinanzaCategories.normalize(category).hashCode(), CategoryColors.size)
-    return CategoryColors[index]
+fun categoryColor(category: String, experience: AppExperience? = null): Color {
+    val palette = if (experience == AppExperience.WEB) FinanzaWebCategoryColors else CategoryColors
+    val index = Math.floorMod(FinanzaCategories.normalize(category).hashCode(), palette.size)
+    return palette[index]
 }
 
 fun accountIcon(type: String): ImageVector = when (type.lowercase()) {
@@ -62,6 +66,7 @@ fun accountIcon(type: String): ImageVector = when (type.lowercase()) {
 }
 
 fun featureIcon(moduleId: String, itemKey: String = ""): ImageVector = when {
+    moduleId == "categories" -> Icons.AutoMirrored.Rounded.Label
     moduleId == "budgets" -> Icons.Rounded.TrackChanges
     moduleId == "goals" -> Icons.Rounded.Flag
     moduleId == "subscriptions" -> Icons.Rounded.Subscriptions

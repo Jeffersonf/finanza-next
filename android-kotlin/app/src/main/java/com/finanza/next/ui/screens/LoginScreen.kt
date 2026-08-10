@@ -42,6 +42,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.finanza.next.ui.theme.AppExperience
 import com.finanza.next.ui.theme.LocalAppExperience
+import com.finanza.next.ui.theme.LocalAppExperienceTokens
 
 @Composable
 fun LoginScreen(
@@ -56,7 +57,24 @@ fun LoginScreen(
     var username by remember { mutableStateOf(initialUsername) }
     var password by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    if (LocalAppExperience.current == AppExperience.WEB) {
+        FinanzaWebLogin(
+            apiUrl = apiUrl,
+            username = username,
+            password = password,
+            otp = otp,
+            busy = busy,
+            error = error,
+            onApiUrlChange = { apiUrl = it },
+            onUsernameChange = { username = it },
+            onPasswordChange = { password = it },
+            onOtpChange = { otp = it.filter(Char::isDigit).take(6) },
+            onLogin = { onLogin(apiUrl.trim(), username.trim(), password, otp.trim()) },
+            onContinueOffline = { onContinueOffline(username.ifBlank { "Voc\u00ea" }) }
+        )
+        return
+    }
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     val cardColor = if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
     val pageColor = MaterialTheme.colorScheme.background
 
@@ -68,7 +86,7 @@ fun LoginScreen(
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(if (finanza) 20.dp else 28.dp),
+                shape = RoundedCornerShape(if (finanza) LocalAppExperienceTokens.current.cardRadius else 28.dp),
                 color = cardColor,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
@@ -139,7 +157,7 @@ fun LoginScreen(
                         )
                     ) {
                         Icon(Icons.Rounded.CloudSync, contentDescription = null)
-                        Text(if (busy) "Conectando…" else "Entrar e sincronizar", modifier = Modifier.padding(start = 8.dp))
+                        Text(if (busy) "Conectando..." else "Entrar e sincronizar", modifier = Modifier.padding(start = 8.dp))
                     }
                     OutlinedButton(
                         onClick = { onContinueOffline(username.ifBlank { "Você" }) },
@@ -157,6 +175,119 @@ fun LoginScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FinanzaWebLogin(
+    apiUrl: String,
+    username: String,
+    password: String,
+    otp: String,
+    busy: Boolean,
+    error: String?,
+    onApiUrlChange: (String) -> Unit,
+    onUsernameChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onOtpChange: (String) -> Unit,
+    onLogin: () -> Unit,
+    onContinueOffline: () -> Unit
+) {
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 28.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                "FINANZA",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Seu dinheiro,\norganizado.",
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            Text(
+                "Entre para sincronizar seus dados do Finanza web neste aparelho.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 9.dp, bottom = 24.dp)
+            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.66f))
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Acessar conta", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        "Use as mesmas credenciais do web.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 3.dp, bottom = 14.dp)
+                    )
+                    OutlinedTextField(
+                        value = apiUrl,
+                        onValueChange = onApiUrlChange,
+                        label = { Text("URL da API") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = onUsernameChange,
+                        label = { Text("Usu\u00e1rio") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(top = 9.dp)
+                    )
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = onPasswordChange,
+                        label = { Text("Senha") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(top = 9.dp)
+                    )
+                    OutlinedTextField(
+                        value = otp,
+                        onValueChange = onOtpChange,
+                        label = { Text("C\u00f3digo de autentica\u00e7\u00e3o (opcional)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(top = 9.dp)
+                    )
+                    if (!error.isNullOrBlank()) {
+                        Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 11.dp))
+                    }
+                    Button(
+                        onClick = onLogin,
+                        enabled = !busy && apiUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+                    ) {
+                        Icon(Icons.Rounded.CloudSync, contentDescription = null)
+                        Text(if (busy) "Conectando..." else "Entrar e sincronizar", modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+            }
+            OutlinedButton(
+                onClick = onContinueOffline,
+                enabled = !busy,
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+            ) {
+                Icon(Icons.Rounded.Lock, contentDescription = null)
+                Text("Usar somente neste aparelho", modifier = Modifier.padding(start = 8.dp))
+            }
+            Text(
+                "O modo local mant\u00e9m seus dados neste aparelho. A conex\u00e3o pode ser feita depois em Ajustes.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 10.dp)
+            )
         }
     }
 }

@@ -22,6 +22,7 @@ fun CircularProgressRing(progress: Float, modifier: Modifier = Modifier) {
     val progressColor = when (LocalAppExperience.current) {
         AppExperience.NEXT -> Color(0xFFD2F668)
         AppExperience.FINANZA -> MaterialTheme.colorScheme.primary
+        AppExperience.WEB -> MaterialTheme.colorScheme.primary
     }
     val trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f)
     val labelColor = MaterialTheme.colorScheme.onSurface

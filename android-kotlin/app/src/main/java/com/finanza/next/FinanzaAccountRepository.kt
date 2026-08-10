@@ -39,7 +39,7 @@ internal class FinanzaAccountRepository(private val transport: FinanzaJsonTransp
     fun recoveryCode(): String {
         val result = transport.request("POST", FinanzaAccountRoutes.RECOVERY_CODE, null)
         return result.optString("recovery_code", result.optString("code"))
-            .ifBlank { throw IllegalStateException("O servidor nao retornou o codigo de recuperacao.") }
+            .ifBlank { throw IllegalStateException("O servidor não retornou o código de recuperação.") }
     }
 
     fun beginTwoFactor(): JSONObject = transport.request("POST", FinanzaAccountRoutes.TWO_FACTOR_SETUP, null)

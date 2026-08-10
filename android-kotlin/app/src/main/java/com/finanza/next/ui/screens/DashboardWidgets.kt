@@ -4,6 +4,7 @@ package com.finanza.next.ui.screens
 
 import android.content.Context
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
+import androidx.compose.material.icons.automirrored.rounded.ShowChart
 import androidx.compose.material.icons.rounded.AccountBalanceWallet
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Analytics
@@ -42,6 +44,9 @@ import androidx.compose.material.icons.rounded.SpaceDashboard
 import androidx.compose.material.icons.rounded.Subscriptions
 import androidx.compose.material.icons.rounded.TrackChanges
 import androidx.compose.material.icons.rounded.Tune
+import java.time.LocalDate
+import java.time.YearMonth
+import java.util.Locale
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -66,7 +71,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.finanza.next.features.FeatureCenterUiState
@@ -107,7 +113,13 @@ private data class OverviewMosaicItem(
 private val dashboardWidgetDefs = listOf(
     DashboardWidgetDef("workbench", "Atalhos do Finanza", "Entrada para as áreas principais", "Apoio", Icons.Rounded.SpaceDashboard, true, true),
     DashboardWidgetDef("cards", "Resumo do dia a dia", "Saldo, entradas e gastos", "Essencial", Icons.Rounded.Analytics, true),
+    DashboardWidgetDef("dailyweek", "Ritmo semanal", "Entradas, gastos e saldo da semana", "Essencial", Icons.Rounded.CalendarMonth, false),
+    DashboardWidgetDef("dailymonth", "Ritmo mensal", "Entradas, gastos e saldo do mês", "Essencial", Icons.Rounded.CalendarMonth, false),
+    DashboardWidgetDef("dailyyear", "Ritmo anual", "Entradas, gastos e saldo do ano", "Essencial", Icons.Rounded.CalendarMonth, false),
+    DashboardWidgetDef("cashflow", "Fluxo do mês", "Entradas, saídas e saldo dos lançamentos", "Análise", Icons.AutoMirrored.Rounded.ShowChart, false),
+    DashboardWidgetDef("charts", "Gráficos", "Fluxo de caixa e categorias", "Análise", Icons.Rounded.BarChart, false),
     DashboardWidgetDef("commitments", "Próximos vencimentos", "Contas e compromissos", "Essencial", Icons.AutoMirrored.Rounded.ReceiptLong, true),
+    DashboardWidgetDef("renewals", "Renovações próximas", "Assinaturas, dívidas e contratos", "Apoio", Icons.Rounded.Subscriptions, false),
     DashboardWidgetDef("overview", "Visão geral", "Maiores movimentos e compromissos", "Essencial", Icons.Rounded.GridView, true),
     DashboardWidgetDef("subscriptions", "Assinaturas", "Recorrentes por peso mensal", "Apoio", Icons.Rounded.Subscriptions, false),
     DashboardWidgetDef("quickactions", "Ações rápidas", "Menos toques para lançar", "Essencial", Icons.Rounded.Bolt, true),
@@ -115,7 +127,16 @@ private val dashboardWidgetDefs = listOf(
     DashboardWidgetDef("accounts", "Saldos das contas", "Saldo de cada conta", "Apoio", Icons.Rounded.AccountBalanceWallet, false),
     DashboardWidgetDef("budgets", "Orçamentos rápidos", "Uso por categoria", "Apoio", Icons.Rounded.TrackChanges, false),
     DashboardWidgetDef("goals", "Metas rápidas", "Progresso das metas", "Apoio", Icons.Rounded.Flag, false),
-    DashboardWidgetDef("barcats", "Ranking de gastos", "Categorias com maior peso", "Análise", Icons.Rounded.BarChart, false)
+    DashboardWidgetDef("shopping", "Lista de compras", "Itens pendentes da lista ativa", "Apoio", Icons.Rounded.History, false),
+    DashboardWidgetDef("vehicles", "Veículos", "Garagem e manutenção", "Apoio", Icons.Rounded.AccountBalanceWallet, false),
+    DashboardWidgetDef("barcats", "Ranking de gastos", "Categorias com maior peso", "Análise", Icons.Rounded.BarChart, false),
+    DashboardWidgetDef("compare", "Comparar meses", "Variação entre os dois últimos meses", "Análise", Icons.Rounded.Analytics, false),
+    DashboardWidgetDef("ministats", "Mini estatísticas", "Média diária, maior gasto e dias", "Análise", Icons.Rounded.Analytics, false),
+    DashboardWidgetDef("saverate", "Taxa de economia", "Quanto sobra das receitas", "Análise", Icons.AutoMirrored.Rounded.ShowChart, false),
+    DashboardWidgetDef("projection", "Projeção do mês", "Estimativa de gastos até o fechamento", "Análise", Icons.AutoMirrored.Rounded.ShowChart, false),
+    DashboardWidgetDef("weekly", "Pulso semanal", "Média e total dos últimos sete dias", "Análise", Icons.Rounded.CalendarMonth, false),
+    DashboardWidgetDef("anomaly", "Maior lançamento", "Movimento que mais pesou no período", "Análise", Icons.Rounded.ArrowDownward, false),
+    DashboardWidgetDef("budalerts", "Alertas de orçamento", "Categorias perto do limite", "Apoio", Icons.Rounded.TrackChanges, false)
 )
 
 @Composable
@@ -128,6 +149,7 @@ fun DashboardWidgets(
     accounts: List<AccountUi>,
     bills: List<BillUi>,
     categories: List<CategoryUi>,
+    trends: List<MonthTrendUi>,
     features: FeatureCenterUiState,
     onAdd: () -> Unit,
     onAllTransactions: () -> Unit,
@@ -143,8 +165,9 @@ fun DashboardWidgets(
     onManagerVisibleChange: ((Boolean) -> Unit)? = null
 ) {
     val context = LocalContext.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
-    var config by remember { mutableStateOf(loadDashboardWidgetConfig(context)) }
+    val experience = LocalAppExperience.current
+    val finanza = experience.usesFinanzaVisuals
+    var config by remember(experience) { mutableStateOf(loadDashboardWidgetConfig(context, experience)) }
     var localEditing by remember { mutableStateOf(false) }
     val editing = managerVisible ?: localEditing
 
@@ -155,7 +178,7 @@ fun DashboardWidgets(
     fun update(next: DashboardWidgetConfig) {
         val normalized = normalizeDashboardWidgetConfig(next)
         config = normalized
-        saveDashboardWidgetConfig(context, normalized)
+        saveDashboardWidgetConfig(context, experience, normalized)
     }
 
     if (showManagerHeader) {
@@ -165,19 +188,28 @@ fun DashboardWidgets(
     val orderedWidgetIds = config.order
         .filter(config.active::contains)
         .filterNot(hiddenWidgetIds::contains)
+        // The Modern workbench already contains the fast actions. Rendering both
+        // blocks makes the dashboard repeat the same commands and adds weight.
+        .filterNot { id -> experience == AppExperience.NEXT && id == "quickactions" }
         .let { ids ->
             if (!finanza || "workbench" !in ids) ids
             else ids.filterNot { it == "workbench" } + "workbench"
         }
     orderedWidgetIds.forEach { id ->
         when (id) {
-            "workbench" -> DashboardWorkbench(onAccounts, onAnalysis, onFeatures, onSettings)
+            "workbench" -> DashboardWorkbench(onAccounts, onAnalysis, onFeatures, onSettings, onAllTransactions)
             "cards" -> if (finanza) {
                 FinanzaSummaryGrid(balance, income, spent, bills)
             } else {
                 HeroBalanceCard("Disponível", period, balance, income, spent)
             }
+            "dailyweek" -> DashboardPeriodRhythm("Ritmo semanal", "Últimos sete dias", transactions, RhythmPeriod.WEEK, onAnalysis)
+            "dailymonth" -> DashboardPeriodRhythm("Ritmo mensal", "Mês atual", transactions, RhythmPeriod.MONTH, onAnalysis)
+            "dailyyear" -> DashboardPeriodRhythm("Ritmo anual", "Ano atual", transactions, RhythmPeriod.YEAR, onAnalysis)
+            "cashflow" -> DashboardCashFlow(transactions, onAnalysis)
+            "charts" -> DashboardChartsOverview(transactions, categories, onAnalysis)
             "commitments" -> DashboardBills(bills, onBill, onAccounts)
+            "renewals" -> DashboardRenewals(features, onFeatures)
             "overview" -> DashboardOverviewMosaic(transactions, bills, features, income, spent, balance, onFeatures)
             "subscriptions" -> DashboardSubscriptions(features, onFeatures)
             "quickactions" -> DashboardQuickActions(onAdd, onAllTransactions, onAccounts)
@@ -185,7 +217,16 @@ fun DashboardWidgets(
             "accounts" -> DashboardAccounts(accounts, onAccounts)
             "budgets" -> DashboardFeatureList("Orçamentos", features, "budgets", MaterialTheme.colorScheme.primary, onFeatures)
             "goals" -> DashboardFeatureList("Metas", features, "goals", MaterialTheme.colorScheme.tertiary, onFeatures)
+            "shopping" -> DashboardFeatureList("Lista de compras", features, "shopping", MaterialTheme.colorScheme.primary, onFeatures)
+            "vehicles" -> DashboardFeatureList("Veículos", features, "vehicles", MaterialTheme.colorScheme.secondary, onFeatures)
             "barcats" -> DashboardCategories(categories, onAnalysis)
+            "compare" -> DashboardMonthCompare(trends, onAnalysis)
+            "ministats" -> DashboardMiniStats(transactions, onAllTransactions)
+            "saverate" -> DashboardSavingsRate(transactions, onAnalysis)
+            "projection" -> DashboardProjection(transactions, onAnalysis)
+            "weekly" -> DashboardWeeklyPulse(transactions, onAnalysis)
+            "anomaly" -> DashboardLargestExpense(transactions, onAllTransactions)
+            "budalerts" -> DashboardBudgetAlerts(features, onFeatures)
         }
         Spacer(Modifier.height(10.dp))
     }
@@ -193,9 +234,276 @@ fun DashboardWidgets(
     if (editing) {
         DashboardWidgetManager(
             config = config,
+            experience = experience,
             onDismiss = { setEditing(false) },
             onUpdate = ::update
         )
+    }
+}
+
+@Composable
+private fun DashboardCashFlow(transactions: List<TransactionUi>, onAnalysis: () -> Unit) {
+    val income = transactions.filter { it.income }.sumOf { moneyNumber(it.amount) }
+    val spent = transactions.filterNot { it.income }.sumOf { moneyNumber(it.amount) }
+    val total = (income + spent).coerceAtLeast(1.0)
+    val incomeShare = (income / total).toFloat().coerceIn(0f, 1f)
+    val balance = income - spent
+    WidgetSurface("Fluxo do mês", "Leitura dos lançamentos visíveis", Icons.AutoMirrored.Rounded.ShowChart, onAnalysis) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowMetric("Entradas", moneyLabel(income), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+            FlowMetric("Saídas", moneyLabel(spent), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+        }
+        Box(
+            Modifier.fillMaxWidth().padding(top = 13.dp).height(8.dp)
+                .clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Box(
+                Modifier.fillMaxWidth(incomeShare).height(8.dp)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+        }
+        Text(
+            if (balance >= 0.0) "Saldo positivo de ${moneyLabel(balance)}" else "Saldo negativo de ${moneyLabel(-balance)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 9.dp)
+        )
+    }
+}
+
+private enum class RhythmPeriod { WEEK, MONTH, YEAR }
+
+@Composable
+private fun DashboardPeriodRhythm(
+    title: String,
+    subtitle: String,
+    transactions: List<TransactionUi>,
+    period: RhythmPeriod,
+    onAnalysis: () -> Unit
+) {
+    val today = LocalDate.now()
+    val visible = transactions.filter { item ->
+        val date = runCatching { LocalDate.parse(item.dateKey) }.getOrNull() ?: return@filter false
+        when (period) {
+            RhythmPeriod.WEEK -> date in today.minusDays(6)..today
+            RhythmPeriod.MONTH -> YearMonth.from(date) == YearMonth.from(today)
+            RhythmPeriod.YEAR -> date.year == today.year
+        }
+    }
+    val income = visible.filter { it.income }.sumOf { moneyNumber(it.amount) }
+    val expenses = visible.filterNot { it.income }.sumOf { moneyNumber(it.amount) }
+    val balance = income - expenses
+    val days = when (period) {
+        RhythmPeriod.WEEK -> 7
+        RhythmPeriod.MONTH -> today.dayOfMonth
+        RhythmPeriod.YEAR -> today.dayOfYear
+    }.coerceAtLeast(1)
+    val previousWeekExpenses = if (period == RhythmPeriod.WEEK) {
+        val start = today.minusDays(13)
+        val end = today.minusDays(7)
+        transactions.filterNot { it.income }.filter { item ->
+            runCatching { LocalDate.parse(item.dateKey) in start..end }.getOrDefault(false)
+        }.sumOf { moneyNumber(it.amount) }
+    } else 0.0
+    val expenseAverage = expenses / days
+    val incomeAverage = income / days
+    WidgetSurface(title, subtitle, Icons.Rounded.CalendarMonth, onAnalysis) {
+        when (period) {
+            RhythmPeriod.WEEK -> {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowMetric("Gasto da semana", moneyLabel(expenses), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+                    FlowMetric("Média diária", moneyLabel(expenseAverage), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+                }
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowMetric("Semana anterior", moneyLabel(previousWeekExpenses), MaterialTheme.colorScheme.onSurfaceVariant, Modifier.weight(1f))
+                    FlowMetric("Entradas", moneyLabel(income), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+                }
+            }
+            RhythmPeriod.MONTH -> {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowMetric("Ganho por dia", moneyLabel(incomeAverage), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+                    FlowMetric("Gasto por dia", moneyLabel(expenseAverage), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+                }
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowMetric("Gasto no mês", moneyLabel(expenses), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+                    FlowMetric("Saldo do mês", moneyLabel(balance), if (balance >= 0) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error, Modifier.weight(1f))
+                }
+            }
+            RhythmPeriod.YEAR -> {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowMetric("Ganho até hoje", moneyLabel(income), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+                    FlowMetric("Ganho por dia", moneyLabel(incomeAverage), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+                }
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowMetric("Gasto anual", moneyLabel(expenses), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+                    FlowMetric("Gasto por dia", moneyLabel(expenseAverage), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+                }
+            }
+        }
+        Text(
+            "${visible.size} lançamento(s) considerados no período.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 10.dp)
+        )
+    }
+}
+
+@Composable
+private fun DashboardChartsOverview(
+    transactions: List<TransactionUi>,
+    categories: List<CategoryUi>,
+    onAnalysis: () -> Unit
+) {
+    val expenses = transactions.filterNot { it.income }
+    val total = expenses.sumOf { moneyNumber(it.amount) }
+    val categoryTotal = categories.sumOf { moneyNumber(it.amount) }
+    val topCategory = categories.maxByOrNull { moneyNumber(it.amount) }
+    val classifiedShare = if (total > 0.0) (categoryTotal / total * 100.0).coerceIn(0.0, 100.0) else 0.0
+    WidgetSurface("Gráficos", "Fluxo de caixa e distribuição por categoria", Icons.Rounded.BarChart, onAnalysis) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowMetric("Gastos", moneyLabel(total), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+            FlowMetric("Categorias", categories.size.toString(), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+        }
+        Text(
+            topCategory?.let { "Maior categoria: ${it.name} (${it.amount})." }
+                ?: "Ainda não há despesas por categoria para desenhar os gráficos.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 10.dp)
+        )
+        if (total > 0.0) {
+            Box(
+                Modifier.fillMaxWidth().padding(top = 10.dp).height(7.dp)
+                    .clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Box(
+                    Modifier.fillMaxWidth(classifiedShare.toFloat() / 100f).height(7.dp)
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardMonthCompare(trends: List<MonthTrendUi>, onAnalysis: () -> Unit) {
+    val pair = trends.takeLast(2)
+    WidgetSurface("Comparar meses", "Despesas no mês atual versus o anterior", Icons.Rounded.Analytics, onAnalysis) {
+        if (pair.size < 2) {
+            Text("Registre movimentos em dois meses para comparar.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            val previous = moneyNumber(pair[0].spent)
+            val current = moneyNumber(pair[1].spent)
+            val difference = current - previous
+            val percent = if (previous > 0.0) (difference / previous * 100.0) else null
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowMetric(pair[0].label, pair[0].spent, MaterialTheme.colorScheme.onSurfaceVariant, Modifier.weight(1f))
+                FlowMetric(pair[1].label, pair[1].spent, if (difference <= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error, Modifier.weight(1f))
+            }
+            Text(
+                when {
+                    difference == 0.0 -> "Mesmo nível de gastos do mês anterior."
+                    difference < 0.0 -> "${moneyLabel(-difference)} a menos${percent?.let { " (${String.format(Locale.forLanguageTag("pt-BR"), "%.0f", -it)}%)" }.orEmpty()}."
+                    else -> "${moneyLabel(difference)} a mais${percent?.let { " (${String.format(Locale.forLanguageTag("pt-BR"), "%.0f", it)}%)" }.orEmpty()}."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 10.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardProjection(transactions: List<TransactionUi>, onAnalysis: () -> Unit) {
+    val today = LocalDate.now()
+    val month = YearMonth.from(today)
+    val spent = transactions.filterNot { it.income }.filter { item ->
+        runCatching { YearMonth.from(LocalDate.parse(item.dateKey)) == month }.getOrDefault(false)
+    }.sumOf { moneyNumber(it.amount) }
+    val projected = if (today.dayOfMonth > 0) spent / today.dayOfMonth * month.lengthOfMonth() else 0.0
+    WidgetSurface("Projeção do mês", "Estimativa baseada no ritmo de gastos", Icons.AutoMirrored.Rounded.ShowChart, onAnalysis) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowMetric("Até hoje", moneyLabel(spent), MaterialTheme.colorScheme.error, Modifier.weight(1f))
+            FlowMetric("Fechamento", moneyLabel(projected), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+        }
+        Text(
+            "Média de ${moneyLabel(spent / today.dayOfMonth.coerceAtLeast(1))} por dia em ${month.lengthOfMonth()} dias.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 10.dp)
+        )
+    }
+}
+
+@Composable
+private fun DashboardWeeklyPulse(transactions: List<TransactionUi>, onAnalysis: () -> Unit) {
+    val today = LocalDate.now()
+    val start = today.minusDays(6)
+    val expenses = transactions.filterNot { it.income }.filter { item ->
+        runCatching { LocalDate.parse(item.dateKey) in start..today }.getOrDefault(false)
+    }
+    val total = expenses.sumOf { moneyNumber(it.amount) }
+    val activeDays = expenses.map { it.dateKey }.distinct().size
+    WidgetSurface("Pulso semanal", "Ritmo dos últimos sete dias", Icons.Rounded.CalendarMonth, onAnalysis) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowMetric("Semana", moneyLabel(total), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+            FlowMetric("Por dia", moneyLabel(total / 7.0), MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+        }
+        Text(
+            if (activeDays == 0) "Nenhuma despesa registrada nos últimos sete dias." else "$activeDays dia(s) com movimentos registrados.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 10.dp)
+        )
+    }
+}
+
+@Composable
+private fun DashboardLargestExpense(transactions: List<TransactionUi>, onAll: () -> Unit) {
+    val largest = transactions.filterNot { it.income }.maxByOrNull { moneyNumber(it.amount) }
+    WidgetSurface("Maior lançamento", "Movimento que mais pesou no período", Icons.Rounded.ArrowDownward, onAll) {
+        if (largest == null) {
+            Text("Nenhuma despesa disponível para analisar.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            Text(largest.title, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+            Text("${largest.category} · ${largest.date}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 3.dp))
+            Text(largest.amount, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 10.dp))
+        }
+    }
+}
+
+@Composable
+private fun DashboardBudgetAlerts(features: FeatureCenterUiState, onFeatures: () -> Unit) {
+    val alerts = features.modules.firstOrNull { it.id == "budgets" }?.items.orEmpty()
+        .filter { (it.progress ?: 0f) >= 0.8f }
+        .sortedByDescending { it.progress ?: 0f }
+    WidgetSurface("Alertas de orçamento", "Categorias próximas do limite", Icons.Rounded.TrackChanges, onFeatures) {
+        if (alerts.isEmpty()) {
+            Text("Nenhuma categoria está próxima do limite.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            alerts.take(3).forEachIndexed { index, item ->
+                if (index > 0) HorizontalDivider(Modifier.padding(vertical = 9.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(item.title, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                        Text(item.value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Text("${((item.progress ?: 0f) * 100).toInt()}%", style = MaterialTheme.typography.labelLarge, color = if ((item.progress ?: 0f) >= 1f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FlowMetric(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
+    Column(
+        modifier.clip(RoundedCornerShape(12.dp)).background(color.copy(alpha = 0.11f)).padding(10.dp)
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.titleSmall, color = color, maxLines = 1)
     }
 }
 
@@ -256,23 +564,24 @@ private fun FinanzaSummaryCard(
     accent: Color,
     modifier: Modifier
 ) {
+    val web = LocalAppExperience.current == AppExperience.WEB
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        shadowElevation = 1.dp
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = if (web) 0.06f else 1f)),
+        shadowElevation = 0.dp
     ) {
-        Column(Modifier.padding(horizontal = 14.dp, vertical = 13.dp)) {
+        Column(Modifier.padding(horizontal = 13.dp, vertical = 11.dp)) {
             Surface(shape = CircleShape, color = accent.copy(alpha = 0.13f)) {
                 Icon(
                     icon,
                     contentDescription = null,
                     tint = accent,
-                    modifier = Modifier.padding(7.dp).size(18.dp)
+                    modifier = Modifier.padding(6.dp).size(17.dp)
                 )
             }
-            Spacer(Modifier.height(13.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
                 label.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
@@ -280,7 +589,7 @@ private fun FinanzaSummaryCard(
             )
             Text(
                 value,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Black,
                 maxLines = 1
             )
@@ -304,7 +613,9 @@ private fun DashboardOverviewMosaic(
     balance: String,
     onAll: () -> Unit
 ) {
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
+    val modern = LocalAppExperience.current == AppExperience.NEXT
+    val web = LocalAppExperience.current == AppExperience.WEB
     val featureItems = features.modules
         .filter { it.id in setOf("subscriptions", "debts", "contracts") }
         .flatMap { module ->
@@ -364,7 +675,7 @@ private fun DashboardOverviewMosaic(
                     modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                     shape = RoundedCornerShape(LocalAppExperienceTokens.current.cardRadius - 5.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    border = if (modern || web) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
                     Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
@@ -395,13 +706,15 @@ private fun OverviewTile(
     large: Boolean = false
 ) {
     val tokens = LocalAppExperienceTokens.current
+    val modern = LocalAppExperience.current == AppExperience.NEXT
+    val web = LocalAppExperience.current == AppExperience.WEB
     val colors = subscriptionTileColors()
     val share = if (total > 0.0) ((item.amount / total) * 100.0).toInt().coerceAtLeast(1) else 0
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(tokens.cardRadius - if (large) 3.dp else 6.dp),
         color = colors[(item.colorIndex + index) % colors.size],
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.58f))
+        border = if (modern || web) null else BorderStroke(1.dp, Color.White.copy(alpha = 0.58f))
     ) {
         Column(Modifier.padding(if (large) 14.dp else 10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -423,8 +736,7 @@ private fun OverviewTile(
 
 @Composable
 private fun DashboardManagerHeader(active: Int, total: Int, onEdit: () -> Unit) {
-    val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     if (finanza) {
         Row(
             Modifier.fillMaxWidth(),
@@ -449,15 +761,51 @@ private fun DashboardManagerHeader(active: Int, total: Int, onEdit: () -> Unit) 
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        OutlinedButton(onClick = onEdit, shape = RoundedCornerShape(tokens.cardRadius - 6.dp)) {
-            Icon(Icons.Rounded.Tune, contentDescription = null, modifier = Modifier.size(17.dp))
-            Text("Editar", modifier = Modifier.padding(start = 6.dp))
+        IconButton(onClick = onEdit) {
+            Icon(
+                Icons.Rounded.Tune,
+                contentDescription = "Personalizar painel",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
 
 @Composable
-private fun DashboardWorkbench(onAccounts: () -> Unit, onAnalysis: () -> Unit, onFeatures: () -> Unit, onSettings: () -> Unit) {
+private fun DashboardWorkbench(
+    onAccounts: () -> Unit,
+    onAnalysis: () -> Unit,
+    onFeatures: () -> Unit,
+    onSettings: () -> Unit,
+    onHistory: () -> Unit
+) {
+    if (LocalAppExperience.current == AppExperience.NEXT) {
+        Row(
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(onClick = onFeatures)
+                .padding(horizontal = 4.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onFeatures, modifier = Modifier.size(46.dp)) {
+                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)) {
+                    Icon(
+                        Icons.Rounded.GridView,
+                        contentDescription = "Abrir recursos",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(9.dp).size(19.dp)
+                    )
+                }
+            }
+            Column(Modifier.weight(1f).padding(start = 11.dp)) {
+                Text("Central de recursos", style = MaterialTheme.typography.titleSmall)
+                Text("Planejamento, listas e veiculos", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            IconButton(onClick = onHistory) {
+                Icon(Icons.Rounded.History, contentDescription = "Abrir histórico", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Rounded.ChevronRight, contentDescription = "Abrir recursos", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        return
+    }
     WidgetSurface("Atalhos do Finanza", "O que você usa sempre", Icons.Rounded.SpaceDashboard) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             WidgetAction("Contas", Icons.Rounded.AccountBalanceWallet, onAccounts, Modifier.weight(1f))
@@ -488,6 +836,57 @@ private fun DashboardBills(items: List<BillUi>, onBill: (Long) -> Unit, onAll: (
 }
 
 @Composable
+private fun DashboardRenewals(state: FeatureCenterUiState, onFeatures: () -> Unit) {
+    val modules = listOf("subscriptions", "debts", "contracts")
+    val items = modules.flatMap { id -> state.modules.firstOrNull { it.id == id }?.items.orEmpty() }
+        .sortedBy { it.subtitle }
+    WidgetSurface("Renovações próximas", "Assinaturas, dívidas e contratos", Icons.Rounded.Subscriptions, onFeatures) {
+        if (items.isEmpty()) {
+            WidgetEmpty("Nenhuma renovação ou parcela cadastrada.")
+        } else {
+            items.take(3).forEach { item ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(item.title, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                        Text(item.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                    }
+                    Text(item.value, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardMiniStats(items: List<TransactionUi>, onAll: () -> Unit) {
+    val expenses = items.filterNot { it.income }
+    val largest = expenses.maxByOrNull { moneyNumber(it.amount) }
+    val activeDays = expenses.map { it.dateKey }.distinct().size
+    val average = if (activeDays == 0) 0.0 else expenses.sumOf { moneyNumber(it.amount) } / activeDays
+    WidgetSurface("Mini estatísticas", "Leitura rápida dos gastos visíveis", Icons.Rounded.Analytics, onAll) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowMetric("Por dia", moneyLabel(average), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+            FlowMetric("Maior", largest?.amount ?: "R$ 0,00", MaterialTheme.colorScheme.error, Modifier.weight(1f))
+            FlowMetric("Dias", activeDays.toString(), MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun DashboardSavingsRate(items: List<TransactionUi>, onAnalysis: () -> Unit) {
+    val income = items.filter { it.income }.sumOf { moneyNumber(it.amount) }
+    val expenses = items.filterNot { it.income }.sumOf { moneyNumber(it.amount) }
+    val balance = income - expenses
+    val rate = if (income <= 0.0) 0.0 else (balance / income * 100.0)
+    WidgetSurface("Taxa de economia", "Quanto das receitas ainda está disponível", Icons.AutoMirrored.Rounded.ShowChart, onAnalysis) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowMetric("Taxa", String.format(java.util.Locale.forLanguageTag("pt-BR"), "%.0f%%", rate), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+            FlowMetric("Sobra", moneyLabel(balance), if (balance >= 0.0) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
 private fun DashboardSubscriptions(state: FeatureCenterUiState, onAll: () -> Unit) {
     val module = state.modules.firstOrNull { it.id == "subscriptions" }
     val items = module?.items.orEmpty()
@@ -501,7 +900,7 @@ private fun DashboardSubscriptions(state: FeatureCenterUiState, onAll: () -> Uni
     WidgetSurface("Assinaturas", "Peso mensal e projecao anual", Icons.Rounded.Subscriptions, onAll) {
         if (items.isEmpty()) {
             WidgetEmpty(if (module?.items.orEmpty().isEmpty()) {
-                module?.emptyText ?: "Suas assinaturas recorrentes aparecerao aqui."
+                module?.emptyText ?: "Suas assinaturas recorrentes aparecerão aqui."
             } else {
                 "Nenhuma assinatura ativa no momento."
             })
@@ -616,7 +1015,7 @@ private fun SubscriptionTile(
 @Composable
 private fun DashboardRecent(items: List<TransactionUi>, onItem: (Long) -> Unit, onAll: () -> Unit) {
     WidgetSurface("Últimas transações", "Histórico recente", Icons.Rounded.History, onAll) {
-        if (items.isEmpty()) WidgetEmpty("Nenhuma transacao ainda.")
+        if (items.isEmpty()) WidgetEmpty("Nenhuma transação ainda.")
         else items.take(6).forEach { TransactionRow(it, { onItem(it.id) }) }
     }
 }
@@ -667,7 +1066,7 @@ private fun DashboardFeatureList(title: String, state: FeatureCenterUiState, mod
 @Composable
 private fun DashboardCategories(items: List<CategoryUi>, onAll: () -> Unit) {
     WidgetSurface("Ranking de gastos", "Categorias com maior peso", Icons.Rounded.BarChart, onAll) {
-        if (items.isEmpty()) WidgetEmpty("Os gastos por categoria aparecerao aqui.")
+        if (items.isEmpty()) WidgetEmpty("Os gastos por categoria aparecerão aqui.")
         else items.take(6).forEach { item ->
             Row(Modifier.fillMaxWidth().padding(top = 9.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(item.name, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
@@ -684,11 +1083,14 @@ private fun DashboardCategories(items: List<CategoryUi>, onAll: () -> Unit) {
 @Composable
 private fun WidgetSurface(title: String, subtitle: String, icon: ImageVector, onOpen: (() -> Unit)? = null, content: @Composable () -> Unit) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
+    val modern = LocalAppExperience.current == AppExperience.NEXT
+    val web = LocalAppExperience.current == AppExperience.WEB
+    val modernDark = modern && MaterialTheme.colorScheme.background.luminance() < 0.5f
     Surface(
-        shape = RoundedCornerShape(if (finanza) 20.dp else tokens.cardRadius),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(tokens.cardRadius),
+        color = if (modernDark) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f) else MaterialTheme.colorScheme.surface,
+        border = if (modern) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = if (web) 0.06f else 1f)),
         shadowElevation = if (finanza) 2.dp else 0.dp
     ) {
         Column(Modifier.padding(if (finanza) 16.dp else if (tokens.denseLists) 14.dp else 16.dp)) {
@@ -737,8 +1139,15 @@ private fun WidgetEmpty(text: String) {
 }
 
 @Composable
-private fun DashboardWidgetManager(config: DashboardWidgetConfig, onDismiss: () -> Unit, onUpdate: (DashboardWidgetConfig) -> Unit) {
-    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.64f
+private fun DashboardWidgetManager(
+    config: DashboardWidgetConfig,
+    experience: AppExperience,
+    onDismiss: () -> Unit,
+    onUpdate: (DashboardWidgetConfig) -> Unit
+) {
+    val maxHeight = with(LocalDensity.current) {
+        LocalWindowInfo.current.containerSize.height.toDp() * 0.64f
+    }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val tokens = LocalAppExperienceTokens.current
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(topStart = tokens.sheetRadius, topEnd = tokens.sheetRadius)) {
@@ -746,9 +1155,9 @@ private fun DashboardWidgetManager(config: DashboardWidgetConfig, onDismiss: () 
             Text("Editar widgets", style = MaterialTheme.typography.titleLarge)
             Text("Escolha os blocos e a ordem da página inicial.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 3.dp, bottom = 12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                OutlinedButton(onClick = { onUpdate(defaultDashboardWidgetConfig(focused = true)) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(tokens.cardRadius - 6.dp)) { Text("Essencial") }
+                OutlinedButton(onClick = { onUpdate(defaultDashboardWidgetConfig(experience, focused = true)) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(tokens.cardRadius - 6.dp)) { Text("Essencial") }
                 OutlinedButton(onClick = { onUpdate(config.copy(active = dashboardWidgetDefs.map { it.id }.toSet())) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(tokens.cardRadius - 6.dp)) { Text("Todos") }
-                IconButton(onClick = { onUpdate(defaultDashboardWidgetConfig()) }) { Icon(Icons.Rounded.Restore, contentDescription = "Restaurar") }
+                IconButton(onClick = { onUpdate(defaultDashboardWidgetConfig(experience)) }) { Icon(Icons.Rounded.Restore, contentDescription = "Restaurar") }
             }
             dashboardWidgetDefs.forEach { definition ->
                 val index = config.order.indexOf(definition.id)
@@ -795,9 +1204,12 @@ private fun moveDashboardWidget(order: List<String>, id: String, direction: Int)
     return order.toMutableList().apply { add(to, removeAt(from)) }
 }
 
-private fun defaultDashboardWidgetConfig(focused: Boolean = false): DashboardWidgetConfig {
-    val focusedIds = setOf("cards", "commitments", "overview", "quickactions")
-    val active = dashboardWidgetDefs.filter { it.pinned || if (focused) it.id in focusedIds else it.default }.map { it.id }.toSet()
+private fun defaultDashboardWidgetConfig(experience: AppExperience = AppExperience.FINANZA, focused: Boolean = false): DashboardWidgetConfig {
+    val focusedIds = setOf("cards", "commitments", "quickactions", "recent")
+    val isModern = experience == AppExperience.NEXT
+    val active = dashboardWidgetDefs.filter {
+        it.pinned || if (isModern) it.id in focusedIds else if (focused) it.id in focusedIds else it.default
+    }.map { it.id }.toSet()
     return DashboardWidgetConfig(active, dashboardWidgetDefs.map { it.id })
 }
 
@@ -809,17 +1221,27 @@ private fun normalizeDashboardWidgetConfig(config: DashboardWidgetConfig): Dashb
     return DashboardWidgetConfig(active, order)
 }
 
-private fun loadDashboardWidgetConfig(context: Context): DashboardWidgetConfig {
+private fun loadDashboardWidgetConfig(context: Context, experience: AppExperience): DashboardWidgetConfig {
     val prefs = FinanzaPreferences.get(context)
-    val fallback = defaultDashboardWidgetConfig()
+    val fallback = defaultDashboardWidgetConfig(experience)
+    if (experience == AppExperience.NEXT) {
+        val activeRaw = prefs.getString("dashboard_widget_active_next", null) ?: return fallback
+        return runCatching {
+            val activeArray = JSONArray(activeRaw)
+            val active = (0 until activeArray.length()).map(activeArray::getString).toSet()
+            val orderArray = JSONArray(prefs.getString("dashboard_widget_order_next", null) ?: return fallback)
+            normalizeDashboardWidgetConfig(DashboardWidgetConfig(active, (0 until orderArray.length()).map(orderArray::getString)))
+        }.getOrDefault(fallback)
+    }
+    val suffix = if (experience == AppExperience.WEB) "_web" else ""
     return runCatching {
-        val activeRaw = prefs.getString("dashboard_widget_active", null)
+        val activeRaw = prefs.getString("dashboard_widget_active$suffix", null)
         val webPrefs = runCatching { JSONObject(prefs.getString("widget_prefs", "{}") ?: "{}") }.getOrDefault(JSONObject())
         val active = if (activeRaw != null) {
             val array = JSONArray(activeRaw)
             (0 until array.length()).map(array::getString).toSet()
         } else dashboardWidgetDefs.filter { webPrefs.optBoolean(it.id, it.default) || it.pinned }.map { it.id }.toSet()
-        val orderArray = JSONArray(prefs.getString("dashboard_widget_order", prefs.getString("widget_order", null)) ?: return fallback)
+        val orderArray = JSONArray(prefs.getString("dashboard_widget_order$suffix", prefs.getString("widget_order", null)) ?: return fallback)
         // Versions before the overview used this dashboard position exclusively for subscriptions.
         val parsedOrder = (0 until orderArray.length()).map(orderArray::getString)
             .map { if (it == "subscriptions") "overview" else it }
@@ -836,14 +1258,21 @@ private fun loadDashboardWidgetConfig(context: Context): DashboardWidgetConfig {
     }.getOrDefault(fallback)
 }
 
-private fun saveDashboardWidgetConfig(context: Context, config: DashboardWidgetConfig) {
+private fun saveDashboardWidgetConfig(context: Context, experience: AppExperience, config: DashboardWidgetConfig) {
     val webPrefs = JSONObject().apply { dashboardWidgetDefs.forEach { put(it.id, it.id in config.active) } }
-    FinanzaPreferences.get(context).edit()
-        .putString("dashboard_widget_active", JSONArray(config.active.toList()).toString())
-        .putString("dashboard_widget_order", JSONArray(config.order).toString())
-        .putString("widget_prefs", webPrefs.toString())
-        .putString("widget_order", JSONArray(config.order).toString())
-        .apply()
+    val suffix = when (experience) {
+        AppExperience.NEXT -> "_next"
+        AppExperience.WEB -> "_web"
+        AppExperience.FINANZA -> ""
+    }
+    FinanzaPreferences.get(context).edit().apply {
+        putString("dashboard_widget_active$suffix", JSONArray(config.active.toList()).toString())
+        putString("dashboard_widget_order$suffix", JSONArray(config.order).toString())
+        if (experience == AppExperience.FINANZA) {
+            putString("widget_prefs", webPrefs.toString())
+            putString("widget_order", JSONArray(config.order).toString())
+        }
+    }.apply()
 }
 
 @Composable

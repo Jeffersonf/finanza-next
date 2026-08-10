@@ -1,4 +1,4 @@
-package com.finanza.next.ui.components
+﻿package com.finanza.next.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,13 +35,18 @@ data class TransactionUi(
     val amount: String,
     val date: String,
     val income: Boolean,
-    val color: Color
+    val color: Color,
+    val accountId: String = "",
+    /** ISO-8601 date used for chronological calculations; [date] is display text. */
+    val dateKey: String = date,
+    /** Web dashboard excludes settled entries from its current-period flow widgets. */
+    val paid: Boolean = false
 )
 
 @Composable
 fun TransactionRow(item: TransactionUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     val amountColor = when {
         item.income && finanza -> MaterialTheme.colorScheme.primary
         item.income -> SuccessGreen

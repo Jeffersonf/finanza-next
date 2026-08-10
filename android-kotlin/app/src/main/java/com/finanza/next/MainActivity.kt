@@ -4,6 +4,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.app.NotificationManager
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -32,6 +34,15 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
+import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.rendering.ImageType
+import com.tom_roush.pdfbox.rendering.PDFRenderer
+import com.tom_roush.pdfbox.text.PDFTextStripper
+import com.google.android.gms.tasks.Tasks
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.NumberFormat
@@ -41,17 +52,18 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
 import java.net.URL
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.WindowCompat
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountBalanceWallet
 import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import com.finanza.next.navigation.AppActions
 import com.finanza.next.navigation.AppScaffold
@@ -67,6 +79,11 @@ import com.finanza.next.ui.screens.ConfigUiState
 import com.finanza.next.ui.screens.PaymentMethodUi
 import com.finanza.next.ui.screens.MonthTrendUi
 import com.finanza.next.ui.screens.LoginScreen
+import com.finanza.next.ui.screens.OnboardingScreen
+import com.finanza.next.ui.screens.FinanceCalendarEventUi
+import com.finanza.next.ui.screens.FinanceCalendarSource
+import com.finanza.next.ui.screens.InvoiceReviewSheet
+import com.finanza.next.ui.screens.AppearanceSheet
 import com.finanza.next.ui.components.categoryColor
 import com.finanza.next.ui.theme.AppExperience
 import com.finanza.next.ui.theme.FinanceAppTheme
@@ -98,12 +115,23 @@ class MainActivity : ComponentActivity() {
 
     private var bootSyncTriggered = false
 
+    private data class ActiveAppearance(
+        val mode: String,
+        val experience: AppExperience
+    )
+
     private var activeTab = "home"
     private var accentId = "green"
-    private var composeRevision by mutableIntStateOf(0)
+    private var activeAppearance by mutableStateOf(ActiveAppearance("light", AppExperience.NEXT))
+    private var appUiState by mutableStateOf<AppUiState?>(null)
     private var loginVisible by mutableStateOf(false)
+    private var onboardingVisible by mutableStateOf(false)
     private var loginBusy by mutableStateOf(false)
     private var loginError by mutableStateOf<String?>(null)
+    private var invoiceReviewLines by mutableStateOf<List<InvoiceReviewLine>?>(null)
+    private var invoiceReviewSourceLabel by mutableStateOf("Fatura PDF")
+    private var appearancePickerVisible by mutableStateOf(false)
+    private var pendingSharedText: String? = null
     private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) showQuickExpenseNotificationSafely()
     }
@@ -113,19 +141,29 @@ class MainActivity : ComponentActivity() {
     private val transactionImportLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(::importTransactionsFromUri)
     }
+    private val pdfImportLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(::importPdfFromUri)
+    }
 
-    private val isFinanzaExperience get() = visualExperience() == AppExperience.FINANZA
+    private val isFinanzaExperience get() = visualExperience().usesFinanzaVisuals
+    private val isFinanzaWebExperience get() = visualExperience() == AppExperience.WEB
     private val bg get() = when {
+        isFinanzaWebExperience && !isDarkTheme() -> Color.rgb(244, 247, 239)
+        isFinanzaWebExperience -> Color.rgb(8, 9, 13)
         isDarkTheme() -> Color.BLACK
         isFinanzaExperience -> Color.rgb(247, 247, 243)
         else -> Color.rgb(242, 242, 247)
     }
     private val paper get() = when {
+        isFinanzaWebExperience && !isDarkTheme() -> Color.WHITE
+        isFinanzaWebExperience -> Color.rgb(18, 21, 30)
         isDarkTheme() && isFinanzaExperience -> Color.rgb(18, 18, 18)
         isDarkTheme() -> Color.rgb(28, 28, 30)
         else -> Color.WHITE
     }
     private val paper2 get() = when {
+        isFinanzaWebExperience && !isDarkTheme() -> Color.rgb(246, 249, 240)
+        isFinanzaWebExperience -> Color.rgb(28, 32, 46)
         isDarkTheme() && isFinanzaExperience -> Color.rgb(34, 34, 34)
         isDarkTheme() -> Color.rgb(44, 44, 46)
         isFinanzaExperience -> Color.rgb(237, 237, 232)
@@ -133,6 +171,8 @@ class MainActivity : ComponentActivity() {
     }
     private val ink get() = if (isDarkTheme()) Color.rgb(248, 248, 244) else Color.rgb(16, 16, 16)
     private val muted get() = when {
+        isFinanzaWebExperience && !isDarkTheme() -> Color.rgb(99, 112, 93)
+        isFinanzaWebExperience -> Color.rgb(196, 204, 190)
         isDarkTheme() && isFinanzaExperience -> Color.rgb(198, 198, 190)
         isDarkTheme() -> Color.rgb(174, 174, 178)
         isFinanzaExperience -> Color.rgb(111, 111, 104)
@@ -145,6 +185,8 @@ class MainActivity : ComponentActivity() {
     }
     private val line get() = if (isDarkTheme()) Color.argb(46, 255, 255, 255) else Color.argb(31, 16, 16, 16)
     private val accent get() = when {
+        isFinanzaWebExperience && !isDarkTheme() -> Color.rgb(63, 125, 0)
+        isFinanzaWebExperience -> Color.rgb(200, 245, 90)
         isFinanzaExperience -> Color.rgb(216, 255, 95)
         isDarkTheme() -> Color.WHITE
         else -> Color.rgb(28, 28, 30)
@@ -198,7 +240,7 @@ class MainActivity : ComponentActivity() {
         Accent("green", "Verde", Color.rgb(53, 201, 111)),
         Accent("yellow", "Amarelo", Color.rgb(244, 207, 69)),
         Accent("blue", "Azul", Color.rgb(91, 140, 255)),
-        Accent("violet", "Lilas", Color.rgb(122, 167, 255)),
+        Accent("violet", "Lilás", Color.rgb(122, 167, 255)),
         Accent("coral", "Coral", Color.rgb(255, 127, 102))
     )
 
@@ -207,14 +249,16 @@ class MainActivity : ComponentActivity() {
         actionBar?.hide()
         FinanzaPreferences.repairLegacyTypes(this)
         accentId = prefs.getString("accent", "green") ?: "green"
+        activeAppearance = savedAppearance()
         activeTab = intent.getStringExtra("start_tab")?.takeIf { it in setOf("home", "accounts", "analysis", "settings") } ?: activeTab
         loginVisible = !prefs.getBoolean("login_completed", false) || prefs.getBoolean("session_expired", false)
+        onboardingVisible = !loginVisible && !prefs.getBoolean("onboarding_completed", false)
         seedIfEmpty()
+        appUiState = composeUiState()
 
         setContent {
-            @Suppress("UNUSED_VARIABLE")
-            val revision = composeRevision
-            FinanceAppTheme(darkTheme = isDarkTheme(), experience = visualExperience()) {
+            val appearance = activeAppearance
+            FinanceAppTheme(darkTheme = appearance.mode == "dark", experience = appearance.experience) {
                 if (loginVisible) {
                     LoginScreen(
                         initialUrl = prefs.getString("api_url", "https://finanza-api.onrender.com").orEmpty().ifBlank { "https://finanza-api.onrender.com" },
@@ -224,15 +268,62 @@ class MainActivity : ComponentActivity() {
                         onLogin = ::submitLogin,
                         onContinueOffline = ::continueOffline
                     )
+                } else if (onboardingVisible) {
+                    OnboardingScreen(
+                        onComplete = {
+                            prefs.edit().putBoolean("onboarding_completed", true).apply()
+                            onboardingVisible = false
+                        },
+                        canPinWidget = canPinQuickExpenseWidget(),
+                        onRequestWidgetPin = ::requestPinQuickExpenseWidget
+                    )
                 } else {
                     val initialModule = intent.getStringExtra("feature_module")
-                    AppScaffold(composeUiState(), composeActions(), intent.getBooleanExtra("open_features", false) || initialModule != null, initialModule)
+                    AppScaffold(
+                        state = appUiState ?: emptyComposeUiState(),
+                        actions = composeActions(),
+                        initialShowFeatures = intent.getBooleanExtra("open_features", false) || initialModule != null,
+                        initialFeatureModule = initialModule
+                    )
+                }
+                invoiceReviewLines?.let { lines ->
+                    InvoiceReviewSheet(
+                        lines = lines,
+                        onDismiss = { invoiceReviewLines = null },
+                        onRemovePlannedInstallment = ::removePlannedInvoiceInstallment,
+                        onConfirm = { selected ->
+                            invoiceReviewLines = null
+                            performTransactionImport(
+                                selected.map { line ->
+                                    val refundAdjustment = line.matches.firstOrNull { it.kind == InvoiceMatchKind.REFUND_ADJUSTMENT }
+                                    importedEntry(line.transaction).let { imported ->
+                                        if (refundAdjustment != null) imported.copy(id = refundAdjustment.existingId) else imported
+                                    }
+                                },
+                                dialog = null,
+                                replaceConflicts = false,
+                                sourceLabel = invoiceReviewSourceLabel
+                            )
+                        }
+                    )
+                }
+                if (appearancePickerVisible) {
+                    AppearanceSheet(
+                        initialMode = appearance.mode,
+                        initialExperience = appearance.experience,
+                        onDismiss = { appearancePickerVisible = false },
+                        onApply = { mode, experience ->
+                            appearancePickerVisible = false
+                            applyAppearance(mode, experience)
+                        }
+                    )
                 }
             }
         }
         configureSystemBars()
         window.decorView.post {
             consumeSharedInvite(intent)
+            consumeSharedText(intent)
             if (intent.getBooleanExtra("open_account", false)) {
                 intent.removeExtra("open_account")
                 showOnlineAccessDialog()
@@ -256,7 +347,10 @@ class MainActivity : ComponentActivity() {
                 prefs.edit().putBoolean("login_completed", true).apply()
                 loginBusy = false
                 loginVisible = false
+                onboardingVisible = !prefs.getBoolean("onboarding_completed", false)
+                render()
                 maybeSyncOnLaunch()
+                openPendingSharedText()
             },
             onError = { message ->
                 loginBusy = false
@@ -273,6 +367,9 @@ class MainActivity : ComponentActivity() {
             .apply()
         loginError = null
         loginVisible = false
+        onboardingVisible = !prefs.getBoolean("onboarding_completed", false)
+        render()
+        openPendingSharedText()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -283,6 +380,7 @@ class MainActivity : ComponentActivity() {
             render()
         }
         consumeSharedInvite(intent)
+        consumeSharedText(intent)
         if (intent.getBooleanExtra("open_account", false)) {
             intent.removeExtra("open_account")
             showOnlineAccessDialog()
@@ -320,6 +418,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun consumeSharedText(source: Intent) {
+        if (source.action != Intent.ACTION_SEND || source.type?.startsWith("text/") != true) return
+        val text = source.getStringExtra(Intent.EXTRA_TEXT)?.trim().orEmpty()
+        source.removeExtra(Intent.EXTRA_TEXT)
+        if (text.isBlank()) return
+        pendingSharedText = text
+        openPendingSharedText()
+    }
+
+    private fun openPendingSharedText() {
+        if (loginVisible) return
+        val text = pendingSharedText ?: return
+        pendingSharedText = null
+        window.decorView.post { showTextImportDialog(text) }
+    }
+
     private fun maybeSyncOnLaunch() {
         if (!bootSyncTriggered && isOnlineMode()) {
             bootSyncTriggered = true
@@ -352,6 +466,8 @@ class MainActivity : ComponentActivity() {
 
     private fun configureSystemBars() {
         val decorView = window.decorView
+        val useLightIcons = isDarkTheme()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         @Suppress("DEPRECATION")
         run {
             window.statusBarColor = Color.TRANSPARENT
@@ -375,10 +491,21 @@ class MainActivity : ComponentActivity() {
             window.isStatusBarContrastEnforced = false
             window.isNavigationBarContrastEnforced = false
         }
+        // MIUI/HyperOS can ignore the platform controller after an edge-to-edge
+        // transition. The compat controller keeps icon contrast in sync.
+        WindowCompat.getInsetsController(window, decorView).apply {
+            isAppearanceLightStatusBars = !useLightIcons
+            isAppearanceLightNavigationBars = !useLightIcons
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) window.decorView.post(::configureSystemBars)
     }
 
     private fun render() {
-        composeRevision++
+        appUiState = composeUiState()
         FinanzaWidgets.updateAll(this)
     }
 
@@ -769,38 +896,66 @@ class MainActivity : ComponentActivity() {
     private fun visualExperience(): AppExperience =
         AppExperience.fromId(prefs.getString("visual_experience", AppExperience.NEXT.id))
 
-    private fun applyTheme(mode: String) {
-        prefs.edit().putString("theme_mode", mode).apply()
-        configureSystemBars()
-        FinanzaWidgets.updateAll(this)
-        render()
-    }
+    private fun savedAppearance(): ActiveAppearance = ActiveAppearance(themeMode(), visualExperience())
 
-    private fun applyVisualExperience(experience: AppExperience) {
-        prefs.edit().putString("visual_experience", experience.id).apply()
+    private fun applyAppearance(mode: String, experience: AppExperience) {
+        prefs.edit()
+            .putString("theme_mode", mode)
+            .putString("visual_experience", experience.id)
+            .apply()
+        activeAppearance = ActiveAppearance(mode, experience)
         configureSystemBars()
         FinanzaWidgets.updateAll(this)
         render()
     }
 
     private fun showThemeDialog() {
+        appearancePickerVisible = true
+    }
+
+    @Suppress("unused")
+    private fun showThemeDialogLegacy() {
+        var selectedMode = themeMode()
+        var selectedExperience = visualExperience()
         showAppDialog("Aparência", "Defina o modo de cor e a linguagem visual do Finext.") { dialog ->
             addView(dialogSectionLabel("Modo de cor"))
-            addView(dialogChoice("Claro", "Fundo claro e contraste suave", !isDarkTheme()) {
-                applyTheme("light")
-                dialog.dismiss()
-            })
-            addView(dialogChoice("Escuro", "Superfícies escuras e baixo brilho", isDarkTheme()) {
-                applyTheme("dark")
-                dialog.dismiss()
-            })
-            addView(dialogSectionLabel("Tema", topMargin = 16))
-            AppExperience.entries.forEach { experience ->
-                addView(dialogChoice(experience.label, experience.description, visualExperience() == experience) {
-                    applyVisualExperience(experience)
-                    dialog.dismiss()
-                })
+            val modeChoices = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER
             }
+            addView(modeChoices, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)))
+            addView(dialogSectionLabel("Tema", topMargin = 16))
+            val experienceChoices = LinearLayout(this@MainActivity).apply { orientation = LinearLayout.VERTICAL }
+            addView(experienceChoices)
+            lateinit var refreshExperienceChoices: () -> Unit
+            fun refreshModeChoices() {
+                modeChoices.removeAllViews()
+                modeChoices.addView(themeModeChoice("Claro", selectedMode == "light", darkPreview = false) {
+                    selectedMode = "light"
+                    refreshModeChoices()
+                    refreshExperienceChoices()
+                }, LinearLayout.LayoutParams(0, dp(48), 1f))
+                modeChoices.addView(themeModeChoice("Escuro", selectedMode == "dark", darkPreview = true) {
+                    selectedMode = "dark"
+                    refreshModeChoices()
+                    refreshExperienceChoices()
+                }, LinearLayout.LayoutParams(0, dp(48), 1f).apply { leftMargin = dp(8) })
+            }
+            refreshExperienceChoices = {
+                experienceChoices.removeAllViews()
+                AppExperience.entries.forEach { experience ->
+                    experienceChoices.addView(themeExperienceChoice(experience, selectedExperience == experience, selectedMode == "dark") {
+                        selectedExperience = experience
+                        refreshExperienceChoices()
+                    })
+                }
+            }
+            refreshModeChoices()
+            refreshExperienceChoices()
+            addView(primaryButton("Aplicar aparência") {
+                applyAppearance(selectedMode, selectedExperience)
+                dialog.dismiss()
+            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(50)).apply { topMargin = dp(16) })
         }
     }
 
@@ -1240,19 +1395,21 @@ class MainActivity : ComponentActivity() {
             else -> Color.argb(228, 255, 255, 255)
         }
         background = rounded(fill, dp(if (isFinanzaExperience) 22 else 26), Color.argb(if (isDarkTheme()) 34 else 52, 255, 255, 255))
-        val topRow = LinearLayout(this@MainActivity).apply {
-            gravity = Gravity.CENTER_VERTICAL
-            addView(View(this@MainActivity).apply {
-                background = rounded(if (isDarkTheme()) Color.argb(76, 255, 255, 255) else Color.argb(44, 25, 25, 29), dp(999), Color.TRANSPARENT)
-            }, LinearLayout.LayoutParams(dp(36), dp(4)).apply { gravity = Gravity.CENTER_VERTICAL })
-            addView(View(this@MainActivity), LinearLayout.LayoutParams(0, 1, 1f))
-            if (dialog != null) addView(iconButton("x", "Fechar") { dialog.dismiss() }.apply {
-                minimumWidth = dp(36); minimumHeight = dp(36)
-                textSize = 17f
-                background = rounded(if (isDarkTheme()) paper2 else Color.argb(214, 255, 255, 255), dp(14), line)
-            }, LinearLayout.LayoutParams(dp(36), dp(36)))
+        if (dialog != null) {
+            val topRow = LinearLayout(this@MainActivity).apply {
+                gravity = Gravity.CENTER_VERTICAL
+                addView(View(this@MainActivity).apply {
+                    background = rounded(if (isDarkTheme()) Color.argb(76, 255, 255, 255) else Color.argb(44, 25, 25, 29), dp(999), Color.TRANSPARENT)
+                }, LinearLayout.LayoutParams(dp(36), dp(4)).apply { gravity = Gravity.CENTER_VERTICAL })
+                addView(View(this@MainActivity), LinearLayout.LayoutParams(0, 1, 1f))
+                addView(iconButton("x", "Fechar") { dialog.dismiss() }.apply {
+                    minimumWidth = dp(36); minimumHeight = dp(36)
+                    textSize = 17f
+                    background = rounded(if (isDarkTheme()) paper2 else Color.argb(214, 255, 255, 255), dp(14), line)
+                }, LinearLayout.LayoutParams(dp(36), dp(36)))
+            }
+            addView(topRow, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36)).apply { setMargins(0, 0, 0, dp(8)) })
         }
-        addView(topRow, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(36)).apply { setMargins(0, 0, 0, dp(8)) })
     }
 
     private fun styleDialog(dialog: Dialog) {
@@ -1260,11 +1417,14 @@ class MainActivity : ComponentActivity() {
             dialog.window?.apply {
                 setBackgroundDrawableResource(android.R.color.transparent)
                 setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                setLayout((resources.displayMetrics.widthPixels * 0.90f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+                val width = (resources.displayMetrics.widthPixels * 0.90f).toInt()
+                // Keep long forms usable on small displays instead of letting the sheet leave the viewport.
+                val maxHeight = (resources.displayMetrics.heightPixels * 0.86f).toInt()
+                setLayout(width, maxHeight)
                 setGravity(Gravity.BOTTOM)
                 attributes = attributes.apply {
-                    width = (resources.displayMetrics.widthPixels * 0.90f).toInt()
-                    height = WindowManager.LayoutParams.WRAP_CONTENT
+                    this.width = width
+                    height = maxHeight
                     dimAmount = 0.34f
                 }
                 addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
@@ -1286,16 +1446,66 @@ class MainActivity : ComponentActivity() {
             dp(16),
             if (selected) Color.argb(36, 255, 255, 255) else line
         )
-        val selectedText = selected && (isDarkTheme() || isFinanzaExperience)
+        val selectedText = selected && (isDarkTheme() || (isFinanzaExperience && !isFinanzaWebExperience))
+        val selectedTextColor = if (selectedText) Color.BLACK else if (selected && isFinanzaWebExperience) Color.WHITE else ink
+        val selectedSubtitleColor = if (selectedText) Color.argb(180, 0, 0, 0) else if (selected && isFinanzaWebExperience) Color.argb(210, 255, 255, 255) else muted
         addView(LinearLayout(this@MainActivity).apply {
             orientation = LinearLayout.VERTICAL
-            addView(label(title, 15, if (selectedText) Color.BLACK else ink, true))
-            addView(body(subtitle, 12, if (selectedText) Color.argb(180, 0, 0, 0) else muted).apply { setPadding(0, dp(3), 0, 0) })
+            addView(label(title, 15, selectedTextColor, true))
+            addView(body(subtitle, 12, selectedSubtitleColor).apply { setPadding(0, dp(3), 0, 0) })
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-        addView(label(if (selected) "Selecionado" else "", 11, if (selectedText) Color.BLACK else muted, true))
+        addView(label(if (selected) "Selecionado" else "", 11, selectedTextColor, true))
         setOnClickListener { onClick() }
     }.also { view ->
         view.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, dp(6), 0, 0) }
+    }
+
+    private fun themeModeChoice(label: String, selected: Boolean, darkPreview: Boolean, onClick: () -> Unit): View = TextView(this).apply {
+        gravity = Gravity.CENTER
+        text = label
+        textSize = 14f
+        typeface = Typeface.DEFAULT_BOLD
+        val previewBackground = if (darkPreview) Color.rgb(31, 34, 42) else Color.rgb(238, 239, 243)
+        val previewInk = if (darkPreview) Color.rgb(244, 245, 247) else Color.rgb(25, 25, 28)
+        setTextColor(if (selected) if (darkPreview) Color.BLACK else Color.WHITE else previewInk)
+        background = rounded(
+            if (selected) if (darkPreview) Color.WHITE else Color.rgb(28, 28, 30) else previewBackground,
+            dp(14),
+            if (selected) Color.TRANSPARENT else if (darkPreview) Color.argb(80, 255, 255, 255) else Color.argb(44, 25, 25, 29)
+        )
+        setOnClickListener { onClick() }
+    }
+
+    private fun themeExperienceChoice(experience: AppExperience, selected: Boolean, darkPreview: Boolean, onClick: () -> Unit): View = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(dp(12), dp(10), dp(12), dp(10))
+        val previewSurface = if (darkPreview) Color.rgb(22, 25, 32) else Color.rgb(250, 250, 251)
+        val previewInk = if (darkPreview) Color.rgb(244, 245, 247) else Color.rgb(22, 22, 25)
+        val previewMuted = if (darkPreview) Color.rgb(182, 187, 198) else Color.rgb(100, 101, 108)
+        val previewOutline = if (darkPreview) Color.argb(72, 255, 255, 255) else Color.argb(38, 25, 25, 29)
+        val swatch = when (experience) {
+            AppExperience.NEXT -> if (darkPreview) Color.WHITE else Color.rgb(28, 28, 30)
+            AppExperience.FINANZA -> if (darkPreview) Color.rgb(200, 245, 90) else Color.rgb(63, 125, 0)
+            AppExperience.WEB -> if (darkPreview) Color.rgb(90, 245, 200) else Color.rgb(0, 122, 97)
+        }
+        background = rounded(
+            if (selected) previewSurface else Color.TRANSPARENT,
+            dp(16),
+            if (selected) Color.argb(136, Color.red(swatch), Color.green(swatch), Color.blue(swatch)) else previewOutline
+        )
+        addView(View(this@MainActivity).apply {
+            background = rounded(swatch, dp(999), Color.TRANSPARENT)
+        }, LinearLayout.LayoutParams(dp(12), dp(12)))
+        addView(LinearLayout(this@MainActivity).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(label(experience.label, 15, previewInk, true))
+            addView(body(experience.description, 11, previewMuted).apply { setPadding(0, dp(2), 0, 0) })
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { leftMargin = dp(10) })
+        addView(label(if (selected) "✓" else "", 18, swatch, true))
+        setOnClickListener { onClick() }
+    }.also { view ->
+        view.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, dp(7), 0, 0) }
     }
 
     private fun urlHostLabel(raw: String): String = runCatching {
@@ -1359,29 +1569,35 @@ class MainActivity : ComponentActivity() {
 
                 val stateResponse = snapshot.state
                 val remoteAccounts = mutableListOf<Account>()
-                val accountArray = stateResponse.optJSONArray("accounts") ?: JSONArray()
-                for (index in 0 until accountArray.length()) {
-                    val item = accountArray.optJSONObject(index) ?: continue
-                    remoteAccounts += Account(
-                        id = item.optString("id", "acc_$index"),
-                        name = item.optString("name", "Conta"),
-                        icon = item.optString("icon", accountTypeIcon(item.optString("type", "checking"))),
-                        type = item.optString("type", "checking"),
-                        balance = item.optDouble("balance", 0.0).takeIf(Double::isFinite) ?: 0.0,
-                        yieldRate = item.optDouble("yield_rate", item.optDouble("yieldRate", 0.0)),
-                        yieldType = item.optString("yield_type", item.optString("yieldType", "manual")),
-                        yieldVal = item.optDouble("yield_val", item.optDouble("yieldVal", 0.0)),
-                        calcBase = item.optString("calc_base", item.optString("calcBase", "du")),
-                        startDate = item.optString("start_date", item.optString("startDate", "")).take(10),
-                        cardClosingDay = item.optInt("card_closing_day", item.optInt("cardClosingDay", 0)),
-                        cardDueDay = item.optInt("card_due_day", item.optInt("cardDueDay", 0)),
-                        cardLast4 = item.optString("card_last4", item.optString("cardLast4", "")),
-                        cardExpiry = item.optString("card_expiry", item.optString("cardExpiry", "")),
-                        note = item.optString("note", "")
-                    )
+                val accountArray = stateResponse.optJSONArray("accounts")
+                if (accountArray != null) {
+                    for (index in 0 until accountArray.length()) {
+                        val item = accountArray.optJSONObject(index) ?: continue
+                        remoteAccounts += Account(
+                            id = item.optString("id", "acc_$index"),
+                            name = item.optString("name", "Conta"),
+                            icon = item.optString("icon", accountTypeIcon(item.optString("type", "checking"))),
+                            type = item.optString("type", "checking"),
+                            balance = item.optDouble("balance", 0.0).takeIf(Double::isFinite) ?: 0.0,
+                            yieldRate = item.optDouble("yield_rate", item.optDouble("yieldRate", 0.0)),
+                            yieldType = item.optString("yield_type", item.optString("yieldType", "manual")),
+                            yieldVal = item.optDouble("yield_val", item.optDouble("yieldVal", 0.0)),
+                            calcBase = item.optString("calc_base", item.optString("calcBase", "du")),
+                            startDate = item.optString("start_date", item.optString("startDate", "")).take(10),
+                            cardClosingDay = item.optInt("card_closing_day", item.optInt("cardClosingDay", 0)),
+                            cardDueDay = item.optInt("card_due_day", item.optInt("cardDueDay", 0)),
+                            cardLast4 = item.optString("card_last4", item.optString("cardLast4", "")),
+                            cardExpiry = item.optString("card_expiry", item.optString("cardExpiry", "")),
+                            note = item.optString("note", "")
+                        )
+                    }
                 }
                 val remoteFuture = mutableListOf<Entry>()
                 val remoteSettings = stateResponse.optJSONObject("settings") ?: JSONObject()
+                val remoteMonthlyIncome = remoteSettings.optLong(
+                    "monthly_income_cents",
+                    remoteSettings.optJSONObject("rates")?.optLong("monthly_income_cents", -1L) ?: -1L
+                )
                 val dueArray = remoteSettings.optJSONArray("android_next_due_items")
                     ?: remoteSettings.optJSONObject("rates")?.optJSONArray("dueItems")
                     ?: stateResponse.optJSONArray("dueItems") ?: JSONArray()
@@ -1406,16 +1622,29 @@ class MainActivity : ComponentActivity() {
                         snapshot.goals,
                         stateResponse
                     )
-                    if (remoteAccounts.isNotEmpty()) saveAccounts(remoteAccounts)
+                    if (accountArray != null) saveAccounts(remoteAccounts)
                     saveList("entries", syncedEntries)
                     saveList("future", remoteFuture)
-                    prefs.edit()
+                    val transactionWarning = if (snapshot.transactionTotal > txData.length()) {
+                        "A API entregou ${txData.length()} de ${snapshot.transactionTotal} lancamentos."
+                    } else ""
+                    val syncPrefs = prefs.edit()
                         .putString("last_sync_date", LocalDate.now().toString())
-                        .remove("last_sync_error")
-                        .apply()
+                        .putString("last_sync_warning", transactionWarning)
+                    if (remoteMonthlyIncome >= 0L) syncPrefs.putLong("monthly_income_cents", remoteMonthlyIncome)
+                    syncPrefs.apply()
+                    if (transactionWarning.isBlank()) {
+                        prefs.edit().remove("last_sync_error").apply()
+                    }
                     FinanzaWidgets.updateAll(this@MainActivity)
                     render()
-                    if (!silent) Toast.makeText(this@MainActivity, "Next sincronizado.", Toast.LENGTH_SHORT).show()
+                    if (!silent) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            if (transactionWarning.isBlank()) "Finext sincronizado." else transactionWarning,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                     onComplete?.invoke()
                 }
             } catch (e: Exception) {
@@ -1726,6 +1955,7 @@ class MainActivity : ComponentActivity() {
         val settings = features.optJSONObject("settings") ?: JSONObject()
         settings.put("user_name", prefs.getString("user_name", "Voce") ?: "Voce")
             .put("monthly_budget", prefs.getFloat("monthly_budget", 5000f).toDouble())
+            .put("monthly_income_cents", prefs.getLong("monthly_income_cents", 0L))
             .put("theme_mode", themeMode())
             .put("visual_experience", visualExperience().id)
             .put("accent", accentId)
@@ -1801,6 +2031,10 @@ class MainActivity : ComponentActivity() {
             runCatching {
                 applyBackup(data, merge)
                 syncFullImportOrQueue()
+                recordImport(
+                    if (merge) "Backup mesclado" else "Backup restaurado",
+                    "Dados revisados e ${if (merge) "mesclados sem duplicar" else "substituídos neste aparelho"}."
+                )
             }.onSuccess {
                 runOnUiThread {
                     render()
@@ -1898,8 +2132,15 @@ class MainActivity : ComponentActivity() {
         data.optJSONObject("settings")?.let { settings ->
             val widgetPrefs = settings.optJSONObject("widget_prefs")
             val widgetOrder = settings.optJSONArray("widget_order")
-            if (widgetPrefs != null) prefs.edit().putString("widget_prefs", widgetPrefs.toString()).remove("dashboard_widget_active").apply()
-            if (widgetOrder != null) prefs.edit().putString("widget_order", widgetOrder.toString()).putString("dashboard_widget_order", widgetOrder.toString()).apply()
+            val importedIncome = settings.optLong(
+                "monthly_income_cents",
+                settings.optJSONObject("rates")?.optLong("monthly_income_cents", -1L) ?: -1L
+            )
+            val settingsEditor = prefs.edit()
+            if (widgetPrefs != null) settingsEditor.putString("widget_prefs", widgetPrefs.toString()).remove("dashboard_widget_active")
+            if (widgetOrder != null) settingsEditor.putString("widget_order", widgetOrder.toString()).putString("dashboard_widget_order", widgetOrder.toString())
+            if (importedIncome >= 0L) settingsEditor.putLong("monthly_income_cents", importedIncome)
+            settingsEditor.apply()
         }
     }
 
@@ -1919,56 +2160,181 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun showTransactionImportPreview(imported: List<Entry>) {
-        val known = entries().map(::entryFingerprint).toSet()
-        val distinct = imported.distinctBy(::entryFingerprint)
-        val unique = distinct.filterNot { entryFingerprint(it) in known }
-        val conflicts = distinct.filter { entryFingerprint(it) in known }
-        val duplicates = imported.size - distinct.size + conflicts.size
-        showAppDialog("Revisar importacao", "CSV e OFX entram como dados a classificar; duplicadas ficam de fora.") { dialog ->
-            addView(healthRow("\uD83D\uDCE5", "Reconhecidas", imported.size.toString()))
-            addView(healthRow("\u2728", "Novas", unique.size.toString()))
-            addView(healthRow("\uD83D\uDD01", "Duplicadas", duplicates.toString()))
-            unique.take(5).forEach { entry ->
-                addView(body("${formatDate(entry.date)}  ${entry.title}  ${money.format(entry.amount)}", 12, ink).apply {
-                    setPadding(0, dp(7), 0, 0)
-                })
-            }
-            if (unique.size > 5) addView(body("+ ${unique.size - 5} outros lancamentos", 12, muted))
-            addView(primaryButton("Importar ${unique.size} novos") { performTransactionImport(unique, dialog, false) })
-            if (conflicts.isNotEmpty()) {
-                addView(body("Conflitos encontrados:", 12, muted).apply { setPadding(0, dp(10), 0, 0) })
-                conflicts.take(3).forEach { entry ->
-                    addView(body("${formatDate(entry.date)}  ${entry.title}  ${money.format(entry.amount)}", 12, ink).apply { setPadding(0, dp(6), 0, 0) })
+    private fun importPdfFromUri(uri: Uri) {
+        thread {
+            runCatching {
+                PDFBoxResourceLoader.init(this@MainActivity)
+                val extractedText = contentResolver.openInputStream(uri)?.use { input ->
+                    PDDocument.load(input).use { document -> PDFTextStripper().getText(document) }
+                }.orEmpty().trim()
+                val text = extractedText.takeIf { it.isNotBlank() } ?: extractPdfTextWithOcr(uri)
+                if (text.isBlank()) error("Não foi possível extrair texto do PDF")
+                val imported = FinanzaImportParser.parseText(text, defaultExpenseAccountId())
+                if (imported.isEmpty()) error("Nenhum lançamento válido foi reconhecido no PDF")
+                FinanzaInvoiceReview.review(
+                    imported,
+                    entries().map { entry ->
+                        InvoiceExistingTransaction(
+                            id = entry.id,
+                            title = entry.title,
+                            amount = entry.amount,
+                            type = entry.type,
+                            date = entry.date,
+                            installmentGroup = entry.installmentGroup,
+                            installmentNum = entry.installmentNum,
+                            installmentTotal = entry.installmentTotal
+                        )
+                    }
+                )
+            }.onSuccess { imported ->
+                runOnUiThread {
+                    invoiceReviewSourceLabel = "Fatura PDF"
+                    invoiceReviewLines = imported
                 }
-                addView(secondaryButton("Usar importado em ${conflicts.size} conflitos") {
-                    performTransactionImport(distinct, dialog, true)
-                })
+            }.onFailure { error ->
+                runOnUiThread { Toast.makeText(this@MainActivity, error.message ?: "Falha ao ler o PDF.", Toast.LENGTH_LONG).show() }
             }
         }
     }
 
-    private fun performTransactionImport(imported: List<Entry>, dialog: Dialog, replaceConflicts: Boolean) {
-        if (imported.isEmpty()) {
-            Toast.makeText(this, "Nenhuma transacao nova para importar.", Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
+    /** OCR is only used when the PDF has no selectable text, keeping regular imports cheap. */
+    private fun extractPdfTextWithOcr(uri: Uri): String {
+        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        return try {
+            contentResolver.openInputStream(uri)?.use { input ->
+                PDDocument.load(input).use { document ->
+                    val renderer = PDFRenderer(document)
+                    val pageCount = document.numberOfPages.coerceAtMost(8)
+                    (0 until pageCount).joinToString("\n") { pageIndex ->
+                        val bitmap = renderer.renderImageWithDPI(pageIndex, 150f, ImageType.RGB)
+                        try {
+                            runCatching {
+                                Tasks.await(recognizer.process(InputImage.fromBitmap(bitmap, 0)), 45, TimeUnit.SECONDS).text
+                            }.getOrElse {
+                                error("O reconhecimento de texto ainda não está disponível. Conecte-se à internet uma vez e tente importar a fatura novamente.")
+                            }
+                        } finally {
+                            bitmap.recycle()
+                        }
+                    }
+                }
+            }.orEmpty()
+        } finally {
+            recognizer.close()
+        }
+    }
+
+    private fun showTextImportDialog(initialText: String = "") {
+        showAppDialog("Importar texto", "Cole texto, recibo, OCR, Pix ou QR. Pix recebido vira receita; os demais entram como despesa.") { dialog ->
+            val input = EditText(this@MainActivity).apply {
+                hint = "Ex.: Pix recebido João R$ 48,50\nMercado R$ 128,90"
+                setTextColor(ink)
+                setHintTextColor(muted)
+                textSize = 16f
+                gravity = Gravity.TOP
+                minLines = 5
+                maxLines = 8
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                background = rounded(paper2, dp(16), line)
+                setPadding(dp(14), dp(13), dp(14), dp(13))
+                setText(initialText)
+                setSelection(text.length)
+            }
+            addView(input, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(168)).apply { topMargin = dp(14) })
+            addView(primaryButton("Revisar lançamentos") {
+                val imported = FinanzaImportParser.parseText(input.text.toString(), defaultExpenseAccountId()).map(::importedEntry)
+                if (imported.isEmpty()) {
+                    Toast.makeText(this@MainActivity, "Inclua ao menos um valor, por exemplo R$ 48,50.", Toast.LENGTH_SHORT).show()
+                } else {
+                    dialog.dismiss()
+                    showTransactionImportPreview(imported)
+                }
+            }.apply { setPadding(0, dp(13), 0, dp(13)) }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(12) })
+        }
+    }
+
+    private fun showTransactionImportPreview(imported: List<Entry>) {
+        val reviewed = FinanzaInvoiceReview.review(
+            imported = imported.map { entry ->
+                FinanzaImportedTransaction(
+                    id = entry.id,
+                    description = entry.title,
+                    category = entry.category,
+                    amount = entry.amount,
+                    type = entry.type,
+                    date = entry.date,
+                    accountId = entry.accountId
+                )
+            },
+            existing = entries().map { entry ->
+                InvoiceExistingTransaction(
+                    id = entry.id,
+                    title = entry.title,
+                    amount = entry.amount,
+                    type = entry.type,
+                    date = entry.date,
+                    installmentGroup = entry.installmentGroup,
+                    installmentNum = entry.installmentNum,
+                    installmentTotal = entry.installmentTotal
+                )
+            }
+        )
+        invoiceReviewSourceLabel = "Importação"
+        invoiceReviewLines = reviewed
+    }
+
+    private fun removePlannedInvoiceInstallment(match: InvoiceMatch) {
+        val planned = entries().firstOrNull { it.id == match.existingId }
+        if (planned == null) {
+            Toast.makeText(this, "A parcela planejada nao foi encontrada. Atualize a revisao.", Toast.LENGTH_SHORT).show()
             return
         }
-        dialog.dismiss()
+        val dueDate = runCatching { LocalDate.parse(planned.date) }.getOrNull()
+        if (dueDate == null || !dueDate.isAfter(LocalDate.now())) {
+            Toast.makeText(this, "Somente parcelas futuras podem ser removidas nesta revisao.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        deleteEntry(planned)
+        syncEntryChangeAsync("delete", previous = planned)
+        invoiceReviewLines = invoiceReviewLines?.map { line ->
+            line.copy(matches = line.matches.filterNot { it.existingId == planned.id })
+        }
+        Toast.makeText(this, "Parcela futura removida do planejamento.", Toast.LENGTH_SHORT).show()
+        render()
+    }
+
+    private fun performTransactionImport(
+        imported: List<Entry>,
+        dialog: Dialog?,
+        replaceConflicts: Boolean,
+        sourceLabel: String = "Importação"
+    ) {
+        if (imported.isEmpty()) {
+            Toast.makeText(this, "Nenhuma transacao nova para importar.", Toast.LENGTH_SHORT).show()
+            dialog?.dismiss()
+            return
+        }
+        dialog?.dismiss()
         thread {
             runCatching {
                 val current = entries().toMutableList()
                 val indexes = current.mapIndexed { index, entry -> entryFingerprint(entry) to index }.toMap()
                 imported.forEach { incoming ->
-                    val existingIndex = indexes[entryFingerprint(incoming)]
-                    if (replaceConflicts && existingIndex != null) {
-                        current[existingIndex] = incoming.copy(id = current[existingIndex].id)
+                    val existingById = current.indexOfFirst { it.id == incoming.id }.takeIf { it >= 0 }
+                    val existingIndex = indexes[entryFingerprint(incoming)] ?: existingById
+                    if ((replaceConflicts && existingIndex != null) || existingById != null) {
+                        val targetIndex = existingIndex ?: existingById ?: return@forEach
+                        current[targetIndex] = incoming.copy(id = current[targetIndex].id)
                     } else if (existingIndex == null) {
                         current += incoming
                     }
                 }
                 saveList("entries", current)
                 syncFullImportOrQueue()
+                recordImport(
+                    "${imported.size} lançamentos importados",
+                    if (replaceConflicts) "$sourceLabel aplicado com substituição de conflitos." else "$sourceLabel aplicado sem duplicar lançamentos existentes."
+                )
                 imported.size
             }.onSuccess { count ->
                 runOnUiThread {
@@ -1983,6 +2349,21 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun entryFingerprint(entry: Entry): String = "${entry.date}|${entry.type}|${"%.2f".format(Locale.US, entry.amount)}|${entry.title.trim().lowercase()}"
+
+    private fun recordImport(title: String, detail: String) {
+        val timestamp = LocalDate.now().toString()
+        val history = runCatching { JSONArray(prefs.getString("import_history", "[]")) }.getOrDefault(JSONArray())
+        val next = JSONArray().put(JSONObject().put("title", title).put("detail", detail).put("timestamp", timestamp))
+        for (index in 0 until history.length().coerceAtMost(7)) {
+            history.optJSONObject(index)?.let(next::put)
+        }
+        prefs.edit()
+            .putString("last_import_title", title)
+            .putString("last_import_detail", detail)
+            .putString("last_import_at", timestamp)
+            .putString("import_history", next.toString())
+            .apply()
+    }
 
     private fun importedEntry(item: FinanzaImportedTransaction): Entry = Entry(
         id = item.id,
@@ -2316,8 +2697,8 @@ class MainActivity : ComponentActivity() {
         return preferred ?: accounts().firstOrNull()?.id.orEmpty()
     }
 
-    private fun accountEffectiveBalance(account: Account): Double {
-        val flow = entries()
+    private fun accountEffectiveBalance(account: Account, transactions: List<Entry>): Double {
+        val flow = transactions
             .filter { it.accountId == account.id }
             .sumOf { if (it.type == "income") it.amount else -it.amount }
         return account.balance + flow
@@ -2483,14 +2864,23 @@ class MainActivity : ComponentActivity() {
 
     private fun suggestedCategories(type: String, current: String?): List<String> {
         val base = FinanzaCategories.suggestions(type)
+        val custom = customCategoryNames()
         val recent = movementFeed("all", "all")
             .filter { it.type == type && !it.category.isNullOrBlank() }
             .map { it.category.trim() }
             .distinct()
-        return (listOfNotNull(current?.takeIf { it.isNotBlank() }) + recent + base)
+        return (listOfNotNull(current?.takeIf { it.isNotBlank() }) + custom + recent + base)
             .distinct()
-            .take(6)
+            .take(8)
     }
+
+    private fun customCategoryNames(): List<String> = runCatching {
+        val categories = JSONArray(prefs.getString("feature_categories", "[]") ?: "[]")
+        (0 until categories.length())
+            .mapNotNull { categories.optJSONObject(it)?.optString("name")?.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+    }.getOrDefault(emptyList())
 
    private fun entryIcon(type: String): String = when (type) {
         "income" -> "\uD83D\uDCB0"
@@ -2627,7 +3017,7 @@ class MainActivity : ComponentActivity() {
         setPadding(dp(12), dp(7), dp(12), dp(7))
     }
 
-   private fun primaryButton(text: String, onClick: () -> Unit): TextView = button(text, accent, if (isDarkTheme() || isFinanzaExperience) Color.BLACK else Color.WHITE, onClick)
+   private fun primaryButton(text: String, onClick: () -> Unit): TextView = button(text, accent, if (isDarkTheme() || (isFinanzaExperience && !isFinanzaWebExperience)) Color.BLACK else Color.WHITE, onClick)
     private fun secondaryButton(text: String, onClick: () -> Unit): TextView = button(text, if (isDarkTheme()) paper2 else Color.argb(210, 255, 255, 255), ink, onClick)
     private fun tertiaryButton(text: String, color: Int = muted, onClick: () -> Unit): TextView = button(text, Color.TRANSPARENT, color, onClick)
     private fun dangerButton(text: String, onClick: () -> Unit): TextView = tertiaryButton(text, danger, onClick)
@@ -2664,6 +3054,26 @@ class MainActivity : ComponentActivity() {
         Toast.makeText(this, "Pedido de atalho enviado para a tela inicial.", Toast.LENGTH_SHORT).show()
     }
 
+    private fun canPinQuickExpenseWidget(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
+        return AppWidgetManager.getInstance(this).isRequestPinAppWidgetSupported
+    }
+
+    private fun requestPinQuickExpenseWidget() {
+        if (!canPinQuickExpenseWidget()) {
+            Toast.makeText(this, "Seu launcher nao liberou widgets fixos.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val accepted = AppWidgetManager.getInstance(this).requestPinAppWidget(
+            ComponentName(this, FinanzaQuickExpenseWidgetProvider::class.java),
+            null,
+            null
+        )
+        if (!accepted) {
+            Toast.makeText(this, "Nao foi possivel pedir o widget agora.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun rounded(color: Int, radius: Int, stroke: Int): GradientDrawable = GradientDrawable().apply {
         setColor(color); cornerRadius = radius.toFloat(); if (stroke != Color.TRANSPARENT) setStroke(dp(1), stroke)
     }
@@ -2672,8 +3082,8 @@ class MainActivity : ComponentActivity() {
     private fun monthLabel(): String = LocalDate.now().month.getDisplayName(java.time.format.TextStyle.SHORT, ptBr).replace(".", "").uppercase()
     private fun isCurrentMonth(date: String): Boolean = runCatching { LocalDate.parse(date).let { it.month == LocalDate.now().month && it.year == LocalDate.now().year } }.getOrDefault(false)
     private fun validDate(date: String): Boolean = try { LocalDate.parse(date); true } catch (_: DateTimeParseException) { false }
-    private fun monthSnapshot(): MonthSnapshot {
-        val items = entries().filter { isCurrentMonth(it.date) }
+    private fun monthSnapshot(source: List<Entry>): MonthSnapshot {
+        val items = source.filter { isCurrentMonth(it.date) }
         val financialItems = items.filterNot { it.category.equals("Transferencia", ignoreCase = true) }
         return MonthSnapshot(
             entries = items,
@@ -2724,15 +3134,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun buildComposeUiState(): AppUiState {
-        val month = monthSnapshot()
+        val experience = visualExperience()
+        val privateValues = privacyMode()
+        val transactionItems = entries().distinctBy { it.id }
+            .sortedWith(compareByDescending<Entry> { it.date }.thenByDescending { it.id })
+        val month = monthSnapshot(transactionItems)
         val budget = prefs.getFloat("monthly_budget", 5000f).toDouble().takeIf(Double::isFinite) ?: 5000.0
+        val monthlyIncome = prefs.getLong("monthly_income_cents", 0L)
+            .takeIf { it > 0L }
+            ?.let { moneyText(it / 100.0) }
+            ?: "R$ 0,00"
         val available = budget + month.income - month.spent
         val accountItems = accounts().distinctBy { it.id }
         val dueItems = futureEntries().distinctBy { it.id }.sortedBy { it.date }
+        val accountBalances = accountItems.associate { account ->
+            account.id to accountEffectiveBalance(account, transactionItems)
+        }
         val dueTotal = dueItems.sumOf { it.amount }
         val paidDueTotal = month.entries.filter { it.type == "expense" && it.paid }.sumOf { it.amount }
-        val transactionItems = entries().distinctBy { it.id }
-            .sortedWith(compareByDescending<Entry> { it.date }.thenByDescending { it.id })
         val planningTransactions = transactionItems.mapNotNull { entry ->
             runCatching { LocalDate.parse(entry.date) }.getOrNull()?.let { date ->
                 FinanzaPlanningTransaction(entry.type, entry.amount, entry.category, date, entry.paid)
@@ -2755,15 +3174,27 @@ class MainActivity : ComponentActivity() {
             greeting = greeting(),
             period = monthLabel(),
             balance = moneyText(available),
-            accountsTotal = moneyText(accountItems.sumOf(::accountEffectiveBalance)),
+            accountsTotal = moneyText(accountBalances.values.sum()),
             income = moneyText(month.income),
+            monthlyIncome = monthlyIncome,
             spent = moneyText(month.spent),
             paid = moneyText(paidDueTotal),
             remaining = moneyText(dueTotal),
             billProgress = if (paidDueTotal + dueTotal > 0) (paidDueTotal / (paidDueTotal + dueTotal)).toFloat() else 0f,
-            transactions = transactionItems.map(::composeTransaction),
+            transactions = transactionItems.map { entry -> composeTransaction(entry, experience, privateValues) },
             accounts = accountItems.map { account ->
-                AccountUi(account.id, displayText(account.name), accountTypeLabel(account.type), moneyText(accountEffectiveBalance(account)), account.type)
+                AccountUi(
+                    id = account.id,
+                    name = displayText(account.name),
+                    type = accountTypeLabel(account.type),
+                    amount = moneyText(accountBalances[account.id] ?: account.balance),
+                    iconKey = account.type,
+                    cardClosingDay = account.cardClosingDay,
+                    cardDueDay = account.cardDueDay,
+                    cardLast4 = account.cardLast4,
+                    cardExpiry = account.cardExpiry,
+                    yieldRate = account.yieldRate
+                )
             },
             bills = dueItems.map { entry ->
                 BillUi(
@@ -2775,8 +3206,25 @@ class MainActivity : ComponentActivity() {
                     if (runCatching { LocalDate.parse(entry.date).isBefore(LocalDate.now()) }.getOrDefault(false)) BillStatus.ATRASADO else BillStatus.PENDENTE
                 )
             },
+            calendarEvents = (transactionItems + dueItems)
+                .filterNot(::isCalendarAdministrativeNoise)
+                .distinctBy { "${it.type}:${it.id}" }
+                .mapNotNull { entry ->
+                runCatching { LocalDate.parse(entry.date) }.getOrNull()?.let { date ->
+                    FinanceCalendarEventUi(
+                        id = entry.id,
+                        title = displayText(entry.title),
+                        amount = moneyText(entry.amount),
+                        date = date,
+                        category = entry.category.ifBlank { "Geral" },
+                        color = categoryColor(entry.category.ifBlank { "Geral" }, experience),
+                        income = entry.type == "income",
+                        source = if (entry.type == "due") FinanceCalendarSource.DUE else FinanceCalendarSource.TRANSACTION
+                    )
+                }
+                },
             categories = categoryTotals.take(8).mapIndexed { index, (name, amount) ->
-                CategoryUi(name, moneyText(amount), categoryShares.getOrElse(index) { 0f }, categoryColor(name))
+                CategoryUi(name, moneyText(amount), categoryShares.getOrElse(index) { 0f }, categoryColor(name, experience))
             },
             monthlyTrends = trendRows.map { totals ->
                 MonthTrendUi(
@@ -2788,14 +3236,16 @@ class MainActivity : ComponentActivity() {
                 userName = prefs.getString("user_name", "Voce") ?: "Voce",
                 accountStatus = accountConnectionStatus(),
                 budget = moneyText(budget),
-                theme = "${visualExperience().label} / ${if (isDarkTheme()) "Escuro" else "Claro"}",
+                monthlyIncome = monthlyIncome,
+                theme = "${experience.label} / ${if (isDarkTheme()) "Escuro" else "Claro"}",
                 accounts = accountItems.size,
                 currency = "BRL - R$",
                 notifications = prefs.getBoolean("quick_notification_enabled", false),
-                privacy = privacyMode(),
+                privacy = privateValues,
                 lastSync = prefs.getString("last_sync_date", "")?.ifBlank { "Nunca" } ?: "Nunca",
                 pendingSync = FinanzaSyncQueue.pendingCount(prefs) + featureStore.pendingMutations().size,
                 syncError = prefs.getString("last_sync_error", "").orEmpty(),
+                syncWarning = prefs.getString("last_sync_warning", "").orEmpty(),
                 role = prefs.getString("role", "") ?: "",
                 twoFactor = prefs.getBoolean("two_factor_enabled", false)
             ),
@@ -2850,11 +3300,13 @@ class MainActivity : ComponentActivity() {
             lastSync = "Nunca",
             pendingSync = 0,
             syncError = "",
+            syncWarning = "",
             role = "",
             twoFactor = false
         ),
         paymentMethods = listOf(PaymentMethodUi("", "Principal")),
-        features = FeatureCenterUiState(emptyList(), 0, false)
+        features = FeatureCenterUiState(emptyList(), 0, false),
+        calendarEvents = emptyList()
     )
 
     private fun accountConnectionStatus(): String = when {
@@ -2863,11 +3315,36 @@ class MainActivity : ComponentActivity() {
         else -> "Modo local"
     }
 
-    private fun composeTransaction(entry: Entry): TransactionUi {
+    private fun composeTransaction(entry: Entry, experience: AppExperience, privateValues: Boolean): TransactionUi {
         val income = entry.type == "income"
-        val formatted = if (privacyMode()) "R$ --" else "${if (income) "+" else "-"}${money.format(entry.amount)}"
+        val formatted = if (privateValues) "R$ --" else "${if (income) "+" else "-"}${money.format(entry.amount)}"
         val category = FinanzaCategories.normalize(entry.category)
-        return TransactionUi(entry.id, displayText(entry.title), category, formatted, formatDate(entry.date), income, categoryColor(category))
+        return TransactionUi(
+            entry.id,
+            displayText(entry.title),
+            category,
+            formatted,
+            formatDate(entry.date),
+            income,
+            categoryColor(category, experience),
+            entry.accountId,
+            entry.date,
+            entry.paid
+        )
+    }
+
+    private fun isCalendarAdministrativeNoise(entry: Entry): Boolean {
+        val normalized = java.text.Normalizer.normalize(entry.title.lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFD)
+            .replace(Regex("\\p{M}+"), "")
+        return listOf(
+            "saldo restante",
+            "juros rotativos",
+            "juros e mora",
+            "saque internacional juros",
+            "pagamento minimo",
+            "despesa importada",
+            "ao mes. o valor cresce"
+        ).any(normalized::contains)
     }
 
     private fun displayText(value: String): String = when (value) {
@@ -2913,6 +3390,18 @@ class MainActivity : ComponentActivity() {
             editBudget = {
                 showTextSetting("Orçamento mensal", prefs.getFloat("monthly_budget", 5000f).toString(), true) { raw ->
                     raw.replace(",", ".").toFloatOrNull()?.takeIf { it > 0 }?.let { prefs.edit().putFloat("monthly_budget", it).apply() }
+                    render()
+                }
+            },
+            editMonthlyIncome = {
+                val current = prefs.getLong("monthly_income_cents", 0L)
+                    .takeIf { it > 0L }
+                    ?.let { (it / 100.0).toString() }
+                    .orEmpty()
+                showTextSetting("Salário base", current, true) { raw ->
+                    raw.replace(",", ".").toDoubleOrNull()?.takeIf { it >= 0.0 }?.let {
+                        prefs.edit().putLong("monthly_income_cents", kotlin.math.round(it * 100.0).toLong()).apply()
+                    }
                     render()
                 }
             },
@@ -2981,6 +3470,8 @@ class MainActivity : ComponentActivity() {
             },
             importBackup = { backupImportLauncher.launch(arrayOf("application/json", "text/json", "text/plain")) },
             importTransactions = { transactionImportLauncher.launch(arrayOf("text/csv", "application/vnd.ms-excel", "application/x-ofx", "text/plain")) },
+            importPdf = { pdfImportLauncher.launch(arrayOf("application/pdf")) },
+            importText = ::showTextImportDialog,
             exportBackup = ::exportLocalBackup,
             sync = { if (isOnlineMode()) syncRemoteNow(silent = false) else showOnlineAccessDialog() }
         )

@@ -45,8 +45,18 @@ data class FeatureTrendUi(val label: String, val value: String, val share: Float
 data class FeatureCenterUiState(
     val modules: List<FeatureModuleUi>,
     val pendingSync: Int,
-    val online: Boolean
+    val online: Boolean,
+    val importSummary: ImportSummaryUi = ImportSummaryUi()
 )
+
+data class ImportSummaryUi(
+    val title: String = "Nenhuma importação recente",
+    val detail: String = "PDF, texto, Pix, OCR, QR, CSV, OFX e backup JSON podem ser revisados antes de entrar.",
+    val timestamp: String = "",
+    val history: List<ImportEventUi> = emptyList()
+)
+
+data class ImportEventUi(val title: String, val detail: String, val timestamp: String)
 
 data class FeatureMutation(
     val moduleId: String,
@@ -62,6 +72,8 @@ data class FeatureActions(
     val secondary: (String, String) -> Unit,
     val importBackup: () -> Unit,
     val importTransactions: () -> Unit,
+    val importPdf: () -> Unit,
+    val importText: () -> Unit,
     val exportBackup: () -> Unit,
     val sync: () -> Unit
 )

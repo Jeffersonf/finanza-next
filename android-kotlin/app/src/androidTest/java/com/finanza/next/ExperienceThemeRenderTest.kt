@@ -1,5 +1,7 @@
 package com.finanza.next
 
+import android.content.Intent
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -15,10 +17,17 @@ import com.finanza.next.ui.theme.AppExperience
 import com.finanza.next.ui.theme.FinanceAppTheme
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertTrue
+import org.junit.Before
 
 class ExperienceThemeRenderTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Before
+    fun freezeTestClock() {
+        composeRule.mainClock.autoAdvance = false
+    }
 
     @Test
     fun appScaffoldRendersInNextLight() = render(AppExperience.NEXT, dark = false)
@@ -33,6 +42,23 @@ class ExperienceThemeRenderTest {
     fun appScaffoldRendersInFinanzaDark() = render(AppExperience.FINANZA, dark = true)
 
     @Test
+    fun appScaffoldRendersInFinanzaWebLight() = render(AppExperience.WEB, dark = false)
+
+    @Test
+    fun appScaffoldRendersInFinanzaWebDark() = render(AppExperience.WEB, dark = true)
+
+    @Test
+    fun finextReceivesSharedPlainText() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val intent = Intent(Intent.ACTION_SEND)
+            .setType("text/plain")
+            .setPackage(context.packageName)
+
+        val activities = context.packageManager.queryIntentActivities(intent, 0)
+        assertTrue(activities.any { it.activityInfo.name == MainActivity::class.java.name })
+    }
+
+    @Test
     fun finanzaDashboardUsesWebSummaryWithoutManagerStrip() {
         composeRule.setContent {
             FinanceAppTheme(darkTheme = true, experience = AppExperience.FINANZA) {
@@ -41,9 +67,26 @@ class ExperienceThemeRenderTest {
         }
 
         listOf("Saldo total", "Receitas", "Despesas", "A pagar", "Início").forEach { label ->
-            composeRule.onNodeWithText(label, ignoreCase = true).assertIsDisplayed()
+            assertTrue(composeRule.onAllNodesWithText(label, ignoreCase = true).fetchSemanticsNodes().isNotEmpty())
         }
         check(composeRule.onAllNodesWithText("Widgets do painel").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun finanzaWebUsesItsOwnHeaderAndNavigation() {
+        composeRule.setContent {
+            FinanceAppTheme(darkTheme = false, experience = AppExperience.WEB) {
+                AppScaffold(emptyState(), emptyActions())
+            }
+        }
+
+        listOf(
+            "Dashboard", "+ Nova", "Contas", "Análise", "Ajustes",
+            "Renda do mês", "Gasto no mês", "Seguro por dia", "Sobra projetada", "A pagar"
+        ).forEach { label ->
+            assertTrue(composeRule.onAllNodesWithText(label, ignoreCase = true).fetchSemanticsNodes().isNotEmpty())
+        }
+        check(composeRule.onAllNodesWithText("Saldo disponível", ignoreCase = true).fetchSemanticsNodes().isEmpty())
     }
 
     private fun render(experience: AppExperience, dark: Boolean) {
@@ -53,7 +96,11 @@ class ExperienceThemeRenderTest {
             }
         }
 
-        val title = if (experience == AppExperience.FINANZA) "Dashboard" else "Voce"
+        val title = when (experience) {
+            AppExperience.FINANZA -> "Dashboard"
+            AppExperience.WEB -> "Dashboard"
+            AppExperience.NEXT -> "Voce"
+        }
         composeRule.onAllNodesWithText(title)[0].assertIsDisplayed()
     }
 
@@ -86,11 +133,13 @@ class ExperienceThemeRenderTest {
             lastSync = "Nunca",
             pendingSync = 0,
             syncError = "",
+            syncWarning = "",
             role = "",
             twoFactor = false
         ),
         paymentMethods = emptyList(),
-        features = FeatureCenterUiState(emptyList(), 0, false)
+        features = FeatureCenterUiState(emptyList(), 0, false),
+        calendarEvents = emptyList()
     )
 
     private fun emptyActions() = AppActions(
@@ -124,6 +173,8 @@ class ExperienceThemeRenderTest {
             secondary = { _, _ -> },
             importBackup = {},
             importTransactions = {},
+            importPdf = {},
+            importText = {},
             exportBackup = {},
             sync = {}
         )

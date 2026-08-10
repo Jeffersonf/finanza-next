@@ -28,6 +28,7 @@ import com.finanza.next.ui.components.SettingsRow
 import com.finanza.next.ui.components.SettingsSectionTitle
 import com.finanza.next.ui.theme.LocalAppExperience
 import com.finanza.next.ui.theme.LocalAppExperienceTokens
+import com.finanza.next.ui.theme.AppExperience
 
 data class ConfigUiState(
     val userName: String,
@@ -41,8 +42,10 @@ data class ConfigUiState(
     val lastSync: String,
     val pendingSync: Int,
     val syncError: String,
+    val syncWarning: String,
     val role: String,
-    val twoFactor: Boolean
+    val twoFactor: Boolean,
+    val monthlyIncome: String = "R$ 0,00"
 )
 
 data class ConfigActions(
@@ -58,17 +61,23 @@ data class ConfigActions(
     val security: () -> Unit,
     val admin: () -> Unit,
     val pinShortcut: () -> Unit,
-    val clearData: () -> Unit
+    val clearData: () -> Unit,
+    val editMonthlyIncome: () -> Unit = {}
 )
 
 @Composable
 fun ConfigScreen(state: ConfigUiState, actions: ConfigActions) {
     val tokens = LocalAppExperienceTokens.current
     val experience = LocalAppExperience.current
-    val finanza = experience.id == "finanza"
+    val finanza = experience.usesFinanzaVisuals
+    val web = experience == AppExperience.WEB
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 108.dp)) {
         Text(
-            if (finanza) "Configurações" else "Ajustes",
+            when {
+                web -> "Configurações"
+                finanza -> "Configurações"
+                else -> "Ajustes"
+            },
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(start = 20.dp, top = 18.dp)
         )
@@ -83,8 +92,14 @@ fun ConfigScreen(state: ConfigUiState, actions: ConfigActions) {
             Spacer(Modifier.height(12.dp))
         }
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp).clip(RoundedCornerShape(tokens.cardRadius + 2.dp)).background(if (finanza) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)
-                .border(1.dp, if (finanza) MaterialTheme.colorScheme.outlineVariant else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(tokens.cardRadius + 2.dp))
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp).clip(RoundedCornerShape(tokens.cardRadius + 2.dp)).background(
+                when {
+                    web -> MaterialTheme.colorScheme.surface.copy(alpha = 0.90f)
+                    finanza -> MaterialTheme.colorScheme.surfaceVariant
+                    else -> MaterialTheme.colorScheme.surface
+                }
+            )
+                .border(1.dp, if (finanza) MaterialTheme.colorScheme.outlineVariant.copy(alpha = if (web) 0f else 1f) else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(tokens.cardRadius + 2.dp))
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -105,14 +120,15 @@ fun ConfigScreen(state: ConfigUiState, actions: ConfigActions) {
         SettingsSectionTitle("Planejamento")
         SettingsGroup {
             SettingsRow("Orçamento mensal", state.budget, actions.editBudget)
+            if (web) SettingsRow("Salário base", state.monthlyIncome, actions.editMonthlyIncome)
             SettingsRow("Contas", "${state.accounts} ativas", showDivider = false)
         }
-        SettingsSectionTitle("Aparencia")
+        SettingsSectionTitle("Aparência")
         SettingsGroup {
             SettingsRow("Tema", state.theme, actions.changeTheme)
             SettingsRow("Ocultar valores", switch = state.privacy, onSwitchChange = actions.togglePrivacy, showDivider = false)
         }
-        SettingsSectionTitle("Captura rapida")
+        SettingsSectionTitle("Captura rápida")
         SettingsGroup {
             SettingsRow("Notificação", switch = state.notifications, onSwitchChange = actions.toggleNotifications)
             SettingsRow("Fixar atalho", onClick = actions.pinShortcut, showDivider = false)
@@ -120,13 +136,14 @@ fun ConfigScreen(state: ConfigUiState, actions: ConfigActions) {
         SettingsSectionTitle("Dados")
         SettingsGroup {
             SettingsRow("Sincronizar agora", state.lastSync, actions.sync)
-            if (state.pendingSync > 0) SettingsRow("Pendencias locais", state.pendingSync.toString(), actions.sync)
-            if (state.syncError.isNotBlank()) SettingsRow("Ultimo erro", state.syncError)
+            if (state.pendingSync > 0) SettingsRow("Pendências locais", state.pendingSync.toString(), actions.sync)
+            if (state.syncWarning.isNotBlank()) SettingsRow("Histórico parcial", state.syncWarning)
+            if (state.syncError.isNotBlank()) SettingsRow("Último erro", state.syncError)
             SettingsRow("Compartilhar backup", onClick = actions.backup)
             SettingsRow("Diagnóstico", onClick = actions.diagnostics)
             SettingsRow("Apagar dados locais", onClick = actions.clearData, showDivider = false)
         }
-        SettingsSectionTitle("Seguranca")
+        SettingsSectionTitle("Segurança")
         SettingsGroup {
             SettingsRow("Autenticação em duas etapas", if (state.twoFactor) "Ativa" else "Desativada", actions.security)
             if (state.role == "admin") {

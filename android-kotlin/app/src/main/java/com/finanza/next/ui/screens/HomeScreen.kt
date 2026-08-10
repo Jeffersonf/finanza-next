@@ -1,4 +1,4 @@
-package com.finanza.next.ui.screens
+﻿package com.finanza.next.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
@@ -42,26 +42,39 @@ fun HomeScreen(
     period: String,
     balance: String,
     income: String,
+    monthlyIncome: String = "R$ 0,00",
     spent: String,
     transactions: List<TransactionUi>,
     accounts: List<AccountUi>,
     bills: List<BillUi>,
     categories: List<CategoryUi>,
+    trends: List<MonthTrendUi>,
     features: FeatureCenterUiState,
     onAdd: () -> Unit,
     onAll: () -> Unit,
     onTransaction: (Long) -> Unit,
     onBill: (Long) -> Unit,
     onFeatures: () -> Unit,
+    onImport: () -> Unit,
     onAccounts: () -> Unit,
     onAnalysis: () -> Unit,
     onSettings: () -> Unit
 ) {
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val experience = LocalAppExperience.current
+    val finanza = experience.usesFinanzaVisuals
+    val web = experience == AppExperience.WEB
+    if (web) {
+        FinanzaWebHome(
+            period, balance, income, monthlyIncome, spent, transactions, accounts, bills, categories, trends, features,
+            onAdd, onAll, onTransaction, onBill, onFeatures, onImport, onAccounts, onAnalysis, onSettings
+        )
+        return
+    }
     var editingDashboard by remember { mutableStateOf(false) }
+    val contentPadding = if (experience == AppExperience.NEXT) 20.dp else 16.dp
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, top = 14.dp, end = 16.dp, bottom = 108.dp)
+        contentPadding = PaddingValues(start = contentPadding, top = if (experience == AppExperience.NEXT) 18.dp else 14.dp, end = contentPadding, bottom = 108.dp)
     ) {
         item {
             if (finanza) {
@@ -72,12 +85,12 @@ fun HomeScreen(
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Dashboard",
+                            if (web) "Visão geral" else "Dashboard",
                             style = MaterialTheme.typography.titleLarge,
                             maxLines = 1
                         )
                         Text(
-                            "Visão geral das suas finanças",
+                            if (web) "Seu dinheiro, organizado para o mês" else "Visão geral das suas finanças",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f),
                             modifier = Modifier.padding(top = 3.dp)
@@ -96,7 +109,7 @@ fun HomeScreen(
                         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Text(
-                            period,
+                            if (web) period.uppercase() else period,
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
@@ -111,13 +124,17 @@ fun HomeScreen(
                         )
                     ) {
                         Icon(Icons.Rounded.Add, contentDescription = null)
-                        Text("Nova", modifier = Modifier.padding(start = 4.dp))
+                        Text(if (web) "Adicionar" else "Nova", modifier = Modifier.padding(start = 4.dp))
                     }
                 }
             } else {
                 Column {
-                    Text(greeting, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f))
-                    Text(userName, style = MaterialTheme.typography.headlineMedium)
+                    Text(
+                        "Visão geral",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f)
+                    )
+                    Text("$greeting, $userName", style = MaterialTheme.typography.headlineMedium)
                 }
             }
             Spacer(Modifier.height(16.dp))
@@ -130,6 +147,7 @@ fun HomeScreen(
                 accounts = accounts,
                 bills = bills,
                 categories = categories,
+                trends = trends,
                 features = features,
                 onAdd = onAdd,
                 onAllTransactions = onAll,

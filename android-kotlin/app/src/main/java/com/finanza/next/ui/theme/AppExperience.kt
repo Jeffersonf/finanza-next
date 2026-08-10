@@ -8,7 +8,11 @@ import androidx.compose.ui.unit.dp
 
 enum class AppExperience(val id: String, val label: String, val description: String) {
     NEXT("next", "Moderno", "A linguagem fluida do Next"),
-    FINANZA("finanza", "Clássico", "A interface do Finanza web");
+    FINANZA("finanza", "Clássico", "A interface do Finanza web"),
+    WEB("web", "Finanza Web", "Paridade visual com o Finanza web");
+
+    val usesFinanzaVisuals: Boolean
+        get() = this != NEXT
 
     companion object {
         fun fromId(id: String?): AppExperience = entries.firstOrNull { it.id == id } ?: NEXT
@@ -45,9 +49,9 @@ val NextTokens = AppExperienceTokens(
     navHorizontalPadding = 10.dp,
     navSelectedRadius = 18.dp,
     navSelectedLight = HeroCard.copy(alpha = 0.92f),
-    navSelectedDark = Color(0xFF34343A).copy(alpha = 0.58f),
+    navSelectedDark = Color(0xFF3A3A40).copy(alpha = 0.58f),
     glassLightAlpha = 0.94f,
-    glassDarkAlpha = 0.84f,
+    glassDarkAlpha = 0.78f,
     quickPanel = Color(0xD9212228),
     quickBorder = Color.White.copy(alpha = 0.14f),
     quickSecondaryAction = Color.White.copy(alpha = 0.15f),
@@ -72,6 +76,26 @@ val FinanzaTokens = AppExperienceTokens(
     quickBorder = Color.White.copy(alpha = 0.18f),
     quickSecondaryAction = Color.White.copy(alpha = 0.16f),
     quickPrimaryAction = FinanzaAccent,
+    showNavLabels = true,
+    denseLists = false
+)
+
+val FinanzaWebTokens = AppExperienceTokens(
+    experience = AppExperience.WEB,
+    cardRadius = 16.dp,
+    sheetRadius = 20.dp,
+    navRadius = 0.dp,
+    navHeight = 64.dp,
+    navHorizontalPadding = 0.dp,
+    navSelectedRadius = 10.dp,
+    navSelectedLight = FinanzaWebAccentLight.copy(alpha = 0.12f),
+    navSelectedDark = FinanzaWebAccent.copy(alpha = 0.16f),
+    glassLightAlpha = 0.90f,
+    glassDarkAlpha = 0.92f,
+    quickPanel = Color(0xED12151E),
+    quickBorder = Color.White.copy(alpha = 0.16f),
+    quickSecondaryAction = Color.White.copy(alpha = 0.13f),
+    quickPrimaryAction = FinanzaWebAccent,
     showNavLabels = true,
     denseLists = false
 )

@@ -28,7 +28,7 @@ import com.finanza.next.ui.theme.TextPrimaryDark
 @Composable
 fun HeroBalanceCard(label: String, period: String, value: String, entradas: String, saidas: String, modifier: Modifier = Modifier) {
     val tokens = LocalAppExperienceTokens.current
-    val finanza = LocalAppExperience.current == AppExperience.FINANZA
+    val finanza = LocalAppExperience.current.usesFinanzaVisuals
     val radius = RoundedCornerShape(tokens.cardRadius + 8.dp)
     val cardColor = when {
         finanza -> MaterialTheme.colorScheme.surfaceVariant
@@ -45,9 +45,14 @@ fun HeroBalanceCard(label: String, period: String, value: String, entradas: Stri
         tokens.denseLists -> TextPrimaryDark
         else -> MaterialTheme.colorScheme.inverseOnSurface
     }
+    val outline = when {
+        finanza -> MaterialTheme.colorScheme.outlineVariant
+        tokens.denseLists -> Color.Transparent
+        else -> Color.White.copy(alpha = 0.16f)
+    }
     Column(
         modifier.fillMaxWidth().clip(radius).background(cardColor)
-            .border(1.dp, if (finanza) MaterialTheme.colorScheme.outlineVariant else Color.White.copy(alpha = if (tokens.denseLists) 0.10f else 0.16f), radius).padding(22.dp)
+            .border(1.dp, outline, radius).padding(22.dp)
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label.uppercase(), color = mutedColor, style = MaterialTheme.typography.labelSmall)

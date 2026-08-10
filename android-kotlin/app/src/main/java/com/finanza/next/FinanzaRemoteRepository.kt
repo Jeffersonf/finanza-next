@@ -2,6 +2,8 @@ package com.finanza.next
 
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 internal object FinanzaApiRoutes {
     const val TRANSACTIONS = "/api/transactions"
@@ -10,7 +12,19 @@ internal object FinanzaApiRoutes {
     const val STATE = "/api/state"
     const val IMPORT = "/api/import"
 
-    fun transactions(limit: Int): String = "$TRANSACTIONS?limit=$limit"
+    fun transactions(limit: Int, cursor: String? = null, offset: Int? = null): String = buildString {
+        append("$TRANSACTIONS?limit=$limit")
+        cursor?.takeIf(String::isNotBlank)?.let {
+            append("&cursor=")
+            append(URLEncoder.encode(it, StandardCharsets.UTF_8.name()))
+        }
+        if (cursor.isNullOrBlank()) {
+            offset?.takeIf { it > 0 }?.let {
+                append("&offset=")
+                append(it)
+            }
+        }
+    }
     fun transaction(id: Long): String = "$TRANSACTIONS/$id"
     fun budget(id: String): String = "$BUDGETS/$id"
     fun goal(id: String): String = "$GOALS/$id"
@@ -23,6 +37,7 @@ internal fun interface FinanzaJsonTransport {
 
 internal data class FinanzaRemoteSnapshot(
     val transactions: JSONArray,
+    val transactionTotal: Int,
     val budgets: JSONArray,
     val goals: JSONArray,
     val state: JSONObject
@@ -35,15 +50,51 @@ internal class FinanzaRemoteRepository(
         FinanzaJsonTransport { method, path, body -> client.requestJson(method, path, body) }
     )
 
-    fun loadSnapshot(transactionLimit: Int = 1_000): FinanzaRemoteSnapshot = FinanzaRemoteSnapshot(
-        transactions = transport.request("GET", FinanzaApiRoutes.transactions(transactionLimit), null)
-            .optJSONArray("data") ?: JSONArray(),
-        budgets = transport.request("GET", FinanzaApiRoutes.BUDGETS, null)
-            .optJSONArray("data") ?: JSONArray(),
-        goals = transport.request("GET", FinanzaApiRoutes.GOALS, null)
-            .optJSONArray("data") ?: JSONArray(),
-        state = loadState()
-    )
+    fun loadSnapshot(transactionLimit: Int = 1_000): FinanzaRemoteSnapshot {
+        var transactionResponse = transport.request("GET", FinanzaApiRoutes.transactions(transactionLimit), null)
+        val transactions = JSONArray()
+        val transactionIds = mutableSetOf<String>()
+        val expectedTotal = transactionResponse.optInt("total", -1)
+        val cursors = mutableSetOf<String>()
+        var pageOffset = 0
+
+        while (true) {
+            val page = transactionResponse.optJSONArray("data") ?: JSONArray()
+            for (index in 0 until page.length()) {
+                val item = page.optJSONObject(index) ?: continue
+                val id = item.opt("id")?.toString().orEmpty()
+                if (id.isBlank() || transactionIds.add(id)) transactions.put(item)
+            }
+            pageOffset += page.length()
+            val cursor = transactionResponse.nextTransactionCursor()
+            when {
+                !cursor.isNullOrBlank() && cursors.add(cursor) -> {
+                    transactionResponse = transport.request(
+                        "GET",
+                        FinanzaApiRoutes.transactions(transactionLimit, cursor = cursor),
+                        null
+                    )
+                }
+                page.length() > 0 && expectedTotal > pageOffset -> {
+                    transactionResponse = transport.request(
+                        "GET",
+                        FinanzaApiRoutes.transactions(transactionLimit, offset = pageOffset),
+                        null
+                    )
+                }
+                else -> break
+            }
+        }
+        return FinanzaRemoteSnapshot(
+            transactions = transactions,
+            transactionTotal = expectedTotal.takeIf { it >= 0 } ?: transactions.length(),
+            budgets = transport.request("GET", FinanzaApiRoutes.BUDGETS, null)
+                .optJSONArray("data") ?: JSONArray(),
+            goals = transport.request("GET", FinanzaApiRoutes.GOALS, null)
+                .optJSONArray("data") ?: JSONArray(),
+            state = loadState()
+        )
+    }
 
     fun createTransaction(payload: JSONObject): JSONObject =
         transport.request("POST", FinanzaApiRoutes.TRANSACTIONS, payload)
@@ -83,3 +134,8 @@ internal class FinanzaRemoteRepository(
         return saveState(state)
     }
 }
+
+private fun JSONObject.nextTransactionCursor(): String? = sequenceOf(
+    optString("next_cursor"),
+    optString("nextCursor")
+).firstOrNull { it.isNotBlank() }

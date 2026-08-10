@@ -1,7 +1,28 @@
 'use strict';
 
 const INITIAL_BOOT_TX_LIMIT=1000;
-let fullTxHydrationPromise=null;
+
+async function loadTransactionPages(limit=INITIAL_BOOT_TX_LIMIT){
+  let response=await api('GET',`/api/transactions?limit=${limit}`);
+  const first=response;
+  const all=[];
+  const ids=new Set();
+  const cursors=new Set();
+  while(true){
+    (response.data||[]).forEach(item=>{
+      const id=String(item?.id??'');
+      if(!id||!ids.has(id)){
+        if(id)ids.add(id);
+        all.push(item);
+      }
+    });
+    const cursor=response.next_cursor||response.nextCursor||'';
+    if(!cursor||cursors.has(cursor))break;
+    cursors.add(cursor);
+    response=await api('GET',`/api/transactions?limit=${limit}&cursor=${encodeURIComponent(cursor)}`);
+  }
+  return {...first,data:all,total:Number(first.total??all.length)};
+}
 
 function applyRemotePayload(txR,buds,goals,state){
   S.transactions=(txR.data||[]).map(nTx);S.budgets=(buds||[]).map(nBud);S.goals=(goals||[]).map(nGoal);
@@ -19,24 +40,6 @@ function applyRemotePayload(txR,buds,goals,state){
   if(!(state.accounts||[]).length)saveRemoteState().catch(()=>{});
 }
 
-async function hydrateFullTransactionsInBackground(){
-  if(cfg.mode!=='api'||fullTxHydrationPromise)return fullTxHydrationPromise;
-  fullTxHydrationPromise=(async()=>{
-    try{
-      const txR=await api('GET','/api/transactions?limit=1000');
-      S.transactions=(txR.data||[]).map(nTx);
-      saveLocal();
-      refreshAll();
-      showConnBar('online','Sincronizado',1800);
-    }catch(err){
-      console.warn('full hydration:',err.message);
-    }finally{
-      fullTxHydrationPromise=null;
-    }
-  })();
-  return fullTxHydrationPromise;
-}
-
 async function loadAll(options={}){
   if(cfg.mode==='local'){
     S=loadLocal();
@@ -46,16 +49,14 @@ async function loadAll(options={}){
     return;
   }
   const limit=Math.min(Math.max(parseInt(options.limit,10)||1000,1),1000);
-  const backgroundFull=!!options.backgroundFull;
   try{
     const [txR,buds,goals,state]=await Promise.all([
-      api('GET',`/api/transactions?limit=${limit}`),
+      loadTransactionPages(limit),
       api('GET','/api/budgets'),
       api('GET','/api/goals'),
       api('GET','/api/state')
     ]);
     applyRemotePayload(txR,buds,goals,state);
-    if(backgroundFull&&Number(txR.total||0)>limit)hydrateFullTransactionsInBackground();
   }catch(e){
     console.warn('offline:',e.message);
     const c=loadLocal();
@@ -95,7 +96,7 @@ async function initApp(){
   applyAvatar();
   const bootedFromCache=primeAppFromCache();
   if(bootedFromCache)showConnBar('syncing','Sincronizando...',2200);
-  await loadAll({limit:INITIAL_BOOT_TX_LIMIT,backgroundFull:true});
+  await loadAll({limit:INITIAL_BOOT_TX_LIMIT});
   if(bootedFromCache&&cfg.mode==='api')showConnBar('online','Sincronizado',2200);
   if(cfg.mode==='local')loadCC();
   loadCar();

@@ -24,7 +24,7 @@ class QuickExpenseFlowTest {
             FinanceAppTheme(darkTheme = true) {
                 QuickExpenseFlow(
                     methods = emptyList(),
-                    onComplete = { _, _, _ -> },
+                    onComplete = { _, _, _, _ -> },
                     onDismiss = {}
                 )
             }
@@ -45,7 +45,7 @@ class QuickExpenseFlowTest {
             FinanceAppTheme(darkTheme = true, experience = AppExperience.FINANZA) {
                 QuickExpenseFlow(
                     methods = emptyList(),
-                    onComplete = { _, _, _ -> },
+                    onComplete = { _, _, _, _ -> },
                     onDismiss = {}
                 )
             }
@@ -53,5 +53,27 @@ class QuickExpenseFlowTest {
 
         composeRule.onNodeWithText("Qual o valor do gasto?").assertExists()
         composeRule.onNodeWithText("R$ 0,00").assertExists()
+    }
+
+    @Test
+    fun captureOffersCustomCategoriesWithoutAddingAnotherStep() {
+        composeRule.setContent {
+            FinanceAppTheme(darkTheme = true) {
+                QuickExpenseFlow(
+                    methods = emptyList(),
+                    customCategories = listOf("Pet", "Estudos"),
+                    onComplete = { _, _, _, _ -> },
+                    onDismiss = {}
+                )
+            }
+        }
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("1234")
+        composeRule.onNodeWithText("OK").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("O que foi?").assertExists()
+        composeRule.onNodeWithText("Categoria opcional").assertExists()
+        composeRule.onNodeWithText("Pet").assertExists()
+        composeRule.onNodeWithText("Como voc\u00ea pagou?").assertDoesNotExist()
     }
 }

@@ -1,6 +1,5 @@
 package com.finanza.next.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +25,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -49,10 +51,56 @@ fun BottomNavBar(selected: AppTab, onSelect: (AppTab) -> Unit, modifier: Modifie
     )
     val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     val experience = LocalAppExperience.current
-    if (experience == AppExperience.FINANZA) {
-        ClassicBottomNavBar(items, selected, onSelect, dark, modifier)
-    } else {
-        ModernBottomNavBar(items, selected, onSelect, dark, LocalAppExperienceTokens.current, modifier)
+    when (experience) {
+        AppExperience.NEXT -> ModernBottomNavBar(items, selected, onSelect, dark, LocalAppExperienceTokens.current, modifier)
+        AppExperience.FINANZA -> ClassicBottomNavBar(items, selected, onSelect, dark, modifier)
+        AppExperience.WEB -> FinanzaWebBottomNavBar(items, selected, onSelect, dark, modifier)
+    }
+}
+
+@Composable
+private fun FinanzaWebBottomNavBar(
+    items: List<Triple<AppTab, ImageVector, String>>,
+    selected: AppTab,
+    onSelect: (AppTab) -> Unit,
+    dark: Boolean,
+    modifier: Modifier
+) {
+    val dividerColor = MaterialTheme.colorScheme.outlineVariant
+    Surface(
+        modifier = modifier.fillMaxWidth().height(64.dp).drawBehind {
+            drawLine(
+                color = dividerColor,
+                start = Offset(0f, 0f),
+                end = Offset(size.width, 0f),
+                strokeWidth = 1.dp.toPx()
+            )
+        },
+        shape = RectangleShape,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = if (dark) 0.92f else 0.90f),
+        border = null,
+        shadowElevation = 0.dp,
+        tonalElevation = 0.dp
+    ) {
+        Row(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 4.dp)) {
+            items.forEach { (tab, icon, label) ->
+                val isSelected = selected == tab
+                val tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxSize().clip(RoundedCornerShape(10.dp)).clickable { onSelect(tab) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(19.dp))
+                    Text(label, color = tint, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, lineHeight = 12.sp, maxLines = 1)
+                    Box(
+                        Modifier.padding(top = 2.dp).size(width = if (isSelected) 14.dp else 4.dp, height = 3.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(if (isSelected) tint else Color.Transparent)
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -69,8 +117,8 @@ private fun ModernBottomNavBar(
         modifier = modifier.fillMaxWidth().height(tokens.navHeight),
         shape = RoundedCornerShape(tokens.navRadius),
         color = MaterialTheme.colorScheme.surface.copy(alpha = if (dark) tokens.glassDarkAlpha else tokens.glassLightAlpha),
-        border = BorderStroke(1.dp, if (dark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.72f)),
-        shadowElevation = 4.dp,
+        border = null,
+        shadowElevation = if (dark) 0.dp else 3.dp,
         tonalElevation = 0.dp
     ) {
         Row(Modifier.fillMaxSize().padding(5.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
