@@ -51,7 +51,7 @@ data class FeatureCenterUiState(
 
 data class ImportSummaryUi(
     val title: String = "Nenhuma importação recente",
-    val detail: String = "PDF, texto, Pix, OCR, QR, CSV, OFX e backup JSON podem ser revisados antes de entrar.",
+    val detail: String = "PDF, texto, Pix, OCR, QR, CSV, XLS/XLSX, OFX/QFX e backup JSON podem ser revisados linha a linha antes de entrar.",
     val timestamp: String = "",
     val history: List<ImportEventUi> = emptyList()
 )
@@ -75,5 +75,7 @@ data class FeatureActions(
     val importPdf: () -> Unit,
     val importText: () -> Unit,
     val exportBackup: () -> Unit,
-    val sync: () -> Unit
+    val sync: () -> Unit,
+    /** Opens a source picker with the same document/category context shown in the import center. */
+    val importConfigured: (documentType: String, defaultCategory: String, source: String) -> Unit = { _, _, _ -> }
 )

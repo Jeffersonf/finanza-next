@@ -33,6 +33,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,6 +48,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.finanza.next.FinanzaInvoiceReview
 import com.finanza.next.InvoiceMatch
@@ -69,11 +71,12 @@ internal fun InvoiceReviewSheet(
             lines.forEach { line -> put(line.transaction.id, line.matches.isEmpty()) }
         }
     }
+    var editableLines by remember(lines) { mutableStateOf(lines) }
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(InvoiceFilter.ALL) }
     var removalCandidate by remember { mutableStateOf<InvoiceMatch?>(null) }
     val normalizedQuery = FinanzaInvoiceReview.merchantKey(query)
-    val visible = lines.filter { line ->
+    val visible = editableLines.filter { line ->
         val matchesFilter = when (filter) {
             InvoiceFilter.ALL -> true
             InvoiceFilter.NEW -> line.matches.isEmpty()
@@ -81,9 +84,9 @@ internal fun InvoiceReviewSheet(
         }
         matchesFilter && (normalizedQuery.isBlank() || FinanzaInvoiceReview.merchantKey(line.transaction.description).contains(normalizedQuery))
     }
-    val selectedLines = lines.filter { selected[it.transaction.id] == true && it.matches.none { match -> match.kind == InvoiceMatchKind.EXACT } }
-    val exact = lines.count { line -> line.matches.any { it.kind == InvoiceMatchKind.EXACT } }
-    val installments = lines.count { line -> line.matches.any { it.kind == InvoiceMatchKind.LIKELY_INSTALLMENT } }
+    val selectedLines = editableLines.filter { selected[it.transaction.id] == true && it.matches.none { match -> match.kind == InvoiceMatchKind.EXACT } }
+    val exact = editableLines.count { line -> line.matches.any { it.kind == InvoiceMatchKind.EXACT } }
+    val installments = editableLines.count { line -> line.matches.any { it.kind == InvoiceMatchKind.LIKELY_INSTALLMENT } }
     val maxHeight = with(LocalDensity.current) {
         LocalWindowInfo.current.containerSize.height.toDp() * 0.78f
     }
@@ -142,6 +145,12 @@ internal fun InvoiceReviewSheet(
                     }
                 }
             }
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { editableLines.forEach { line -> if (line.matches.none { it.kind == InvoiceMatchKind.EXACT }) selected[line.transaction.id] = true } }) { Text("Marcar todos") }
+                    TextButton(onClick = { editableLines.forEach { line -> selected[line.transaction.id] = false } }) { Text("Desmarcar todos") }
+                }
+            }
             if (visible.isEmpty()) {
                 item {
                     Text(
@@ -157,6 +166,7 @@ internal fun InvoiceReviewSheet(
                     line = line,
                     checked = selected[line.transaction.id] == true,
                     onCheckedChange = { checked -> selected[line.transaction.id] = checked },
+                    onEdit = { updated -> editableLines = editableLines.map { current -> if (current.transaction.id == updated.transaction.id) updated else current } },
                     onRemovePlannedInstallment = { removalCandidate = it }
                 )
             }
@@ -213,6 +223,7 @@ private fun InvoiceReviewRow(
     line: InvoiceReviewLine,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    onEdit: (InvoiceReviewLine) -> Unit,
     onRemovePlannedInstallment: (InvoiceMatch) -> Unit
 ) {
     val tokens = LocalAppExperienceTokens.current
@@ -255,6 +266,44 @@ private fun InvoiceReviewRow(
                 installment != null -> InvoiceMatchNotice(
                     "Possível série já planejada: ${installment.title}${installment.installmentLabel.takeIf { it.isNotBlank() }?.let { " ($it)" } ?: ""}. A fatura indica ${line.installmentLabel}; confirme antes de remover ou importar.",
                     false
+                )
+            }
+            Row(Modifier.fillMaxWidth().padding(start = 44.dp, top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                FilterChip(
+                    selected = line.transaction.type == "income",
+                    onClick = { onEdit(line.copy(transaction = line.transaction.copy(type = if (line.transaction.type == "income") "expense" else "income"))) },
+                    label = { Text(if (line.transaction.type == "income") "Entrada" else "Despesa") }
+                )
+                OutlinedTextField(
+                    value = line.transaction.category,
+                    onValueChange = { onEdit(line.copy(transaction = line.transaction.copy(category = it))) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    label = { Text("Categoria") }
+                )
+            }
+            OutlinedTextField(
+                value = line.transaction.description,
+                onValueChange = { onEdit(line.copy(transaction = line.transaction.copy(description = it))) },
+                modifier = Modifier.fillMaxWidth().padding(start = 44.dp, top = 8.dp),
+                singleLine = true,
+                label = { Text("Descrição") }
+            )
+            Row(Modifier.fillMaxWidth().padding(start = 44.dp, top = 2.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = line.transaction.date,
+                    onValueChange = { onEdit(line.copy(transaction = line.transaction.copy(date = it))) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    label = { Text("Data") }
+                )
+                OutlinedTextField(
+                    value = line.transaction.amount.toString(),
+                    onValueChange = { raw -> raw.replace(',', '.').toDoubleOrNull()?.takeIf { it >= 0.0 }?.let { onEdit(line.copy(transaction = line.transaction.copy(amount = it))) } },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    label = { Text("Valor") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
             }
             if (installment != null) {

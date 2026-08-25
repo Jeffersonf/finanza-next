@@ -198,13 +198,39 @@ private fun ImportCenterPanel(
     color: Color
 ) {
     val tokens = LocalAppExperienceTokens.current
+    var documentType by remember { mutableStateOf("statement") }
+    var defaultCategory by remember { mutableStateOf("Outros") }
+    val categories = listOf("Outros", "Alimentação", "Casa", "Transporte", "Lazer", "Saúde")
     Surface(shape = RoundedCornerShape(tokens.cardRadius), color = color) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ImportCenterStatus(summary)
+            Text("Importar fatura ou extrato", style = MaterialTheme.typography.titleSmall)
+            Text(
+                "Escolha o tipo e a categoria padrão. Na próxima tela você poderá corrigir data, descrição, tipo e categoria linha a linha antes de salvar.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                FilterChip(selected = documentType == "card_invoice", onClick = { documentType = "card_invoice" }, label = { Text("Fatura de cartão") })
+                FilterChip(selected = documentType == "statement", onClick = { documentType = "statement" }, label = { Text("Extrato bancário") })
+                FilterChip(selected = documentType == "receipt", onClick = { documentType = "receipt" }, label = { Text("Recibo") })
+            }
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                categories.forEach { category ->
+                    FilterChip(selected = defaultCategory == category, onClick = { defaultCategory = category }, label = { Text(category) })
+                }
+            }
+            Surface(shape = RoundedCornerShape(11.dp), color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.62f)) {
+                Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text("Formatos aceitos", style = MaterialTheme.typography.labelMedium)
+                    Text("CSV, XLS/XLSX, OFX/QFX, PDF com texto selecionável, texto copiado, Pix, OCR e QR. PDF escaneado usa OCR.", style = MaterialTheme.typography.bodySmall)
+                    Text("Onde exportar: Nubank → ⋯ → Exportar CSV; Inter → extrato → CSV/OFX; Itaú, Bradesco e Santander → extrato → CSV/Excel.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
             ActionButton("Importar backup JSON", Icons.Rounded.Download, actions.importBackup)
-            ActionButton("Importar CSV ou OFX", Icons.Rounded.Upload, actions.importTransactions)
-            ActionButton("Importar PDF ou extrato", Icons.Rounded.Upload, actions.importPdf)
-            ActionButton("Importar texto, Pix, OCR ou QR", Icons.Rounded.Upload, actions.importText)
+            ActionButton("Importar CSV ou OFX", Icons.Rounded.Upload, { actions.importConfigured(documentType, defaultCategory, "tabular") })
+            ActionButton("Importar PDF ou extrato", Icons.Rounded.Upload, { actions.importConfigured(documentType, defaultCategory, "pdf") })
+            ActionButton("Importar texto, Pix, OCR ou QR", Icons.Rounded.Upload, { actions.importConfigured(documentType, defaultCategory, "text") })
             ActionButton("Exportar backup completo", Icons.Rounded.Download, actions.exportBackup)
             ActionButton("Sincronizar agora", Icons.Rounded.Sync, actions.sync)
         }

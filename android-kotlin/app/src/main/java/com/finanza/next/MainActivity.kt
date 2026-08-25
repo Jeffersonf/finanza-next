@@ -130,6 +130,8 @@ class MainActivity : ComponentActivity() {
     private var loginError by mutableStateOf<String?>(null)
     private var invoiceReviewLines by mutableStateOf<List<InvoiceReviewLine>?>(null)
     private var invoiceReviewSourceLabel by mutableStateOf("Fatura PDF")
+    private var importDocumentType: String = "statement"
+    private var importDefaultCategory: String = "Outros"
     private var appearancePickerVisible by mutableStateOf(false)
     private var pendingSharedText: String? = null
     private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -2149,7 +2151,7 @@ class MainActivity : ComponentActivity() {
             runCatching {
                 val raw = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                     ?: error("Arquivo vazio")
-                val imported = FinanzaImportParser.parse(raw, defaultExpenseAccountId()).map(::importedEntry)
+                val imported = FinanzaImportParser.parse(raw, defaultExpenseAccountId()).map(::importedEntry).map(::applyImportDefaults)
                 if (imported.isEmpty()) error("Nenhuma transacao valida encontrada")
                 imported
             }.onSuccess { imported ->
@@ -2169,7 +2171,7 @@ class MainActivity : ComponentActivity() {
                 }.orEmpty().trim()
                 val text = extractedText.takeIf { it.isNotBlank() } ?: extractPdfTextWithOcr(uri)
                 if (text.isBlank()) error("Não foi possível extrair texto do PDF")
-                val imported = FinanzaImportParser.parseText(text, defaultExpenseAccountId())
+                val imported = FinanzaImportParser.parseText(text, defaultExpenseAccountId()).map(::applyImportedTransactionDefaults)
                 if (imported.isEmpty()) error("Nenhum lançamento válido foi reconhecido no PDF")
                 FinanzaInvoiceReview.review(
                     imported,
@@ -2242,7 +2244,7 @@ class MainActivity : ComponentActivity() {
             }
             addView(input, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(168)).apply { topMargin = dp(14) })
             addView(primaryButton("Revisar lançamentos") {
-                val imported = FinanzaImportParser.parseText(input.text.toString(), defaultExpenseAccountId()).map(::importedEntry)
+                val imported = FinanzaImportParser.parseText(input.text.toString(), defaultExpenseAccountId()).map(::importedEntry).map(::applyImportDefaults)
                 if (imported.isEmpty()) {
                     Toast.makeText(this@MainActivity, "Inclua ao menos um valor, por exemplo R$ 48,50.", Toast.LENGTH_SHORT).show()
                 } else {
@@ -2279,9 +2281,21 @@ class MainActivity : ComponentActivity() {
                 )
             }
         )
-        invoiceReviewSourceLabel = "Importação"
+        invoiceReviewSourceLabel = when (importDocumentType) {
+            "card_invoice" -> "Fatura CSV/OFX"
+            "receipt" -> "Recibo importado"
+            else -> "Extrato bancário"
+        }
         invoiceReviewLines = reviewed
     }
+
+    private fun applyImportDefaults(entry: Entry): Entry = entry.copy(
+        category = entry.category.takeIf { it.isNotBlank() && it != "A classificar" } ?: importDefaultCategory
+    )
+
+    private fun applyImportedTransactionDefaults(transaction: FinanzaImportedTransaction): FinanzaImportedTransaction = transaction.copy(
+        category = transaction.category.takeIf { it.isNotBlank() && it != "A classificar" } ?: importDefaultCategory
+    )
 
     private fun removePlannedInvoiceInstallment(match: InvoiceMatch) {
         val planned = entries().firstOrNull { it.id == match.existingId }
@@ -3473,7 +3487,16 @@ class MainActivity : ComponentActivity() {
             importPdf = { pdfImportLauncher.launch(arrayOf("application/pdf")) },
             importText = ::showTextImportDialog,
             exportBackup = ::exportLocalBackup,
-            sync = { if (isOnlineMode()) syncRemoteNow(silent = false) else showOnlineAccessDialog() }
+            sync = { if (isOnlineMode()) syncRemoteNow(silent = false) else showOnlineAccessDialog() },
+            importConfigured = { documentType, defaultCategory, source ->
+                importDocumentType = documentType
+                importDefaultCategory = defaultCategory
+                when (source) {
+                    "pdf" -> pdfImportLauncher.launch(arrayOf("application/pdf"))
+                    "text" -> showTextImportDialog()
+                    else -> transactionImportLauncher.launch(arrayOf("text/csv", "application/vnd.ms-excel", "application/x-ofx", "text/plain"))
+                }
+            }
         )
     )
 

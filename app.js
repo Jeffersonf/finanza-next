@@ -28,7 +28,7 @@ let subscriptionEditId=null,debtEditId=null,contractEditId=null;
 const IMPORT_CENTER_KEY='fz_import_center';
 const IMPORT_BATCH_PREFIX='imp_';
 let importCenterState={profiles:{csv:{}},rules:{categories:[],subscriptions:[]},snapshots:[],txMeta:{}};
-let importDraft={source:'csv',files:[],rows:[],headers:[],mapping:{},dedupe:'exact',profileName:'',text:'',batchId:'',balanceDivergence:null};
+let importDraft={source:'csv',documentType:'statement',defaultCategory:'Outros',files:[],rows:[],headers:[],mapping:{},dedupe:'exact',profileName:'',text:'',batchId:'',balanceDivergence:null};
 let srchScope='all';
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
 function persistCfg(){localStorage.setItem(CK,JSON.stringify(cfg));}
@@ -848,6 +848,7 @@ function renderImportCenter(){
 }
 function renderImportToolbar(){
   const rows=importDraft.rows||[];
+  const selected=rows.filter(row=>row.selected!==false).length;
   const pendingInbox=S.transactions.filter(t=>t.category==='A classificar'&&(getTxImportMeta(t.id).imported||t.pending)).length;
   const duplicates=rows.filter(r=>r.status==='duplicate').length;
   const recon=rows.filter(r=>r.status==='match').length;
@@ -857,6 +858,7 @@ function renderImportToolbar(){
     <div><span>Preparadas</span><strong>${rows.length}</strong></div>
     <div><span>Duplicadas</span><strong style="color:var(--warn)">${duplicates}</strong></div>
     <div><span>Conciliar</span><strong style="color:var(--ac2)">${recon}</strong></div>
+    <div><span>Selecionadas</span><strong style="color:var(--ac)">${selected}</strong></div>
     <div><span>Entrada</span><strong style="color:var(--dan)">${pendingInbox}</strong></div>
   </div>`;
 }
@@ -867,6 +869,7 @@ function renderImportSourceTabs(){
 }
 function setImportSource(src){
   importDraft.source=src;
+  importDraft.documentType=src==='ofx'?'statement':src==='pdf'||src==='ocr'?'card_invoice':'statement';
   importDraft.files=[];
   importDraft.headers=[];
   importDraft.rows=[];
@@ -878,11 +881,21 @@ function renderImportSourceBody(){
   const el=document.getElementById('importSourceBody');if(!el)return;
   const profileOptions=['<option value="">Perfil salvo</option>',...Object.keys(importCenterState.profiles.csv).sort().map(name=>`<option value="${esc(name)}" ${importDraft.profileName===name?'selected':''}>${esc(name)}</option>`)].join('');
   const ruleSummary=`${importCenterState.rules.categories.length} regra(s) de categoria • ${importCenterState.rules.subscriptions.length} regra(s) de assinatura`;
-  const textBody=src=>`<div class="import-source-panel"><label class="fl">${importSourceLabel(src)}</label><textarea class="ta import-textarea" id="importTextArea" placeholder="${esc(importSourcePlaceholder(src))}" oninput="importDraft.text=this.value">${esc(importDraft.text||'')}</textarea><div class="import-helper">${importSourceHint(src)}</div></div>`;
+  const categoryOptions=allCats().map(cat=>`<option value="${esc(cat.name)}" ${cat.name===importDraft.defaultCategory?'selected':''}>${cat.ico} ${esc(cat.name)}</option>`).join('');
+  const documentInfo=`<div class="import-document-options">
+    <label><span>Tipo de documento</span><select class="fi sel" onchange="importDraft.documentType=this.value;renderImportCenter()">
+      <option value="card_invoice" ${importDraft.documentType==='card_invoice'?'selected':''}>Fatura de cartão de crédito</option>
+      <option value="statement" ${importDraft.documentType==='statement'?'selected':''}>Extrato bancário</option>
+      <option value="receipt" ${importDraft.documentType==='receipt'?'selected':''}>Recibo ou comprovante</option>
+    </select></label>
+    <label><span>Categoria padrão</span><select class="fi sel" onchange="importDraft.defaultCategory=this.value">${categoryOptions}</select></label>
+  </div>
+  <div class="import-guide"><strong>Onde baixar seu arquivo</strong><span>Nubank: conta/fatura → ⋯ → Exportar CSV • Inter: extrato → Exportar CSV ou OFX • Itaú, Bradesco e Santander: extrato → Exportar CSV ou Excel</span><small>Suporta CSV, XLS/XLSX, OFX/QFX, PDF com texto selecionável e texto copiado. PDF escaneado deve passar por OCR.</small></div>`;
+  const textBody=src=>`${documentInfo}<div class="import-source-panel"><label class="fl">${importSourceLabel(src)}</label><textarea class="ta import-textarea" id="importTextArea" placeholder="${esc(importSourcePlaceholder(src))}" oninput="importDraft.text=this.value">${esc(importDraft.text||'')}</textarea><div class="import-helper">${importSourceHint(src)}</div></div>`;
   const sourceBody={
-    csv:`<div class="import-source-panel"><label class="import-file-drop"><span>Selecionar CSV/XLSX</span><small>Escolha .csv, .txt, .xlsx ou .xls exportado do banco/cartão.</small><input type="file" accept=".csv,text/csv,.txt,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onchange="handleImportFiles(this.files)"></label><div class="import-inline-grid"><label><span>Perfil</span><select class="fi sel" onchange="applyImportProfile(this.value)">${profileOptions}</select></label><label><span>Deduplicação</span><select class="fi sel" id="importDedupe" onchange="importDraft.dedupe=this.value"><option value="exact" ${importDraft.dedupe==='exact'?'selected':''}>Exata</option><option value="soft" ${importDraft.dedupe==='soft'?'selected':''}>Descrição + valor</option><option value="off" ${importDraft.dedupe==='off'?'selected':''}>Não ignorar</option></select></label></div><div class="import-helper">${ruleSummary}</div></div>`,
-    ofx:`<div class="import-source-panel"><label class="import-file-drop"><span>Selecionar OFX</span><small>Use .ofx ou .qfx exportado pelo banco/cartão.</small><input type="file" accept=".ofx,.qfx,.txt" onchange="handleImportFiles(this.files)"></label><div class="import-helper">${ruleSummary}</div></div>`,
-    pdf:`<div class="import-source-panel"><label class="import-file-drop"><span>Selecionar PDF</span><small>Use PDF com texto selecionável; PDF escaneado precisa de OCR.</small><input type="file" accept=".pdf,application/pdf" onchange="handleImportFiles(this.files)"></label></div>${textBody('pdf')}`,
+    csv:`${documentInfo}<div class="import-source-panel"><label class="import-file-drop"><span>Selecionar CSV/XLSX</span><small>Escolha .csv, .txt, .xlsx ou .xls exportado do banco/cartão.</small><input type="file" accept=".csv,text/csv,.txt,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onchange="handleImportFiles(this.files)"></label><div class="import-inline-grid"><label><span>Perfil</span><select class="fi sel" onchange="applyImportProfile(this.value)">${profileOptions}</select></label><label><span>Deduplicação</span><select class="fi sel" id="importDedupe" onchange="importDraft.dedupe=this.value"><option value="exact" ${importDraft.dedupe==='exact'?'selected':''}>Exata</option><option value="soft" ${importDraft.dedupe==='soft'?'selected':''}>Descrição + valor</option><option value="off" ${importDraft.dedupe==='off'?'selected':''}>Não ignorar</option></select></label></div><div class="import-helper">${ruleSummary}</div></div>`,
+    ofx:`${documentInfo}<div class="import-source-panel"><label class="import-file-drop"><span>Selecionar OFX</span><small>Use .ofx ou .qfx exportado pelo banco/cartão.</small><input type="file" accept=".ofx,.qfx,.txt" onchange="handleImportFiles(this.files)"></label><div class="import-helper">${ruleSummary}</div></div>`,
+    pdf:`${documentInfo}<div class="import-source-panel"><label class="import-file-drop"><span>Selecionar PDF</span><small>Use PDF com texto selecionável; PDF escaneado precisa de OCR.</small><input type="file" accept=".pdf,application/pdf" onchange="handleImportFiles(this.files)"></label></div>${textBody('pdf').replace(documentInfo,'')}`,
     ocr:textBody('ocr'),
     pix:textBody('pix'),
     qr:textBody('qr'),
@@ -1077,7 +1090,7 @@ function buildImportRowsFromMatrix(parsed,fileName=''){
     const description=(mapped.description||mapped.note||'Importado').trim();
     const type=inferImportType(mapped.type,mapped.amount,description);
     const amount=parseImportAmount(mapped.amount);
-    const category=mapped.category?normCatName(mapped.category):inferTxCategory(description,type);
+    const category=mapped.category?normCatName(mapped.category):importDraft.defaultCategory||inferTxCategory(description,type);
     return applyImportRules({
       id:uid(),
       date:parseImportDate(mapped.date),
@@ -1116,7 +1129,7 @@ function parseOfxRows(text,fileName=''){
       description,
       amount,
       type,
-      category:inferTxCategory(description,type)||'A classificar',
+      category:importDraft.defaultCategory||inferTxCategory(description,type)||'A classificar',
       accountId:findImportAccount('',description),
       note:take('FITID'),
       balance:0,
@@ -1134,7 +1147,7 @@ function parseTextImportRows(text=''){
         description:parsed.desc,
         amount:parsed.amount,
         type:parsed.type,
-        category:parsed.category||'A classificar',
+        category:parsed.category||importDraft.defaultCategory||'A classificar',
         accountId:parsed.accountId||S.accounts[0]?.id||null,
         note:'Importado de texto',
         balance:0,
@@ -1151,7 +1164,7 @@ function parseTextImportRows(text=''){
       description:line.replace(amountMatch?.[0]||'','').trim()||'Importado de texto',
       amount,
       type,
-      category:inferTxCategory(line,type)||'A classificar',
+      category:importDraft.defaultCategory||inferTxCategory(line,type)||'A classificar',
       accountId:S.accounts[0]?.id||null,
       note:'Importado de texto',
       balance:0,
@@ -1183,7 +1196,8 @@ function prepareImportRows(rows){
       duplicateId:duplicate?.id||'',
       matchId:(duplicate||matched)?.id||'',
       status,
-      decision:status==='duplicate'?'skip':status==='match'?'reconcile':'create'
+      decision:status==='duplicate'?'skip':status==='match'?'reconcile':'create',
+      selected:status!=='duplicate'
     };
   });
   const balanceRows=importDraft.rows.filter(r=>r.balance>0);
@@ -1242,12 +1256,13 @@ function renderImportReview(){
     merge:rows.filter(r=>r.decision==='merge').length,
     skip:rows.filter(r=>r.decision==='skip').length
   };
-  head.innerHTML=`<div class="ss-l">Revisão em lote</div><div class="ss-s">${rows.length} itens • criar ${counts.create} • reconciliar ${counts.reconcile} • substituir ${counts.replace} • mesclar ${counts.merge} • ignorar ${counts.skip}${importDraft.balanceDivergence!==null?` • divergência ${fmt(importDraft.balanceDivergence)}`:''}</div>`;
+  const selected=rows.filter(row=>row.selected!==false).length;
+  head.innerHTML=`<div class="import-review-heading"><div><div class="ss-l">Revisar lançamentos (${rows.length})</div><div class="ss-s">A IA tentou identificar entradas e saídas pelo sinal do valor, mas você pode ajustar o tipo e a categoria de cada linha.</div></div><div class="import-review-selection"><button class="btn btn-g btn-sm" onclick="setAllImportRows(true)">✓ Marcar todos</button><button class="btn btn-g btn-sm" onclick="setAllImportRows(false)">× Desmarcar todos</button></div></div><div class="import-bulk-bar"><span>Em massa (${selected} selecionadas):</span><select class="fi sel" id="importBulkType"><option value="expense">Despesa crédito</option><option value="income">Entrada</option></select><button class="btn btn-g btn-sm" onclick="applyImportBulkType()">Aplicar tipo</button><select class="fi sel" id="importBulkCategory">${allCats().map(cat=>`<option value="${esc(cat.name)}" ${cat.name===importDraft.defaultCategory?'selected':''}>${cat.ico} ${esc(cat.name)}</option>`).join('')}</select><button class="btn btn-g btn-sm" onclick="applyImportBulkCategory(false)">Aplicar em entradas</button><button class="btn btn-g btn-sm" onclick="applyImportBulkCategory(true)">Aplicar em despesas</button></div><div class="ss-s">${selected} selecionadas • criar ${counts.create} • reconciliar ${counts.reconcile} • substituir ${counts.replace} • mesclar ${counts.merge} • ignorar ${counts.skip}${importDraft.balanceDivergence!==null?` • divergência ${fmt(importDraft.balanceDivergence)}`:''}</div>`;
   list.innerHTML=rows.map((row,idx)=>{
     const match=row.matchId?S.transactions.find(t=>t.id===row.matchId):null;
-    return `<div class="import-review-row ${row.status}">
+    return `<div class="import-review-row ${row.status} ${row.selected===false?'is-unselected':''}">
       <div class="import-review-main">
-        <div><strong>${esc(row.description)}</strong><small>${fmtD(row.date)} • ${row.type==='income'?'Receita':'Despesa'} • ${fmt(row.amount)} • ${esc(row.category)}</small></div>
+        <label class="import-row-check"><input type="checkbox" ${row.selected!==false?'checked':''} onchange="setImportRowField(${idx},'selected',this.checked)"><span></span></label><div class="import-row-title"><strong>${esc(row.description)}</strong><small>${fmtD(row.date)} • ${row.type==='income'?'Entrada':'Despesa'} • ${fmt(row.amount)} • ${esc(row.category)}</small></div>
         <span class="state-pill ${row.status==='duplicate'?'error':row.status==='match'?'syncing':'synced'}">${row.status==='duplicate'?'Duplicada':row.status==='match'?'Conciliar':'Nova'}</span>
       </div>
       ${match?`<div class="import-review-match">Atual: ${esc(match.desc)} • ${fmt(match.amount)} • ${fmtD(match.date)}</div>`:''}
@@ -1270,7 +1285,11 @@ function renderImportReview(){
         <button class="btn btn-g btn-sm" onclick="setImportRowField(${idx},'decision','replace')">Usar importado</button>
         <button class="btn btn-g btn-sm" onclick="setImportRowField(${idx},'decision','merge')">Mesclar manualmente</button>
       </div>`:''}
-      <div class="import-inline-grid">
+      <div class="import-inline-grid import-row-fields">
+        <label><span>Data</span><input class="fi" type="date" value="${esc(row.date)}" onchange="setImportRowField(${idx},'date',this.value)"></label>
+        <label><span>Descrição</span><input class="fi" type="text" value="${esc(row.description)}" onchange="setImportRowField(${idx},'description',this.value)"></label>
+        <label><span>Tipo</span><select class="fi sel" onchange="setImportRowField(${idx},'type',this.value)"><option value="expense" ${row.type==='expense'?'selected':''}>Despesa crédito</option><option value="income" ${row.type==='income'?'selected':''}>Entrada</option></select></label>
+        <label><span>Valor</span><input class="fi" type="number" min="0" step="0.01" value="${Number(row.amount||0).toFixed(2)}" onchange="setImportRowField(${idx},'amount',Math.abs(Number(this.value)||0))"></label>
         <label><span>Decisão</span><select class="fi sel" onchange="setImportRowField(${idx},'decision',this.value)"><option value="create" ${row.decision==='create'?'selected':''}>Criar novo</option><option value="reconcile" ${row.decision==='reconcile'?'selected':''}>Conciliar</option><option value="replace" ${row.decision==='replace'?'selected':''}>Usar importado</option><option value="merge" ${row.decision==='merge'?'selected':''}>Mesclar manual</option><option value="skip" ${row.decision==='skip'?'selected':''}>Ignorar</option></select></label>
         <label><span>Categoria</span><select class="fi sel" onchange="setImportRowField(${idx},'category',this.value)">${allCats().map(cat=>`<option value="${esc(cat.name)}" ${cat.name===row.category?'selected':''}>${cat.ico} ${esc(cat.name)}</option>`).join('')}</select></label>
         <label><span>Conta</span><select class="fi sel" onchange="setImportRowField(${idx},'accountId',this.value)">${S.accounts.map(acc=>`<option value="${esc(acc.id)}" ${acc.id===row.accountId?'selected':''}>${acc.icon} ${esc(acc.name)}</option>`).join('')}</select></label>
@@ -1283,6 +1302,20 @@ function setImportRowField(idx,key,value){
   if(!importDraft.rows[idx])return;
   importDraft.rows[idx][key]=value;
   renderImportReview();
+}
+function setAllImportRows(selected){
+  importDraft.rows=(importDraft.rows||[]).map(row=>({...row,selected}));
+  renderImportCenter();
+}
+function applyImportBulkType(){
+  const type=document.getElementById('importBulkType')?.value||'expense';
+  importDraft.rows=(importDraft.rows||[]).map(row=>row.selected===false?row:{...row,type});
+  renderImportCenter();
+}
+function applyImportBulkCategory(expensesOnly=false){
+  const category=document.getElementById('importBulkCategory')?.value||importDraft.defaultCategory||'Outros';
+  importDraft.rows=(importDraft.rows||[]).map(row=>row.selected===false|| (expensesOnly&&row.type!=='expense') || (!expensesOnly&&row.type!=='income')?row:{...row,category});
+  renderImportCenter();
 }
 function saveImportCategoryRule(idx){
   const row=importDraft.rows[idx];if(!row)return;
@@ -1345,7 +1378,7 @@ function restoreImportSnapshot(id){
   toast('Snapshot restaurado','success');
 }
 async function confirmImportTransactions(){
-  const rows=importDraft.rows||[];
+  const rows=(importDraft.rows||[]).filter(row=>row.selected!==false);
   if(!rows.length){toast('Nada preparado para importar','info');return;}
   if(!requireWriteAccess('importar transações'))return;
   createImportSnapshot();
@@ -1954,7 +1987,7 @@ function setTxImportMeta(id,patch){
   saveImportCenterState();
 }
 function clearImportDraft(){
-  importDraft={source:'csv',files:[],rows:[],headers:[],mapping:{},dedupe:'exact',profileName:'',text:'',batchId:'',balanceDivergence:null};
+  importDraft={source:'csv',documentType:'statement',defaultCategory:'Outros',files:[],rows:[],headers:[],mapping:{},dedupe:'exact',profileName:'',text:'',batchId:'',balanceDivergence:null};
 }
 function nCarVehicle(v={}){
   return {
