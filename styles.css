@@ -63,6 +63,33 @@
              radial-gradient(ellipse 46% 34% at 16% 92%, rgba(246,194,92,.14) 0%, transparent 58%),
              linear-gradient(145deg, #fbfcf6 0%, #eef4e5 46%, #e6efe9 100%);
 }
+[data-theme=x] {
+  --ac: #ff7545;
+  --ac2: #299a68;
+  --fut: #e5a52a;
+  --dan: #d85d4d;
+  --warn: #d68b1f;
+  --grn: #299a68;
+  --bg: #f7f7f6;
+  --bg2: #f0f1f2;
+  --sf: rgba(255,255,255,.94);
+  --sf2: rgba(240,241,242,.9);
+  --sf-solid: #ffffff;
+  --bd: rgba(32,37,43,.12);
+  --bd2: rgba(32,37,43,.07);
+  --tx: #20252b;
+  --tx2: rgba(32,37,43,.82);
+  --mt: rgba(32,37,43,.58);
+  --sh: rgba(32,37,43,.10);
+  --glow-ac: rgba(255,117,69,.16);
+  --glow-ac2: rgba(41,154,104,.12);
+  --grad-bg: radial-gradient(ellipse 76% 52% at 16% -10%, rgba(255,117,69,.12) 0%, transparent 64%),
+             radial-gradient(ellipse 60% 46% at 96% 12%, rgba(41,154,104,.10) 0%, transparent 58%),
+             linear-gradient(145deg, #ffffff 0%, #f7f7f6 58%, #fff1eb 100%);
+  --glass-bg: rgba(255,255,255,.86);
+  --glass-bd: rgba(32,37,43,.11);
+  --blur: 12px;
+}
 
 /* Android WebView fallback - backdrop-filter not supported */
 @supports not (backdrop-filter: blur(1px)) {
@@ -89,6 +116,14 @@
   [data-theme=light] .modal { background: #ffffff !important; }
   [data-theme=light] .sidebar { background: #f8f9ff !important; }
   [data-theme=light] .setup-box { background: #ffffff !important; }
+  [data-theme=x] .sc,
+  [data-theme=x] .cc-box,
+  [data-theme=x] .box,
+  [data-theme=x] .bg-card { background: #ffffff !important; }
+  [data-theme=x] .fnav,
+  [data-theme=x] .modal,
+  [data-theme=x] .sidebar,
+  [data-theme=x] .setup-box { background: #ffffff !important; }
 }
 
 

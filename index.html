@@ -436,8 +436,13 @@
     <div class="key-box" id="recoveryCodeBox" style="display:none"></div>
   </div>
   <div class="ss"><div class="ss-t">Aparência</div>
-    <div class="ss-r"><div><div class="ss-l">Tema escuro</div></div>
-      <label class="tog"><input type="checkbox" id="thmTog" onchange="thmFromSet(this.checked)"><div class="tog-t"></div><div class="tog-th"></div></label>
+    <div class="ss-r theme-setting-row"><div><div class="ss-l">Tema do app</div><div class="ss-s">Escolha entre o visual claro, escuro ou o tema X.</div></div>
+      <div class="theme-choice-grid" id="themeChoiceGrid" role="group" aria-label="Tema do app">
+        <button type="button" class="theme-choice" data-theme-choice="light" onclick="setThemeChoice('light')" aria-pressed="false">Claro</button>
+        <button type="button" class="theme-choice" data-theme-choice="dark" onclick="setThemeChoice('dark')" aria-pressed="false">Escuro</button>
+        <button type="button" class="theme-choice" data-theme-choice="x" onclick="setThemeChoice('x')" aria-pressed="false">X</button>
+      </div>
+      <input type="checkbox" id="thmTog" onchange="thmFromSet(this.checked)" hidden>
     </div>
     <div class="ss-r"><div><div class="ss-l">Ocultar valores</div><div class="ss-s">Mascara saldos, salários, gastos e totais para prints e gravações</div></div>
       <label class="tog"><input type="checkbox" id="privTog" onchange="privacyFromSet(this.checked)"><div class="tog-t"></div><div class="tog-th"></div></label>

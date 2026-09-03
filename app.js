@@ -132,15 +132,27 @@ function removeAvatar(){
   toast('Foto removida','info');
 }
 function applyTheme(t){
-  document.documentElement.dataset.theme=t;
-  document.getElementById('thmBtn').textContent=t==='dark'?'\u{1F319}':'\u2600\uFE0F';
-  const tog=document.getElementById('thmTog');if(tog)tog.checked=t==='dark';
-  const m=document.getElementById('themeColorMeta');if(m)m.content=t==='dark'?'#0a0c10':'#f2f4fb';
-  localStorage.setItem('fz_t',t);
+  const theme=['light','dark','x'].includes(t)?t:'dark';
+  document.documentElement.dataset.theme=theme;
+  const savedAccent=localStorage.getItem('next_accent');
+  const accent=theme==='x'?'#ff7545':/^#[0-9a-f]{6}$/i.test(savedAccent||'')?savedAccent:'#35c96f';
+  document.documentElement.style.setProperty('--next-accent',accent);
+  document.documentElement.style.setProperty('--ac',accent);
+  const themeButton=document.getElementById('thmBtn');
+  if(themeButton)themeButton.textContent=theme==='dark'?'\u{1F319}':theme==='x'?'X':'\u2600\uFE0F';
+  const tog=document.getElementById('thmTog');if(tog)tog.checked=theme==='dark';
+  document.querySelectorAll('[data-theme-choice]').forEach(button=>{
+    const active=button.dataset.themeChoice===theme;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-pressed',String(active));
+  });
+  const m=document.getElementById('themeColorMeta');if(m)m.content=theme==='dark'?'#0a0c10':theme==='x'?'#f7f7f6':'#f2f4fb';
+  localStorage.setItem('fz_t',theme);
   if(cfg?.mode==='api')saveRemoteState().catch(()=>{});
 }
 function toggleTheme(){applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');renderDash();}
 function thmFromSet(v){applyTheme(v?'dark':'light');renderDash();}
+function setThemeChoice(theme){applyTheme(theme);renderDash();}
 function initTheme(){applyTheme(localStorage.getItem('fz_t')||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'));}
 function applyPrivacy(v){
   privacyMode=!!v;

@@ -43,11 +43,16 @@
 
   const applyAccent = value => {
     const color = validAccent(value);
+    const theme = document.documentElement.dataset.theme;
+    const effectiveColor = theme === 'x' ? '#ff7545' : color;
     localStorage.setItem(ACCENT_KEY, color);
-    document.documentElement.style.setProperty('--next-accent', color);
-    document.documentElement.style.setProperty('--ac', color);
+    document.documentElement.style.setProperty('--next-accent', effectiveColor);
+    document.documentElement.style.setProperty('--ac', effectiveColor);
     const meta = document.getElementById('themeColorMeta');
-    if (meta) meta.content = '#f5f5f7';
+    if (meta) {
+      const theme = document.documentElement.dataset.theme;
+      meta.content = theme === 'dark' ? '#0a0c10' : theme === 'x' ? '#f7f7f6' : '#f2f4fb';
+    }
     return color;
   };
 
