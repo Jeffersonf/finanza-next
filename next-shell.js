@@ -7,6 +7,16 @@
   const LAUNCHER_ID = 'nextLauncher';
   const ACCENT_KEY = 'next_accent';
   const DEFAULT_ACCENT = '#35c96f';
+  const THIINGS_CDN = 'https://lftz25oez4aqbxpq.public.blob.vercel-storage.com/image-';
+  const financeIcons = {
+    counter: `${THIINGS_CDN}CsdmL6Mu7Mz9dPjZYw1Xq22mkGhekV.png`,
+    bag: `${THIINGS_CDN}oKmcX6Scsb03ofRIcpVfqdCdpSBiC3.png`,
+    discount: `${THIINGS_CDN}DtJ22CFLc3xD78DKMT8N0zoRIdoo3H.png`,
+    cash: `${THIINGS_CDN}wnzXfGqb6aI838iS9TCufJSh2ToJP8.png`,
+    card: `${THIINGS_CDN}xylXWxjRoBYdaH9IPOx1080olvl5Ur.png`,
+    bank: `${THIINGS_CDN}IiMitsVHDCFJDFZnsGOFBFJg3Jhsbp.png`,
+    bulb: `${THIINGS_CDN}JaLO4GvMZea2az0FyzzLXFoWFyjJOB.png`
+  };
   const accents = [
     ['#35c96f', 'Verde'],
     ['#f4cf45', 'Amarelo'],
@@ -32,6 +42,9 @@
     '"': '&quot;',
     "'": '&#39;'
   }[char]));
+
+  const thiing = (name, alt) =>
+    `<img class="box-3d-icon" src="${financeIcons[name]}" alt="${esc(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
 
   const validAccent = value =>
     /^#[0-9a-f]{6}$/i.test(String(value || ''))
@@ -293,6 +306,7 @@
     budgetBaseFor(state),
     currentAccent(),
     userName(),
+    document.documentElement.dataset.theme || 'dark',
     VERSION
   ].join('|');
 
@@ -311,6 +325,74 @@
       </button>
     `).join('')
     : `<div class="box-empty"><strong>Nenhuma transação ainda</strong><span>Toque em + para registrar o primeiro movimento.</span></div>`;
+
+  const renderReferenceHome = (home, model) => {
+    const { recent, available, base, spent, used, margin, receivable, payable, projected, daily, daysLeft, leadingCategory } = model;
+    home.innerHTML = `
+      <header class="box-home-head">
+        <div>
+          <small>Financeiro · ${greeting()}</small>
+          <h1>${esc(userName())}</h1>
+        </div>
+        <div class="box-home-actions">
+          <button type="button" onclick="openSrch()" aria-label="Buscar"><span aria-hidden="true">⌕</span></button>
+          <button type="button" onclick="toggleNextLauncher()" aria-label="Abrir módulos"><span aria-hidden="true">•••</span></button>
+          <button type="button" onclick="openModal()" aria-label="Nova transação">+</button>
+        </div>
+      </header>
+
+      <nav class="box-view-tabs" aria-label="Visões financeiras">
+        <button type="button" class="active" onclick="showPage('dashboard')">Visão geral</button>
+        <button type="button" onclick="showPage('future')">A receber</button>
+        <button type="button" onclick="showPage('future')">A pagar</button>
+        <button type="button" onclick="showPage('dashboard')">Fluxo de caixa</button>
+        <button type="button" onclick="showPage('budget')">DRE</button>
+      </nav>
+
+      <div class="box-home-period"><span>${monthLong()}</span><button type="button" onclick="showPage('dashboard')">${monthShort()} <span aria-hidden="true">⌄</span></button></div>
+
+      <section class="box-metric-grid" aria-label="Resumo financeiro">
+        <article class="box-metric-card box-metric-featured">
+          <div class="box-metric-copy"><small>Previsão de saldo</small><h2>${money(available)}</h2><span class="box-trend positive">↗ ${margin.toFixed(1)}% disponível no mês</span></div>
+          ${thiing('counter', 'Contador de dinheiro')}
+          <div class="box-mini-progress"><i style="width:${used}%"></i></div>
+        </article>
+        <article class="box-metric-card">
+          <div class="box-metric-copy"><small>Receita líquida prevista</small><h2>${money(base)}</h2><span>Base mensal cadastrada</span></div>
+          ${thiing('bag', 'Saco de dinheiro')}
+        </article>
+        <article class="box-metric-card">
+          <div class="box-metric-copy"><small>Margem do mês</small><h2>${margin.toFixed(1)}%</h2><span>Margem real após gastos</span></div>
+          ${thiing('discount', 'Etiqueta de desconto')}
+        </article>
+      </section>
+
+      <section class="box-detail-grid" aria-label="Projeções">
+        <button class="box-detail-card" type="button" onclick="showPage('future')"><span class="box-detail-copy"><small>A receber</small><strong>${money(receivable)}</strong><em>${receivable ? 'Entradas futuras' : 'Nenhuma entrada futura'}</em></span>${thiing('cash', 'Dinheiro')}</button>
+        <button class="box-detail-card" type="button" onclick="showPage('accounts')"><span class="box-detail-copy"><small>Taxa de cartão prevista</small><strong>${money(0)}</strong><em>Configure suas carteiras</em></span>${thiing('card', 'Cartão de crédito')}</button>
+        <button class="box-detail-card" type="button" onclick="showPage('future')"><span class="box-detail-copy"><small>A pagar D+30</small><strong>${money(payable)}</strong><em>${payable ? 'Contas a vencer' : 'Sem contas futuras'}</em></span>${thiing('cash', 'Dinheiro em espécie')}</button>
+        <button class="box-detail-card" type="button" onclick="showPage('accounts')"><span class="box-detail-copy"><small>Saldo projetado D+30</small><strong>${money(projected)}</strong><em>Com os lançamentos futuros</em></span>${thiing('bank', 'Banco')}</button>
+      </section>
+
+      <section class="box-insight-alert">
+        ${thiing('bulb', 'Lâmpada de ideia')}
+        <div><small>Leitura do mês</small><strong>${leadingCategory ? `${esc(leadingCategory.name)} concentra seus maiores gastos` : 'Comece registrando seus lançamentos'}</strong><p>${leadingCategory ? `${money(leadingCategory.amount)} na categoria principal. Revise antes de fechar o mês.` : 'Adicione uma transação para liberar análises e projeções.'}</p></div>
+        <button type="button" onclick="showPage('budget')">Ver análise</button>
+      </section>
+
+      <section class="box-home-lower-grid">
+        <div class="box-section">
+          <header><h2>Últimas transações</h2><button type="button" onclick="showPage('transactions')">Ver todas</button></header>
+          <div class="box-transaction-list">${renderRecent(recent)}</div>
+        </div>
+        <div class="box-section box-home-summary">
+          <header><h2>Resumo do período</h2><button type="button" onclick="showPage('future')">Detalhes</button></header>
+          <div class="box-summary-panel"><div><small>Gasto no mês</small><strong>${money(spent)}</strong></div><div><small>Média diária</small><strong>${money(daily)}</strong></div><div><small>Dias restantes</small><strong>${daysLeft}</strong></div></div>
+          <button class="box-summary-link" type="button" onclick="showPage('budget')">${leadingCategory ? `Maior categoria: ${esc(leadingCategory.name)}` : 'Abrir análise de categorias'} <span>→</span></button>
+        </div>
+      </section>
+    `;
+  };
 
   const renderHome = force => {
     const page = document.getElementById('page-dashboard');
@@ -332,6 +414,16 @@
     const categories = categoriesFor(state);
     const daily = new Date().getDate() ? spent / new Date().getDate() : 0;
     const daysLeft = Math.max(0, new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - new Date().getDate());
+    const futureTransactions = state.transactions.filter(isFuture);
+    const receivable = futureTransactions
+      .filter(tx => tx.type === 'income')
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+    const payable = futureTransactions
+      .filter(tx => tx.type === 'expense')
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+    const projected = available + receivable - payable;
+    const margin = base > 0 ? Math.max(0, Math.min(100, (available / base) * 100)) : 0;
+    const leadingCategory = categories[0];
 
     page.classList.add('next-home-page');
     page.querySelectorAll(':scope > *:not(#nextHome)').forEach(node => {
@@ -400,6 +492,9 @@
         </button>
       </section>
     `;
+    if (document.documentElement.dataset.theme === 'x') {
+      renderReferenceHome(home, { recent, available, base, spent, used, margin, receivable, payable, projected, daily, daysLeft, leadingCategory });
+    }
   };
 
   const pageMeta = {
